@@ -1,0 +1,10 @@
+# Worker API de paiement — déjà en ligne sous https://loan-api.loandrouard-website.workers.dev
+# Déploiement (après accord de Loan uniquement) : npx wrangler deploy --config cloudflare/wrangler.toml
+name = "loan-api"
+main = "api-worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# Conserve les variables saisies dans le tableau de bord (SITE_ORIGIN).
+# Les secrets STRIPE_SECRET_KEY et WHATSAPP_NUMBER ne sont jamais touchés par un déploiement.
+keep_vars = true

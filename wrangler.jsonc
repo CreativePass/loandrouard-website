@@ -1,0 +1,16 @@
+// Site public loandrouard.com — Cloudflare Workers Static Assets.
+// Sert public/ tel quel (aucune réécriture d'URL). Déploiement : npm run publier
+{
+  "name": "loandrouard-site",
+  "main": "worker/site.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // Pas de « pretty URLs » : X.html reste X.html, ?lang= et ?session_id= intacts.
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "workers_dev": true,
+  "preview_urls": false
+}
