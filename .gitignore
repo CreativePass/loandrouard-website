@@ -3,3 +3,5 @@ public/
 .wrangler/
 verification/
 .dev.vars
+verification-site/
+verification-temoin/

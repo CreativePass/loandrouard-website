@@ -2,6 +2,7 @@
 // Usage :
 //   npm run verifier                         → compare http://localhost:8788 (npm run apercu) à l'export brut
 //   npm run verifier -- https://loandrouard.com   → compare le site en ligne à l'export brut
+//   npm run verifier -- temoin               → export brut contre lui-même (bruit des animations)
 // Résultats : verification/<largeur>/<page>-<hauteur>-{ref,site,diff}.png + rapport.txt
 import fs from "node:fs";
 import http from "node:http";
@@ -12,7 +13,7 @@ import pixelmatch from "pixelmatch";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const SORTIE = path.join(RACINE, "verification");
-const SITE = (process.argv[2] || "http://localhost:8788").replace(/\/$/, "");
+const SITE = (process.argv[2] && process.argv[2] !== "temoin" ? process.argv[2] : "http://localhost:8788").replace(/\/$/, "");
 const LARGEURS = process.env.VERIF_LARGEURS ? process.env.VERIF_LARGEURS.split(",").map(Number) : [1440, 1280, 390];
 const HAUTEURS = [0, 0.15, 0.3, 0.5, 0.7, 1]; // fractions de la hauteur de page
 const TOUTES = [
@@ -40,6 +41,8 @@ const ref = http.createServer((req, res) => {
   fs.createReadStream(f).pipe(res);
 }).listen(0);
 const REF = `http://localhost:${ref.address().port}`;
+// « npm run verifier -- temoin » : compare l'export à lui-même, pour mesurer le bruit des animations.
+const CIBLE = process.argv[2] === "temoin" ? REF : SITE;
 
 // Les CDN (unpkg, jsdelivr) peuvent être injoignables depuis la machine de test : on sert alors
 // les mêmes fichiers depuis node_modules (identiques octet pour octet, l'empreinte SRI le garantit).
@@ -59,6 +62,7 @@ const navigateur = await chromium.launch({
 const rapport = [];
 const log = (s) => { console.log(s); rapport.push(s); };
 
+const EXTERNES = new Map();
 const T0 = new Date("2026-10-01T10:00:00Z").getTime();
 // Laisse le réseau et le décodage d'images finir (temps réel), puis fait avancer l'horloge figée.
 async function avancer(page, ms) {
@@ -74,14 +78,25 @@ async function ouvrir(ctx, url, journal) {
   await page.addInitScript(() => {
     let s = 42; Math.random = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
   });
-  if (!cdnJoignable) {
-    await page.route(/unpkg\.com|cdn\.jsdelivr\.net/, (route) => {
-      const local = CDN_LOCAL[route.request().url()];
-      if (local) return route.fulfill({ path: path.join(RACINE, "node_modules", local),
-        contentType: "text/javascript", headers: { "access-control-allow-origin": "*" } });
-      return route.abort();
-    });
-  }
+  // Ressources externes (Google Fonts, CDN…) : téléchargées une fois, puis servies à l'identique
+  // aux deux côtés, pour que la comparaison ne dépende pas des aléas du réseau.
+  await page.route((u) => !u.href.startsWith(REF) && !u.href.startsWith(CIBLE), async (route) => {
+    const url = route.request().url();
+    if (!cdnJoignable && CDN_LOCAL[url]) return route.fulfill({ path: path.join(RACINE, "node_modules", CDN_LOCAL[url]),
+      contentType: "text/javascript", headers: { "access-control-allow-origin": "*" } });
+    if (route.request().method() !== "GET") return route.continue();
+    if (!EXTERNES.has(url)) EXTERNES.set(url, (async () => {
+      for (let essai = 0; essai < 4; essai++) {
+        try {
+          const r = await route.fetch({ timeout: 15000 });
+          return { status: r.status(), headers: r.headers(), body: await r.body() };
+        } catch {}
+      }
+      return null;
+    })());
+    const r = await EXTERNES.get(url);
+    return r ? route.fulfill(r) : route.abort();
+  });
   if (journal) {
     page.on("console", (m) => { if (m.type() === "error") journal.push(`console : ${m.text()}`); });
     page.on("pageerror", (e) => journal.push(`erreur JS : ${e.message}`));
@@ -126,7 +141,7 @@ for (const largeur of LARGEURS) {
   for (const [nom, chemin] of PAGES) {
     const journal = [];
     const pr = await ouvrir(ctx, REF + chemin);
-    const ps = await ouvrir(ctx, SITE + chemin, journal);
+    const ps = await ouvrir(ctx, CIBLE + chemin, journal);
     for (const f of HAUTEURS) {
       const a = await capture(pr, f), b = await capture(ps, f);
       const etiquette = `${largeur}px ${nom} @${Math.round(f * 100)}%`;
