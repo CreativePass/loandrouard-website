@@ -57,7 +57,11 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] Script de construction, configuration Cloudflare, script de vérification
 - [x] Accès Cloudflare (jeton d'API) et réseau de l'environnement
 - [x] Déploiement de prévisualisation (`loandrouard-site.loandrouard-website.workers.dev`) — 01/10
-- [ ] Vérifications du § 8 sur la prévisualisation
+- [x] Vérifications du § 8 sur la prévisualisation — 01/10 :
+  - les 118 fichiers servis sont identiques octet pour octet à `public/` ; `public/` ne diffère de l'export que par l'e-mail provisoire (CGV, Privacy, Legal) et les crédits photo (Legal) ;
+  - `/` et `/index.html` = Video Feedback octet pour octet ; `Home.dc.html`, `Press.dc.html`, fichiers de travail : 404 ; `?lang=` et `?session_id=` conservés, aucune redirection ;
+  - captures 1440 / 1280 / 390 px : écarts uniquement sur l'e-mail et les crédits (et le texte qu'ils décalent sur mobile), plus quelques pixels d'animations saisies à un instant différent sur Video Feedback ;
+  - en-têtes Home / The Journey / Press grisés et hors tabulation, bloc « Powered by » présent, aucune erreur JS ni 404 (hors `/places`, voir plus bas).
 - [x] Worker `loan-api` : code de référence (+ option A) déployé, `SITE_ORIGIN` = domaine + adresse de prévisualisation — 01/10
 - [ ] `loan-api` : `/places` renvoie `{"error":"stripe"}` (502). La clé du Worker lit bien les sessions ; droit « Abonnements : lecture » probablement absent (clé restreinte). Indispensable aussi pour débloquer la carte du programme.
 - [x] Stripe (API, accord du 01/10) : liens de repli Single et Pack → facture avec mémo WhatsApp (option A). Lien HYNEOS laissé tel quel. Pas de redirection après paiement (§ 6.5) : la page de confirmation actuelle est gardée.
