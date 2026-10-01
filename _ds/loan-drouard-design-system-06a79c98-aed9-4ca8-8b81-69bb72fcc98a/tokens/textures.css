@@ -1,0 +1,22 @@
+/* Fonds texturés — le troisième type de fond, après l'aplat et le dégradé.
+   Une photographie de matière posée en tuile : le fond cesse d'être une surface calculée,
+   il devient une page. Toujours sous le texte, jamais derrière une image.
+   Chaque tuile est un miroir quatre côtés de la photo d'origine : elle se répète sans couture.
+   Une texture ne change jamais l'encre — elle suit le ton du fond qu'elle remplace :
+   le lin pour le clair (encre noire), l'enduit et le métal pour le sombre (encre blanche).
+   Les couleurs de repli sont la moyenne exacte de chaque tuile : si l'image ne charge pas,
+   le fond garde la même valeur. */
+:root {
+  /* Clair — lin droit : la page, la lecture longue. */
+  --texture-lin: url("../assets/textures/lin-droit.jpg"); /* @kind other */
+  --lin: #EFE8E0;
+  /* Sombre — enduit noir : matière large, minérale, le grain de la marque en relief. */
+  --texture-enduit: url("../assets/textures/enduit-noir.jpg"); /* @kind other */
+  --enduit-noir: #101010;
+  /* Sombre — métal noir : trame fine et serrée, pour une section resserrée (cartes, formules). */
+  --texture-metal: url("../assets/textures/metal-noir.jpg"); /* @kind other */
+  --metal-noir: #1A1A1C;
+  /* Une seule échelle de tuile pour tout le système : la matière reste à sa taille réelle,
+     lisible de près sans jamais devenir un motif. */
+  --texture-taille: 620px; /* @kind other */
+}

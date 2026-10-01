@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/colors.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/typography.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/effects.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/textures.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/base.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/components/loan.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/styles.css">
+<script src="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/_ds_bundle.js"></script>
+</helmet>
+<section ref="{{ refSec }}" data-screen-label="Sponsors" class="ld-on-noir ld-grain" style="position:relative;overflow:hidden;padding:clamp(44px,6vw,72px) 24px clamp(36px,5vw,56px);color:#F6F5F1;background:#161616">
+<div style="position:relative;max-width:1000px;margin:0 auto">
+<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:clamp(22px,3vw,34px);color:#A9A59A">
+<i style="display:block;width:34px;height:1px;background:currentColor;opacity:.6"></i>
+<span style="font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase">{{ surtitre }}</span>
+<i style="display:block;width:34px;height:1px;background:currentColor;opacity:.6"></i>
+</div>
+<div style="display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);align-items:end">
+<sc-for list="{{ sponsors }}" as="s" hint-placeholder-count="2">
+<a href="{{ s.url }}" target="_blank" rel="noopener" class="{{ s.cls }}" aria-label="{{ s.nom }}" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding-inline:8px;text-align:center;color:inherit;text-decoration:none;border:0;--ld-encre:#F6F5F1">
+<sc-if value="{{ s.logo }}" hint-placeholder-val="{{ false }}">
+<img src="{{ s.logo }}" alt="{{ s.nom }}" style="display:block;max-width:100%;height:clamp(72px,9vw,104px);width:auto;object-fit:contain">
+</sc-if>
+<sc-if value="{{ s.hanzi }}" hint-placeholder-val="{{ false }}">
+<span lang="zh" style="font-family:'Long Cang',cursive;font-size:clamp(28px,3.6vw,38px);line-height:1">{{ s.hanzi }}</span>
+</sc-if>
+<sc-if value="{{ s.nomSeul }}" hint-placeholder-val="{{ false }}">
+<span style="font-family:'Cormorant SC',Georgia,serif;font-weight:600;font-size:clamp(20px,2.6vw,27px);line-height:1.1;letter-spacing:.01em">{{ s.nom }}</span>
+</sc-if>
+<span style="font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(246,245,241,.66)">{{ s.legende }}</span>
+</a>
+</sc-for>
+</div>
+<div ref="{{ refTrace }}" style="margin-top:8px;aspect-ratio:1200 / 364"></div>
+<div ref="{{ refNom }}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:clamp(-22px,-1.6vw,-10px);text-align:center;opacity:calc(.4 + var(--q, 0) * .6)">
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Sceau" taille="30" couleur="blanc" hint-size="30px,30px"></x-import>
+<span style="font-family:'Cormorant SC',Georgia,serif;font-weight:600;font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:.02em;cursor:default;color:transparent;-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;background-image:radial-gradient(ellipse calc(62% + var(--flux, 0) * 30%) 150% at 50% 36%, rgba(255,240,208,calc(var(--q, 0) * var(--flux, 0))) 0%, rgba(232,204,150,calc(var(--q, 0) * var(--flux, 0) * .8)) 55%, rgba(227,196,142,calc(var(--q, 0) * var(--flux, 0) * .55)) 100%),linear-gradient(rgba(227,196,142,calc(var(--q, 0) * var(--flux, 0) * .5)),rgba(227,196,142,calc(var(--q, 0) * var(--flux, 0) * .5))),linear-gradient(#F6F5F1,#F6F5F1)"><span style="text-shadow:0 0 14px rgba(246,245,241,calc(var(--q, 0) * .75)),0 0 34px rgba(246,245,241,calc(var(--q, 0) * .4)),0 0 52px rgba(169,129,74,calc(var(--q, 0) * .4))">L</span>oan DROUARD</span>
+</div>
+<div ref="{{ refPied }}" data-screen-label="Footer" style="position:relative;margin-top:clamp(52px,7vw,84px)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:30px clamp(24px,4vw,56px);padding-top:clamp(26px,3.6vw,38px);border-top:1px solid rgba(246,245,241,.16)">
+<sc-for list="{{ familles }}" as="f" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;align-items:baseline;gap:10px;min-height:20px;color:#A9A59A"><span style="font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase">{{ f.titre }}</span><span lang="zh" style="font-family:'Long Cang',cursive;font-size:18px;line-height:1">{{ f.hanzi }}</span></div>
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.BarreReseaux" ton="sombre" libelles="{{ true }}" liens="{{ f.liens }}" hint-size="100%,132px"></x-import>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 32px;margin-top:clamp(28px,4vw,40px);padding-top:22px;border-top:1px solid rgba(246,245,241,.16)">
+<div style="display:flex;align-items:center;gap:12px"><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Sceau" taille="22" couleur="blanc" hint-size="22px,22px"></x-import><span style="font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#A9A59A">Loan Drouard — Wushu taolu</span></div>
+<nav aria-label="Legal" style="display:flex;flex-wrap:wrap;gap:10px 28px;font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase">
+<a class="ld-balaie" href="CGV.dc.html" style="color:#A9A59A;text-decoration:none;border:0">Terms of sale</a>
+<a class="ld-balaie" href="Privacy.dc.html" style="color:#A9A59A;text-decoration:none;border:0">Privacy</a>
+<a class="ld-balaie" href="Legal.dc.html" style="color:#A9A59A;text-decoration:none;border:0">Legal notice</a>
+</nav>
+<span style="font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#A9A59A">© 2026</span>
+</div>
+</div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:1000},&quot;surtitre&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Powered by&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+/* Ordre d'arrivée. Pour un nouveau sponsor : ajouter une entrée — les faisceaux se recalculent.
+   logo : chemin du fichier (ex. "assets/sponsors/wushu-performance.svg"), null en attendant. */
+const SPONSORS = [
+  { id: "wubixing", hanzi: "武必行", nom: "Wu Bi Xing", legende: "Wu Bi Xing", logo: null, url: null },
+  { id: "wushu-performance", nom: "Wushu Performance", legende: "", logo: "assets/sponsors/wushu-performance.png", url: "https://wushuperformance.com/" },
+];
+
+/* Pied : familles de réseaux. Les URL se lisent dans COMPTES (DS), jamais recopiées ici ;
+   un compte ajouté au DS sans famille tombe dans « Global ». */
+const FAMILLES = [
+  { titre: "Meta", hanzi: "", reseaux: ["instagram", "facebook", "threads"] },
+  { titre: "China", hanzi: "中国", reseaux: ["xiaohongshu", "douyin"] },
+  { titre: "Global", hanzi: "", reseaux: ["tiktok", "x", "linkedin"] },
+];
+
+const W = 1200, X = 600, A = 18, DIAG = 140, Y1 = A + DIAG + 22, Y2 = Y1 + 40, Y3 = Y2 + 90, H = Y3 + 40;
+const f = (n) => (Math.round(n * 10) / 10).toString();
+const B = (v) => Math.min(1, Math.max(0, v));
+
+function arrondi(pts, r) {
+  let d = "M" + f(pts[0][0]) + " " + f(pts[0][1]);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [px, py] = pts[i], [ax, ay] = pts[i - 1], [bx, by] = pts[i + 1];
+    const la = Math.hypot(ax - px, ay - py), lb = Math.hypot(bx - px, by - py);
+    if (!la || !lb) continue;
+    const ra = Math.min(r, la / 2), rb = Math.min(r, lb / 2);
+    d += " L" + f(px + (ax - px) / la * ra) + " " + f(py + (ay - py) / la * ra) + " Q" + f(px) + " " + f(py) + " " + f(px + (bx - px) / lb * rb) + " " + f(py + (by - py) / lb * rb);
+  }
+  const z = pts[pts.length - 1];
+  return d + " L" + f(z[0]) + " " + f(z[1]);
+}
+
+function geometrie(n) {
+  const lignes = [];
+  const cx = (i) => (n === 1 ? X : W * (i + 0.5) / n);
+  let dmax = 1;
+  for (let i = 0; i < n; i++) dmax = Math.max(dmax, Math.abs(X + (i - (n - 1) / 2) * 16 - cx(i)));
+  const k = Math.min(1, DIAG / dmax);
+  for (let i = 0; i < n; i++) {
+    const L = (i - (n - 1) / 2) * 16;
+    [-5, 0, 5].forEach((o, j) => {
+      const x0 = cx(i) + o, x1 = X + L + o, dy = Math.abs(x1 - x0) * k;
+      lignes.push({ d: arrondi([[x0, 0], [x0, A + (DIAG - dy) / 2], [x1, A + (DIAG + dy) / 2], [x1, Y1], [X, Y2]], 10), j, cote: Math.abs(L + o) });
+    });
+  }
+  return lignes;
+}
+
+function alea(i) { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+
+function construire(n) {
+  const lignes = geometrie(n);
+  const t = (d, attrs) => '<path d="' + d + '" pathLength="1" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 2" stroke-dashoffset="1" ' + (attrs || "") + '></path>';
+  const tronc = "M" + X + " " + Y2 + " L" + X + " " + Y3;
+  const cad = 'data-cadre="" stroke="rgba(246,245,241,.1)" stroke-width="1"';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true" style="display:block;width:100%;height:auto;overflow:visible">' +
+    '<defs><linearGradient id="sp-lum" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="' + Y3 + '"><stop offset="0" stop-color="#A9814A" stop-opacity=".15"></stop><stop offset=".45" stop-color="#C9A46A" stop-opacity=".6"></stop><stop offset=".72" stop-color="#E3C48E" stop-opacity=".95"></stop><stop offset="1" stop-color="#FFF6E6" stop-opacity="1"></stop></linearGradient>' +
+    '<radialGradient id="sp-flaque" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFF6E6" stop-opacity=".95"></stop><stop offset=".22" stop-color="#E3C48E" stop-opacity=".6"></stop><stop offset=".6" stop-color="#A9814A" stop-opacity=".16"></stop><stop offset="1" stop-color="#A9814A" stop-opacity="0"></stop></radialGradient>' +
+    '<filter id="sp-flou" x="-50%" y="-10%" width="200%" height="120%"><feGaussianBlur stdDeviation="3.5"></feGaussianBlur></filter>' +
+    '<filter id="sp-flou-l" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"></feGaussianBlur></filter></defs>' +
+    '<g data-rp="-30">' +
+      t("M" + X + " " + (Y2 - 64) + " L" + (X + 150) + " " + Y2 + " L" + X + " " + (Y2 + 64) + " L" + (X - 150) + " " + Y2 + " Z", cad) +
+      t("M" + X + " " + (Y2 - 38) + " L" + (X + 88) + " " + Y2 + " L" + X + " " + (Y2 + 38) + " L" + (X - 88) + " " + Y2 + " Z", cad) +
+      t("M" + (X - 240) + " " + Y2 + " L" + (X + 240) + " " + Y2, cad) + '</g>' +
+    '<g stroke="rgba(246,245,241,.24)" stroke-width="1.1">' + lignes.map((l) => t(l.d, 'data-gris="' + l.j + '" data-route=""')).join("") + t(tronc, 'data-gris="0"') + '</g>' +
+    '<g data-flaque="" style="opacity:0">' +
+      '<ellipse cx="' + X + '" cy="' + (Y3 + 8) + '" rx="220" ry="22" fill="url(#sp-flaque)" filter="url(#sp-flou-l)"></ellipse>' +
+      '<ellipse cx="' + X + '" cy="' + (Y3 + 6) + '" rx="120" ry="9" fill="url(#sp-flaque)"></ellipse>' +
+      '<ellipse cx="' + X + '" cy="' + (Y3 + 30) + '" rx="70" ry="5" fill="url(#sp-flaque)" opacity=".4"></ellipse>' +
+      '<ellipse cx="' + X + '" cy="' + (Y3 + 12) + '" rx="330" ry="22" fill="none" stroke="rgba(246,245,241,.05)"></ellipse></g>' +
+    '<g data-lum="" style="opacity:0">' +
+      '<g stroke="#C9A46A" stroke-width="3.5" stroke-opacity=".7" filter="url(#sp-flou)">' + lignes.map((l) => t(l.d, 'data-l="" stroke-opacity="' + (l.j === 1 ? 0.8 : 0.45) + '"')).join("") + t(tronc, 'data-tronc=""') + '</g>' +
+      '<g stroke="url(#sp-lum)" stroke-width="1.5">' + lignes.map((l) => t(l.d, 'data-l="" stroke-opacity="' + (l.j === 1 ? 1 : 0.6) + '"')).join("") + t(tronc, 'data-tronc=""') + '</g>' +
+      [0, 1, 2].map((i) => '<circle data-goutte="" cx="' + X + '" cy="' + Y2 + '" r="' + (2.2 - i * 0.3) + '" fill="#FFF6E6" style="opacity:0"></circle>').join("") + '</g></svg>';
+}
+
+class Component extends DCLogic {
+  refSec = React.createRef();
+  refNom = React.createRef();
+  refTrace = React.createRef();
+  refPied = React.createRef();
+
+  componentDidMount() {
+    setTimeout(() => this.init(), 0);
+    if (!this.comptes()) this._attente = setInterval(() => { if (this.comptes()) { clearInterval(this._attente); this.forceUpdate(); } }, 120);
+  }
+  componentWillUnmount() { if (this._off) this._off(); clearInterval(this._attente); }
+  comptes() { const ns = window.LoanDrouardDesignSystem_06a79c; return ns && ns.COMPTES; }
+
+  init() {
+    const sec = this.refSec.current;
+    const zone = this.refTrace.current;
+    if (!sec || !zone || this._off) return;
+    zone.innerHTML = construire(SPONSORS.length);
+    const calme = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const gris = sec.querySelectorAll("[data-gris]"), cadre = sec.querySelectorAll("[data-cadre]");
+    const lits = sec.querySelectorAll("[data-l]"), troncs = sec.querySelectorAll("[data-tronc]");
+    const lum = sec.querySelector("[data-lum]"), flaque = sec.querySelector("[data-flaque]");
+    const mobiles = sec.querySelectorAll("[data-rp]");
+    const pied = this.refPied.current;
+    const anims = [];
+    if (!calme) {
+      sec.querySelectorAll("[data-goutte]").forEach((g, i) => {
+        const a = g.animate([{ transform: "translate(0,0)", opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 0.9, offset: 0.85 }, { transform: "translate(0," + (Y3 - Y2) + "px)", opacity: 0 }], { duration: 2400, iterations: Infinity, delay: -i * 800, easing: "cubic-bezier(.5,0,.9,.6)" });
+        a.pause(); anims.push(a);
+      });
+    }
+    const sable = calme ? null : this.sable(sec, zone, this.refNom.current);
+    const dessin = (el, p) => { el.style.strokeDashoffset = (1 - p).toFixed(4); };
+    let joue = false, raf = 0;
+    const maj = () => {
+      raf = 0;
+      const r = sec.getBoundingClientRect(), vh = window.innerHeight;
+      const fin = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      const h = pied ? pied.getBoundingClientRect().top - r.top : r.height;
+      const p = calme || fin ? 1 : B((vh - r.top) / Math.min(h * 0.95, vh * 0.25 + h * 0.8));
+      gris.forEach((el) => dessin(el, B(p / 0.5 - (+el.dataset.gris) * 0.04)));
+      cadre.forEach((el) => dessin(el, B((p - 0.2) / 0.4)));
+      const l = B((p - 0.42) / 0.3);
+      lits.forEach((el) => dessin(el, l));
+      troncs.forEach((el) => dessin(el, B((p - 0.64) / 0.2)));
+      lum.style.opacity = l > 0 ? 1 : 0;
+      const q = B((p - 0.8) / 0.18);
+      flaque.style.opacity = q.toFixed(3);
+      flaque.style.transform = "translate(" + X + "px," + (Y3 + 8) + "px) scale(" + (0.55 + q * 0.45).toFixed(3) + ",1) translate(-" + X + "px,-" + (Y3 + 8) + "px)";
+      if (sable) { sable.lit = l; sable.rp = p; }
+      sec.style.setProperty("--q", q.toFixed(3));
+      const vu = r.top < vh && r.bottom > 0 && l > 0;
+      if (vu !== joue) { joue = vu; anims.forEach((a) => (vu ? a.play() : a.pause())); if (sable) sable.jouer(vu); }
+      if (!calme) mobiles.forEach((m) => { m.style.transform = "translate(0," + ((p - 0.5) * +m.dataset.rp).toFixed(1) + "px)"; });
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(maj); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    this._off = () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); cancelAnimationFrame(raf); anims.forEach((a) => a.cancel()); if (sable) sable.off(); };
+    maj();
+  }
+
+  /* Sable d'or : mêmes grains que poussiere-or.js (taille, teintes, scintillement, vent). Flux continu
+     sponsors → nom. Intouchable dans les tuyaux séparés ; soufflable dès le point d'union et dans la descente. */
+  sable(sec, zone, nom) {
+    const TEINTES = ["222,188,128", "240,218,168", "250,234,196", "232,204,150"], TAUX = 20;
+    const cv = document.createElement("canvas");
+    cv.setAttribute("aria-hidden", "true");
+    cv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
+    sec.appendChild(cv);
+    const cx = cv.getContext("2d");
+    const routes = Array.from(sec.querySelectorAll("[data-route]")).map((el) => {
+      const L = el.getTotalLength(), pts = [];
+      for (let s = 0; s < L; s += 2) { const q = el.getPointAtLength(s); pts.push([q.x, q.y]); }
+      pts.push([X, Y2]);
+      const u = pts.findIndex((q) => q[1] >= Y2 - 1);
+      for (let y = Y2 + 2; y <= Y3; y += 2) pts.push([X, y]);
+      return { pts, u };
+    });
+    const o = { lit: 0 };
+    let parts = [], libres = [], raf = 0, prev = 0, acc = 0, k = 1, ox = 0, oy = 0, dpr = 1;
+    const grain = (ri, s) => ({ ri, s, v: 8 + Math.random() * 5, jx: (Math.random() - 0.5) * 1.6, jy: (Math.random() - 0.5) * 1.6,
+      r: 0.28 + Math.random() * 0.38, c: TEINTES[(Math.random() * TEINTES.length) | 0], ph: Math.random() * 6.28,
+      fr: 1.5 + Math.random() * 2.5, brille: Math.random() < 0.05, a0: 0.7 + Math.random() * 0.3 });
+    const vitesse = (p, rt) => p.v * (p.s > rt.u ? 1 + 0.35 * (p.s - rt.u) / (rt.pts.length - rt.u) : 1);
+    const pos = (p) => {
+      const pts = routes[p.ri].pts, i = Math.min(pts.length - 1, Math.max(0, Math.floor(p.s))), t = Math.max(0, p.s - i), a = pts[i], b = pts[Math.min(i + 1, pts.length - 1)];
+      return [ox + (a[0] + (b[0] - a[0]) * t) * k + p.jx, oy + (a[1] + (b[1] - a[1]) * t) * k + p.jy, (b[0] - a[0]) / 2, (b[1] - a[1]) / 2, p.r];
+    };
+    let flux = 0, boost = 0, survol = 0;
+    const flaques = Array.from(sec.querySelectorAll("[data-flaque] ellipse"));
+    flaques.forEach((el) => { el.__b = +(el.getAttribute("opacity") || 1); });
+    const braises = [];
+    for (let i = 0; i < 44; i++) {
+      const j = i >> 1, sg = i % 2 ? 1 : -1;
+      const y = Y1 + 6 + (alea(j) * 0.9 + alea(i + 57) * 0.1) * (Y3 - Y1 - 14), ecart = 36 + (1 - (y - Y1) / (Y3 - Y1)) * 115;
+      const u = sg * ((j + 0.25 + alea(j + 91) * 0.5) / 22);
+      braises.push({ x: X + u * ecart, y, r: 0.7 + alea(i + 33) * 1.5, c: i % 3 ? "201,164,106" : "246,245,241",
+        d: 5200 + ((i * 977) % 4200), dx: sg * ((j % 3) - 1) * 6, dy: 40 + ((i * 53) % 70), t0: -((i * 0.29) % 1), fragile: i % 3 !== 0, cy: -1, ox: 0, oy: 0, vx: 0, vy: 0 });
+    }
+    const posB = (b, now) => {
+      const t = ((now / b.d + b.t0) % 1 + 1) % 1, c = Math.floor(now / b.d + b.t0);
+      if (c !== b.cy) { b.cy = c; b.ox = b.oy = b.vx = b.vy = 0; b.sw = 0; }
+      const e = t * t, rp = ((o.rp ?? 1) - 0.5) * -60;
+      const a = t < 0.25 ? t / 0.25 : t < 0.7 ? 1 - 0.4 * (t - 0.25) / 0.45 : 0.6 * (1 - (t - 0.7) / 0.3);
+      const ext = b.sw ? Math.max(0, 1 - (now - b.sw) / 1100) : 1;
+      return [ox + (b.x + b.dx * e) * k + b.ox, oy + (b.y + b.dy * e + rp) * k + b.oy, a * ext * ext];
+    };
+    const entre = () => { survol = 1; }, sort = () => { survol = 0; };
+    if (nom) { nom.addEventListener("pointerenter", entre); nom.addEventListener("pointerleave", sort); }
+    for (let i = 0; i < 480; i++) { const ri = (Math.random() * routes.length) | 0; parts.push(grain(ri, Math.random() * (routes[ri].pts.length - 2))); }
+    const geo = () => {
+      const sr = sec.getBoundingClientRect(), zr = zone.getBoundingClientRect();
+      k = zr.width / W; ox = zr.left - sr.left; oy = zr.top - sr.top;
+      dpr = Math.min(2, devicePixelRatio || 1);
+      const w = Math.round(sr.width * dpr), h = Math.round(sr.height * dpr);
+      if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+      return sr;
+    };
+    const point = (x, y, r, c, a, sc, brille) => {
+      if (brille) { cx.fillStyle = "rgba(" + c + "," + a * sc * 0.4 + ")"; cx.beginPath(); cx.arc(x, y, r * 3.6, 0, 6.283); cx.fill(); }
+      cx.fillStyle = "rgba(" + c + "," + Math.min(1, a * (brille ? 0.7 + 0.6 * sc : 0.9)) + ")";
+      cx.beginPath(); cx.arc(x, y, r, 0, 6.283); cx.fill();
+    };
+    const boucle = (now) => {
+      const dt = Math.max(0, Math.min(0.05, (now - prev) / 1000)); prev = now;
+      geo();
+      boost += (survol - boost) * Math.min(1, dt * (survol ? 2.2 : 1.2));
+      acc += dt * TAUX * (1 + 0.4 * boost);
+      while (acc >= 1) { acc--; parts.push(grain((Math.random() * routes.length) | 0, 0)); }
+      cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, cv.width, cv.height);
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cx.globalCompositeOperation = "lighter"; cx.globalAlpha = o.lit;
+      const s = now / 1000;
+      let arrivees = 0;
+      cx.globalCompositeOperation = "source-over";
+      for (const b of braises) {
+        b.ox += b.vx * dt; b.oy += b.vy * dt;
+        const am = Math.exp(-dt * 1.4); b.vx *= am; b.vy *= am;
+        const [x, y, a] = posB(b, now);
+        cx.fillStyle = "rgba(" + b.c + "," + a + ")"; cx.beginPath(); cx.arc(x, y, b.r * k, 0, 6.283); cx.fill();
+      }
+      cx.globalCompositeOperation = "lighter";
+      parts = parts.filter((p) => {
+        const rt = routes[p.ri], n = rt.pts.length;
+        p.s += vitesse(p, rt) * dt;
+        if (p.s >= n - 1) { arrivees++; return false; }
+        const [x, y, , , r] = pos(p), fin = n - 1 - p.s;
+        const a = p.a0 * Math.min(1, p.s / 12, fin / 10);
+        point(x, y, r, p.c, a, 0.55 + 0.45 * Math.sin(p.ph * 3 + s * p.fr * 7), p.brille);
+        return true;
+      });
+      libres = libres.filter((p) => now - p.t0 < p.vie);
+      for (const p of libres) {
+        const age = now - p.t0, kk = age / p.vie, t = age / 1000;
+        const rafale = 0.75 + 0.25 * Math.sin(t * 5 + p.ph);
+        const kv = now - p.doux < 700 ? 3 + 6 * ((now - p.doux) / 700) ** 2 : 9;
+        p.vx += (p.wx * rafale - p.vx) * kv * dt; p.vy += (p.wy * rafale - p.vy) * kv * dt;
+        p.x += p.vx * dt; p.y += (p.vy + Math.sin(p.ph + t * p.fr * 6) * 3) * dt;
+        point(p.x, p.y, p.r * (1 - kk * 0.5), p.c, p.a0 * (1 - kk) ** 1.6, 0.55 + 0.45 * Math.sin(p.ph * 3 + t * p.fr * 7), p.brille);
+      }
+      const bat = (u) => { u = ((u % 3.6) + 3.6) % 3.6; return Math.exp(-(((u - 0.5) / 0.5) ** 2)) + 0.45 * Math.exp(-(((u - 1.35) / 0.6) ** 2)); };
+      const f = Math.min(1, 0.12 + 0.72 * bat(s - 0.15) + 0.16 * boost);
+      sec.style.setProperty("--flux", (f * o.lit).toFixed(3));
+      flaques.forEach((el, i) => { el.style.opacity = (el.__b * (0.8 + 0.2 * bat(s - i * 0.12))).toFixed(3); });
+      raf = requestAnimationFrame(boucle);
+    };
+    let mx = 0, my = 0, mt = 0, svx = 0, svy = 0;
+    const onMove = (e) => {
+      const t = performance.now(), d = Math.max(8, t - mt) / 1000;
+      if (mt) { const m = Math.min(1, d * 12); svx += ((e.clientX - mx) / d - svx) * m; svy += ((e.clientY - my) / d - svy) * m; }
+      mx = e.clientX; my = e.clientY; mt = t;
+      if (!raf || o.lit <= 0) return;
+      const vit = Math.hypot(svx, svy); if (vit < 150) return;
+      const sr = sec.getBoundingClientRect(), px = e.clientX - sr.left, py = e.clientY - sr.top;
+      const R = 70, m = Math.min(1, (vit - 150) / 1500), tx = svx * 0.17, ty = svy * 0.17;
+      const vent = (p, d) => { const w = (1 - d / R) ** 2 * (0.18 + 0.37 * m); p.wx += (tx - p.wx) * w; p.wy += (ty - p.wy) * w; p.vx += (tx - p.vx) * w * 0.12; p.vy += (ty - p.vy) * w * 0.12; p.doux = t; };
+      parts = parts.filter((p) => {
+        const rt = routes[p.ri];
+        if (p.s < rt.u) return true;
+        const [x, y, dx, dy, r] = pos(p), d = Math.hypot(x - px, y - py);
+        if (d > R) return true;
+        const v = vitesse(p, rt) * 2 * k, l = Math.hypot(dx, dy) || 1;
+        const q = { x, y, vx: dx / l * v, vy: dy / l * v, wx: dx / l * v, wy: dy / l * v, r, c: p.c, ph: p.ph, fr: p.fr, brille: p.brille, a0: p.a0, t0: t, vie: 800 + Math.random() * 800, doux: t };
+        vent(q, d); libres.push(q);
+        return false;
+      });
+      for (const p of libres) { const d = Math.hypot(p.x - px, p.y - py); if (d <= R) vent(p, d); }
+      for (const b of braises) {
+        const [x, y] = posB(b, t), d = Math.hypot(x - px, y - py); if (d > R * 0.85) continue;
+        const w = (1 - d / (R * 0.85)) ** 2 * (0.06 + 0.1 * m);
+        b.vx += (tx * 0.35 - b.vx) * w; b.vy += (ty * 0.35 - b.vy) * w; if (!b.sw && b.fragile) b.sw = t;
+      }
+    };
+    addEventListener("pointermove", onMove, { passive: true });
+    o.jouer = (on) => {
+      if (on && !raf) { prev = performance.now(); raf = requestAnimationFrame(boucle); }
+      else if (!on && raf) { cancelAnimationFrame(raf); raf = 0; }
+    };
+    o.off = () => { o.jouer(false); removeEventListener("pointermove", onMove); if (nom) { nom.removeEventListener("pointerenter", entre); nom.removeEventListener("pointerleave", sort); } cv.remove(); };
+    return o;
+  }
+
+  renderVals() {
+    const C = this.comptes() || [];
+    const pris = new Set(FAMILLES.flatMap((f) => f.reseaux));
+    const familles = FAMILLES.map((f) => ({ titre: f.titre, hanzi: f.hanzi, liens: f.reseaux.map((r) => C.find((c) => c.reseau === r)).filter(Boolean) }));
+    familles[familles.length - 1].liens.push(...C.filter((c) => !pris.has(c.reseau)));
+    return {
+      familles,
+      refPied: this.refPied,
+      surtitre: this.props.surtitre ?? "Powered by",
+      sponsors: SPONSORS.map((s) => Object.assign({ nomSeul: !s.logo && !s.hanzi, cls: "ld-balaie" }, s, { url: s.url || undefined })),
+      refTrace: this.refTrace,
+      refSec: this.refSec,
+      refNom: this.refNom,
+    };
+  }
+}
+</script>
+</body>
+</html>

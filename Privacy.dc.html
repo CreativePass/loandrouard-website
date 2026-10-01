@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="chargement.js?v=7"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/colors.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/typography.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/effects.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/textures.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/base.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/components/loan.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/styles.css">
+<script src="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/_ds_bundle.js"></script>
+<script src="header-flottant.js?v=4"></script>
+<style>
+body { margin: 0; background: #161616; }
+a { color: #F6F5F1; }
+a:hover { color: #A9814A; }
+.lg { max-width: 740px; }
+.lg-h1 { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(38px, 5.4vw, 64px); line-height: 1.06; letter-spacing: .01em; text-wrap: balance; }
+.lg-lede { margin: 24px 0 0; font-size: 20px; line-height: 1.7; color: rgba(246,245,241,.82); text-wrap: pretty; }
+.lg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; margin-top: 28px; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #A9A59A; }
+.lg-toc { margin-top: 64px; }
+.lg-toc-t { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12.5px; letter-spacing: .16em; text-transform: uppercase; color: #A9A59A; }
+.lg-toc-t::before { content: ""; width: 34px; height: 1px; background: currentColor; opacity: .6; }
+.lg-toc ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); column-gap: 40px; }
+.lg-toc a { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 10px 0; border-top: 1px solid rgba(246,245,241,.14); color: rgba(246,245,241,.82); text-decoration: none; font-size: 18px; line-height: 1.35; transition: color .25s ease; }
+.lg-toc a b { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 11px; letter-spacing: .1em; color: #A9A59A; transition: color .25s ease; }
+.lg-toc a:hover { color: #F6F5F1; }
+.lg-toc a:hover b { color: #A9814A; }
+.lg-art { scroll-margin-top: 96px; margin-top: 72px; }
+.lg-art h2 { margin: 0 0 22px; display: flex; align-items: baseline; gap: 16px; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(26px, 3.2vw, 36px); line-height: 1.15; letter-spacing: .01em; text-wrap: balance; }
+.lg-art h2 span { flex: none; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12px; letter-spacing: .12em; color: #A9A59A; }
+.lg-art h3 { margin: 30px 0 10px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #C7C4BC; }
+.lg-art p, .lg-art li { font-size: 19px; line-height: 1.75; color: rgba(246,245,241,.86); text-wrap: pretty; }
+.lg-art p { margin: 0 0 16px; }
+.lg-art ul, .lg-art ol { margin: 0 0 18px; padding: 0; list-style: none; display: grid; gap: 8px; }
+.lg-art ul > li { position: relative; padding-left: 26px; }
+.lg-art ul > li::before { content: ""; position: absolute; left: 0; top: .9em; width: 14px; height: 1px; background: #C7C4BC; opacity: .7; }
+.lg-art ol { counter-reset: e; }
+.lg-art ol > li { position: relative; padding-left: 38px; counter-increment: e; }
+.lg-art ol > li::before { content: counter(e, decimal-leading-zero); position: absolute; left: 0; top: .62em; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .1em; line-height: 1; color: #A9A59A; }
+.lg-art strong { font-weight: 600; color: #F6F5F1; }
+.lg-art a { color: #F6F5F1; text-decoration: underline; text-decoration-color: rgba(246,245,241,.4); text-underline-offset: 3px; }
+.lg-art a:hover { color: #A9814A; text-decoration-color: currentColor; }
+.lg-todo { background: rgba(198,160,94,.14); color: #E3D5B8; outline: 1px dashed rgba(198,160,94,.75); outline-offset: 1px; border-radius: 3px; padding: 0 6px; font-family: 'Cinzel', Georgia, serif; font-size: .74em; letter-spacing: .06em; }
+.lg-cadre { margin: 22px 0 18px; padding: 26px 30px; border: 1px solid rgba(246,245,241,.18); border-radius: 24px; }
+.lg-cadre p { font-size: 17.5px; margin-bottom: 10px; }
+.lg-cadre p:last-child { margin-bottom: 0; }
+.lg-fin { margin-top: 80px; padding-top: 22px; border-top: 1px solid rgba(246,245,241,.14); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 28px; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #A9A59A; }
+.lg-fin a { color: inherit; text-decoration: none; }
+.lg-fin a:hover { color: #F6F5F1; }
+</style>
+</helmet>
+<div style="font-family:'Cormorant',Georgia,serif;font-size:19px;line-height:1.65;background:#161616;color:#F6F5F1">
+
+<header class="ld-header" data-ton="sombre">
+<div style="max-width:none;margin:0;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:32px">
+<div style="display:flex;align-items:center;gap:12px"><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Sceau" taille="26" couleur="blanc" hint-size="26px,26px"></x-import><span style="font-family:'Cormorant SC',Georgia,serif;font-weight:600;font-size:19px;letter-spacing:.01em">LOAN DROUARD</span></div>
+<nav style="display:flex;gap:26px;font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase">
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">Home</span>
+<a class="ld-balaie" href="Video Feedback.dc.html" style="color:inherit;opacity:.64;text-decoration:none;border:0">Video Feedback</a>
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">The Journey</span>
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">Press / Contact</span>
+</nav>
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.SelecteurLangue" ton="sombre" langue="{{ langue }}" langues="{{ langues }}" onChange="{{ changerLangue }}" hint-size="100px,20px"></x-import>
+</div>
+</header>
+
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Section" ton="sombre" hint-size="100%,1400px">
+<div class="lg">
+<sc-if value="{{ en }}" hint-placeholder-val="{{ true }}">
+<div class="ld-etiquette ld-etiquette--role" style="margin-bottom:16px">Legal</div>
+<h1 class="lg-h1">Privacy Policy</h1>
+<p class="lg-lede">What data I collect when you visit loandrouard.com or buy a Video Feedback package, why, and what your rights are.</p>
+<div class="lg-meta"><span>Version of 1 October 2026</span><span>The French version prevails</span><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" taille="sm" onClick="{{ versFr }}" hint-size="130px,28px">Lire en français</x-import></div>
+
+<nav class="lg-toc" aria-label="Contents">
+<div class="lg-toc-t">Contents</div>
+<ol>
+<li><a href="#controller"><b>01</b><span>Who is responsible</span></a></li>
+<li><a href="#collected"><b>02</b><span>What data I collect</span></a></li>
+<li><a href="#purposes"><b>03</b><span>Why, and on what legal basis</span></a></li>
+<li><a href="#recipients"><b>04</b><span>Who receives it</span></a></li>
+<li><a href="#transfers"><b>05</b><span>Transfers outside the EU</span></a></li>
+<li><a href="#retention"><b>06</b><span>How long it is kept</span></a></li>
+<li><a href="#your-rights"><b>07</b><span>Your rights</span></a></li>
+<li><a href="#minors"><b>08</b><span>Minors</span></a></li>
+<li><a href="#security"><b>09</b><span>Security</span></a></li>
+<li><a href="#changes"><b>10</b><span>Changes</span></a></li>
+</ol>
+</nav>
+
+<section id="controller" class="lg-art">
+<h2><span>01</span>Who is responsible</h2>
+<p>The data controller is <strong>Loan Drouard</strong>, individual entrepreneur (EI), SIRET 109 709 014 00012, Route de Solignat, 63500 Issoire, France. Contact: <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>.</p>
+<p>There is no data protection officer: write to me directly.</p>
+</section>
+
+<section id="collected" class="lg-art">
+<h2><span>02</span>What data I collect</h2>
+<h3>Order and payment</h3>
+<p>Collected by Stripe at checkout: name, email, phone number, billing country and address, package chosen, amount and date. Your card details go straight to Stripe: I never see them.</p>
+<h3>Exchanges and videos</h3>
+<p>On WhatsApp: your number, profile name, messages, voice messages and videos. Videos show your image. You may also tell me about an injury (health data), which I use only to adapt my advice.</p>
+<h3>Browsing</h3>
+<ul>
+<li>The site uses no advertising cookies and no audience measurement.</li>
+<li>After a payment, it keeps a session reference in your browser (local storage) so it can show your WhatsApp access.</li>
+<li>The host, Cloudflare, processes technical data (IP address, browser) to deliver and secure the site.</li>
+<li>Some fonts (Google Fonts) and a QR code tool (jsDelivr) load from their own servers, which receive your IP address.</li>
+<li>At checkout, Stripe uses cookies needed for security and fraud prevention.</li>
+</ul>
+</section>
+
+<section id="purposes" class="lg-art">
+<h2><span>03</span>Why, and on what legal basis</h2>
+<ul>
+<li><strong>Providing the service</strong> (order, videos, analyses, exchanges): performance of the contract.</li>
+<li><strong>Payment, invoicing, accounting</strong>: legal obligation.</li>
+<li><strong>Site security and fraud prevention</strong>: legitimate interest.</li>
+<li><strong>Answering your messages</strong>: legitimate interest, or steps taken before a contract.</li>
+<li><strong>Information about an injury</strong>: your explicit consent, given when you tell me, and which you can withdraw at any time.</li>
+<li><strong>Publishing a video or image</strong>: only with your prior written agreement.</li>
+</ul>
+</section>
+
+<section id="recipients" class="lg-art">
+<h2><span>04</span>Who receives it</h2>
+<p>Your data is never sold or used for advertising. Only I have access to it, with these providers:</p>
+<ul>
+<li><strong>Stripe Payments Europe, Ltd</strong> (Ireland): payment. Stripe is also responsible for its own processing (fraud prevention, regulatory obligations): <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer">stripe.com/privacy</a>.</li>
+<li><strong>WhatsApp Ireland Ltd</strong> (Meta): messaging, end-to-end encrypted: <a href="https://www.whatsapp.com/legal" target="_blank" rel="noreferrer">whatsapp.com/legal</a>.</li>
+<li><strong>Cloudflare, Inc.</strong>: hosting of the site and of the payment-check service.</li>
+<li><strong>Google</strong> (Google Fonts) and <strong>jsDelivr</strong>: delivery of fonts and code.</li>
+</ul>
+</section>
+
+<section id="transfers" class="lg-art">
+<h2><span>05</span>Transfers outside the EU</h2>
+<p>Some of these providers may process data in the United States. These transfers are covered by the EU–US Data Privacy Framework and/or the European Commission’s standard contractual clauses.</p>
+</section>
+
+<section id="retention" class="lg-art">
+<h2><span>06</span>How long it is kept</h2>
+<ul>
+<li><strong>Videos, analyses and WhatsApp conversation:</strong> deleted 3 months after your last feedback.</li>
+<li><strong>Information about an injury:</strong> deleted at the same time.</li>
+<li><strong>Orders and invoices:</strong> 10 years (accounting obligation, article L123-22 of the French Commercial Code).</li>
+<li><strong>Emails with no order:</strong> 3 years after the last contact.</li>
+<li><strong>Session reference in your browser:</strong> until you clear it.</li>
+</ul>
+</section>
+
+<section id="your-rights" class="lg-art">
+<h2><span>07</span>Your rights</h2>
+<p>You can access, correct or delete your data, restrict or object to its processing, ask for a copy in a reusable format, withdraw your consent at any time, and leave instructions for what happens to it after your death.</p>
+<p>Write to <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>. I reply within one month.</p>
+<p>You can also complain to the French data protection authority: CNIL, 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07 — <a href="https://www.cnil.fr" target="_blank" rel="noreferrer">cnil.fr</a>.</p>
+</section>
+
+<section id="minors" class="lg-art">
+<h2><span>08</span>Minors</h2>
+<p>If you are under 18, the order is placed by a parent or legal guardian, who can exercise your rights with you. No image of a minor is published without that parent or guardian’s agreement.</p>
+</section>
+
+<section id="security" class="lg-art">
+<h2><span>09</span>Security</h2>
+<p>Videos are kept only in WhatsApp and on my own password-protected devices. Exchanges on WhatsApp are end-to-end encrypted, and Stripe is certified to the PCI DSS payment security standard.</p>
+</section>
+
+<section id="changes" class="lg-art">
+<h2><span>10</span>Changes</h2>
+<p>If this policy changes, the date at the top of the page changes too. For a significant change affecting current clients, I will tell you by email.</p>
+</section>
+<div class="lg-fin"><span>Loan Drouard EI · SIRET 109 709 014 00012</span><span style="display:flex;gap:22px;flex-wrap:wrap"><a href="CGV.dc.html">Terms of sale</a><a href="Privacy.dc.html">Privacy</a><a href="Legal.dc.html">Legal notice</a></span></div>
+</sc-if>
+
+<sc-if value="{{ fr }}" hint-placeholder-val="{{ false }}">
+<div class="ld-etiquette ld-etiquette--role" style="margin-bottom:16px">Legal</div>
+<h1 class="lg-h1">Politique de confidentialité</h1>
+<p class="lg-lede">Les données que je collecte quand vous visitez loandrouard.com ou achetez une formule Video Feedback, pourquoi, et quels sont vos droits.</p>
+<div class="lg-meta"><span>Version du 1er octobre 2026</span><span>La version française fait foi</span><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" taille="sm" onClick="{{ versEn }}" hint-size="130px,28px">Read in English</x-import></div>
+
+<nav class="lg-toc" aria-label="Sommaire">
+<div class="lg-toc-t">Sommaire</div>
+<ol>
+<li><a href="#controller"><b>01</b><span>Responsable du traitement</span></a></li>
+<li><a href="#collected"><b>02</b><span>Données collectées</span></a></li>
+<li><a href="#purposes"><b>03</b><span>Finalités et bases légales</span></a></li>
+<li><a href="#recipients"><b>04</b><span>Destinataires</span></a></li>
+<li><a href="#transfers"><b>05</b><span>Transferts hors de l’UE</span></a></li>
+<li><a href="#retention"><b>06</b><span>Durées de conservation</span></a></li>
+<li><a href="#your-rights"><b>07</b><span>Vos droits</span></a></li>
+<li><a href="#minors"><b>08</b><span>Mineurs</span></a></li>
+<li><a href="#security"><b>09</b><span>Sécurité</span></a></li>
+<li><a href="#changes"><b>10</b><span>Modifications</span></a></li>
+</ol>
+</nav>
+
+<section id="controller" class="lg-art">
+<h2><span>01</span>Responsable du traitement</h2>
+<p>Le responsable du traitement est <strong>Loan Drouard</strong>, entrepreneur individuel (EI), SIRET 109 709 014 00012, Route de Solignat, 63500 Issoire, France. Contact : <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>.</p>
+<p>Il n’y a pas de délégué à la protection des données : écrivez-moi directement.</p>
+</section>
+
+<section id="collected" class="lg-art">
+<h2><span>02</span>Données collectées</h2>
+<h3>Commande et paiement</h3>
+<p>Collectées par Stripe lors du paiement : nom, e-mail, numéro de téléphone, pays et adresse de facturation, formule choisie, montant et date. Vos données bancaires vont directement à Stripe : je ne les vois pas.</p>
+<h3>Échanges et vidéos</h3>
+<p>Sur WhatsApp : votre numéro, votre nom de profil, vos messages, messages vocaux et vidéos. Les vidéos montrent votre image. Vous pouvez aussi me parler d’une blessure (donnée de santé), que j’utilise seulement pour adapter mes conseils.</p>
+<h3>Navigation</h3>
+<ul>
+<li>Le site n’utilise ni cookie publicitaire ni mesure d’audience.</li>
+<li>Après un paiement, il garde dans votre navigateur (stockage local) une référence de session pour afficher votre accès WhatsApp.</li>
+<li>L’hébergeur, Cloudflare, traite des données techniques (adresse IP, navigateur) pour délivrer et sécuriser le site.</li>
+<li>Certaines polices (Google Fonts) et un outil de QR code (jsDelivr) sont chargés depuis leurs serveurs, qui reçoivent votre adresse IP.</li>
+<li>Lors du paiement, Stripe utilise des cookies nécessaires à la sécurité et à la lutte contre la fraude.</li>
+</ul>
+</section>
+
+<section id="purposes" class="lg-art">
+<h2><span>03</span>Finalités et bases légales</h2>
+<ul>
+<li><strong>Fournir la prestation</strong> (commande, vidéos, analyses, échanges) : exécution du contrat.</li>
+<li><strong>Paiement, facturation, comptabilité</strong> : obligation légale.</li>
+<li><strong>Sécurité du site et lutte contre la fraude</strong> : intérêt légitime.</li>
+<li><strong>Réponse à vos messages</strong> : intérêt légitime, ou mesures précontractuelles.</li>
+<li><strong>Information sur une blessure</strong> : votre consentement explicite, donné en me la signalant, et que vous pouvez retirer à tout moment.</li>
+<li><strong>Publication d’une vidéo ou d’une image</strong> : uniquement avec votre accord écrit préalable.</li>
+</ul>
+</section>
+
+<section id="recipients" class="lg-art">
+<h2><span>04</span>Destinataires</h2>
+<p>Vos données ne sont jamais vendues ni utilisées pour de la publicité. J’y accède seul, avec ces prestataires :</p>
+<ul>
+<li><strong>Stripe Payments Europe, Ltd</strong> (Irlande) : paiement. Stripe est aussi responsable de ses propres traitements (lutte contre la fraude, obligations réglementaires) : <a href="https://stripe.com/fr/privacy" target="_blank" rel="noreferrer">stripe.com/privacy</a>.</li>
+<li><strong>WhatsApp Ireland Ltd</strong> (Meta) : messagerie, chiffrée de bout en bout : <a href="https://www.whatsapp.com/legal" target="_blank" rel="noreferrer">whatsapp.com/legal</a>.</li>
+<li><strong>Cloudflare, Inc.</strong> : hébergement du site et du service de vérification des paiements.</li>
+<li><strong>Google</strong> (Google Fonts) et <strong>jsDelivr</strong> : diffusion de polices et de code.</li>
+</ul>
+</section>
+
+<section id="transfers" class="lg-art">
+<h2><span>05</span>Transferts hors de l’UE</h2>
+<p>Certains de ces prestataires peuvent traiter des données aux États-Unis. Ces transferts sont encadrés par le Data Privacy Framework UE–États-Unis et/ou par les clauses contractuelles types de la Commission européenne.</p>
+</section>
+
+<section id="retention" class="lg-art">
+<h2><span>06</span>Durées de conservation</h2>
+<ul>
+<li><strong>Vidéos, analyses et conversation WhatsApp :</strong> supprimées 3 mois après votre dernier retour.</li>
+<li><strong>Information sur une blessure :</strong> supprimée en même temps.</li>
+<li><strong>Commandes et factures :</strong> 10 ans (obligation comptable, article L123-22 du Code de commerce).</li>
+<li><strong>E-mails sans commande :</strong> 3 ans après le dernier contact.</li>
+<li><strong>Référence de session dans votre navigateur :</strong> jusqu’à ce que vous l’effaciez.</li>
+</ul>
+</section>
+
+<section id="your-rights" class="lg-art">
+<h2><span>07</span>Vos droits</h2>
+<p>Vous pouvez accéder à vos données, les rectifier ou les effacer, limiter leur traitement ou vous y opposer, en demander une copie dans un format réutilisable, retirer votre consentement à tout moment, et définir des directives sur leur sort après votre décès.</p>
+<p>Écrivez à <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>. Je vous réponds sous un mois.</p>
+<p>Vous pouvez aussi adresser une réclamation à la CNIL, 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07 — <a href="https://www.cnil.fr" target="_blank" rel="noreferrer">cnil.fr</a>.</p>
+</section>
+
+<section id="minors" class="lg-art">
+<h2><span>08</span>Mineurs</h2>
+<p>Si vous avez moins de 18 ans, la commande est passée par un parent ou un représentant légal, qui peut exercer vos droits avec vous. Aucune image d’un mineur n’est publiée sans l’accord de ce parent ou représentant légal.</p>
+</section>
+
+<section id="security" class="lg-art">
+<h2><span>09</span>Sécurité</h2>
+<p>Les vidéos ne sont conservées que dans WhatsApp et sur mes propres appareils protégés par mot de passe. Les échanges WhatsApp sont chiffrés de bout en bout, et Stripe est certifié selon la norme de sécurité des paiements PCI DSS.</p>
+</section>
+
+<section id="changes" class="lg-art">
+<h2><span>10</span>Modifications</h2>
+<p>Si cette politique change, la date en haut de page change aussi. En cas de changement important pour les clients en cours, je vous préviens par e-mail.</p>
+</section>
+<div class="lg-fin"><span>Loan Drouard EI · SIRET 109 709 014 00012</span><span style="display:flex;gap:22px;flex-wrap:wrap"><a href="CGV.dc.html?lang=fr">CGV</a><a href="Privacy.dc.html?lang=fr">Confidentialité</a><a href="Legal.dc.html?lang=fr">Mentions légales</a></span></div>
+</sc-if>
+
+</div>
+</x-import>
+
+<dc-import name="Sponsors" hint-size="100%,860px"></dc-import>
+
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;langue&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;fr&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Langue&quot;}}">
+class Component extends DCLogic {
+  state = { langue: null };
+  componentDidMount() {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q === "fr" || q === "en") this.setState({ langue: q });
+    document.documentElement.lang = q === "fr" ? "fr" : (this.props.langue ?? "en");
+  }
+  changerLangue = (code) => {
+    if (code !== "fr" && code !== "en") return;
+    this.setState({ langue: code });
+    document.documentElement.lang = code;
+    try { const u = new URL(location.href); u.searchParams.set("lang", code); history.replaceState(null, "", u); } catch (e) {}
+    if (!location.hash) window.scrollTo({ top: 0 });
+  };
+  renderVals() {
+    const l = this.state.langue ?? this.props.langue ?? "en";
+    return {
+      en: l === "en",
+      fr: l === "fr",
+      langue: l,
+      langues: ["en", "fr"],
+      changerLangue: this.changerLangue,
+      versFr: () => this.changerLangue("fr"),
+      versEn: () => this.changerLangue("en"),
+    };
+  }
+}
+</script>
+</body>
+</html>

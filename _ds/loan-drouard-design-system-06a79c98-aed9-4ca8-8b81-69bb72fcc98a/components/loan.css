@@ -1,0 +1,239 @@
+/* Habillage des primitives React — valeurs relevées dans design-system-loan-clean.html. */
+
+/* — Grain : une trame de bruit en overlay sur toute section — */
+/* Traitement unique, partagé par les aplats de noir ET les zones en dégradé (transition
+   roofline, bandeau de légende) : même tuile, même opacité, même mode de fusion, donc aucune
+   rupture de texture ni différence de densité au passage de l'un à l'autre. */
+.ld-grain { position: relative; isolation: isolate; }
+.ld-grain::after, .ld-roof::after, .ld-roof__legende::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1; background-image: var(--grain); opacity: var(--grain-opacite-sombre); mix-blend-mode: overlay; }
+.ld-grain--clair::after { opacity: var(--grain-opacite-clair); }
+
+/* — Sceau — */
+.ld-sceau { display: block; flex: none; }
+
+/* — CTA primaire : fond plein, coin inférieur gauche coupé à 16px, rayon 6px.
+     Les trois coins arrondis sont généreux (12px), la coupure reste franche.
+     Au survol, le contour ne bouge pas : le sceau et le texte s'éclairent, et l'or
+     balaie le texte de gauche à droite (dégradé en background-clip, 0.9s). — */
+.ld-bouton { display: inline-flex; align-items: center; gap: 10px; padding: 15px 30px; border-radius: var(--rayon-bouton); border: var(--filet) solid var(--ld-fond); background: var(--ld-fond); color: var(--ld-encre); font-family: var(--font-tertiaire); font-weight: var(--poids-tag); font-size: var(--tert); letter-spacing: var(--ls-btn); text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background var(--transition), border-color var(--transition), color var(--transition-texte), box-shadow var(--transition); }
+.ld-bouton--bg { clip-path: polygon(0 0, 100% 0, 100% 100%, var(--coupe-bouton) 100%, 0 calc(100% - var(--coupe-bouton))); }
+.ld-bouton--bd { clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--coupe-bouton)), calc(100% - var(--coupe-bouton)) 100%, 0 100%); }
+.ld-bouton--hg { clip-path: polygon(var(--coupe-bouton) 0, 100% 0, 100% 100%, 0 100%, 0 var(--coupe-bouton)); }
+.ld-bouton--hd { clip-path: polygon(0 0, calc(100% - var(--coupe-bouton)) 0, 100% var(--coupe-bouton), 100% 100%, 0 100%); }
+.ld-bouton--md { padding: 12px 24px; font-size: var(--tert-tag); }
+.ld-bouton__texte { color: var(--ld-encre); transition: filter var(--transition); }
+/* L'or monte comme au premier survol, s'attarde un court instant, puis l'encre revient et l'or
+   repart aussitôt — les deux extrémités du dégradé sont de l'encre, la boucle ne montre aucune
+   couture. */
+/* Entrée : l'or part hors du mot, à gauche, et vient le couvrir entièrement — puis s'y attarde. */
+@keyframes ld-balayage-entree { from { background-position: 92% 0; } to { background-position: 45% 0; } }
+/* Boucle : un décalage d'exactement une tuile, donc aucune couture ; l'or suivant entre par la
+   gauche avant que l'encre ait fini de remplir le mot. */
+@keyframes ld-balayage-boucle { from { background-position: 45% 0; } to { background-position: -105% 0; } }
+.ld-bouton .ld-sceau { transition: filter var(--transition); }
+.ld-bouton:hover, .ld-bouton:focus-visible { outline: none; }
+/* Le balayage d'or est le même geste pour TOUTE cible cliquable : CTA primaire, lien-trait,
+   sélecteur de langue — un seul geste, une seule règle. */
+.ld-bouton:hover .ld-bouton__texte, .ld-bouton:focus-visible .ld-bouton__texte,
+.ld-lien:hover .ld-lien__texte, .ld-lien:focus-visible .ld-lien__texte,
+.ld-langues__item:hover, .ld-langues__item:focus-visible,
+.ld-balaie:hover, .ld-balaie:focus-visible { background-image: linear-gradient(100deg, var(--ld-encre) 0%, var(--ld-encre) 20%, var(--or) 25%, color-mix(in oklab, var(--or) 55%, var(--blanc)) 47.5%, var(--or) 70%, var(--ld-encre) 75%, var(--ld-encre) 100%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; animation: ld-balayage-entree var(--balayage-entree) cubic-bezier(0.16, 0.6, 0.2, 1) both, ld-eclat-entree calc(var(--balayage-entree) + var(--balayage-pause)) ease-out both, ld-balayage-boucle var(--balayage-boucle) linear calc(var(--balayage-entree) + var(--balayage-pause)) infinite, ld-eclat var(--balayage-boucle) ease-in-out calc(var(--balayage-entree) + var(--balayage-pause)) infinite; }
+/* La lueur passe avec l'or puis s'éteint : elle accompagne chaque traversée sans voiler le mot au repos. */
+@keyframes ld-eclat-entree { 0% { filter: drop-shadow(0 0 0 transparent) drop-shadow(0 0 0 transparent); } 22% { filter: drop-shadow(0 0 7px var(--or-a55)) drop-shadow(0 0 16px var(--or-a40)); } 55%, 100% { filter: drop-shadow(0 0 0 transparent) drop-shadow(0 0 0 transparent); } }
+@keyframes ld-eclat { 0%, 70% { filter: drop-shadow(0 0 0 transparent) drop-shadow(0 0 0 transparent); } 90% { filter: drop-shadow(0 0 7px var(--or-a55)) drop-shadow(0 0 16px var(--or-a40)); } 100% { filter: drop-shadow(0 0 0 transparent) drop-shadow(0 0 0 transparent); } }
+/* La langue déjà en or balaie un or éclairci : le geste reste lisible sans retour à l'encre. */
+.ld-langues__item[aria-current="true"]:hover, .ld-langues__item[aria-current="true"]:focus-visible,
+.ld-balaie--or:hover, .ld-balaie--or:focus-visible { background-image: linear-gradient(100deg, var(--or) 0%, var(--or) 20%, color-mix(in oklab, var(--or) 45%, var(--blanc)) 25%, color-mix(in oklab, var(--or) 45%, var(--blanc)) 70%, var(--or) 75%, var(--or) 100%); }
+/* Lien libre (navigation, adresse) : même balayage ; un lien atténué au repos passe à pleine encre pendant le geste. */
+.ld-balaie:hover, .ld-balaie:focus-visible { opacity: 1 !important; }
+@media (prefers-reduced-motion: reduce) { .ld-balaie:hover, .ld-balaie:focus-visible { background-image: none; animation: none; -webkit-text-fill-color: currentColor; color: var(--or); } }
+.ld-bouton:hover .ld-sceau, .ld-bouton:focus-visible .ld-sceau { filter: drop-shadow(0 0 6px var(--or-a55)) drop-shadow(0 0 14px var(--or-a40)); }
+.ld-bouton:active .ld-bouton__texte { filter: drop-shadow(0 0 10px var(--or-a55)); }
+.ld-bouton[disabled] { opacity: 0.38; cursor: not-allowed; }
+.ld-bouton[disabled] .ld-bouton__texte { background-image: none; color: var(--ld-encre); -webkit-text-fill-color: var(--ld-encre); }
+.ld-bouton[disabled]:hover .ld-bouton__texte, .ld-bouton[disabled]:focus-visible .ld-bouton__texte { background-image: none; color: var(--ld-encre); -webkit-text-fill-color: var(--ld-encre); animation: none; filter: none; }
+.ld-bouton[disabled]:hover .ld-sceau { filter: none; }
+.ld-bouton svg, .ld-bouton img { flex: none; display: block; }
+@media (prefers-reduced-motion: reduce) { .ld-bouton:hover .ld-bouton__texte, .ld-bouton:focus-visible .ld-bouton__texte { background-image: none; color: var(--or); -webkit-text-fill-color: var(--or); animation: none; transition: none; } }
+
+/* — Usages secondaires : trait seul. Un mot, un fin trait dessous. Au repos le trait est
+   de l'encre atténuée : plusieurs liens peuvent coexister sur une page sans que l'or se
+   répète. L'or arrive au survol (le balayage), et au repos seulement sur .ld-lien--or. — */
+.ld-lien { position: relative; display: inline-flex; align-items: center; gap: var(--esp-2); padding: 8px 2px; border: var(--filet) solid transparent; border-radius: 0; background: none; color: var(--ld-encre); font-family: var(--font-tertiaire); font-weight: var(--poids-tag); font-size: var(--tert); letter-spacing: var(--ls-btn); text-transform: uppercase; text-decoration: none; cursor: pointer; transition: color var(--transition-texte); }
+.ld-lien::after { content: ''; position: absolute; left: 2px; right: 2px; bottom: 2px; height: var(--filet); background: var(--ld-encre); opacity: 0.5; }
+.ld-lien--or::after { background: var(--or); opacity: 1; }
+.ld-lien--md { font-size: var(--tert-tag); }
+/* Même balayage d'or que le CTA primaire : le dégradé arrive par la gauche, en background-clip. */
+.ld-lien__texte { color: var(--ld-encre); transition: filter var(--transition); }
+.ld-lien:active .ld-lien__texte { filter: drop-shadow(0 0 10px var(--or-a55)); }
+@media (prefers-reduced-motion: reduce) { .ld-lien:hover .ld-lien__texte, .ld-lien:focus-visible .ld-lien__texte, .ld-langues__item:hover, .ld-langues__item:focus-visible { background-image: none; color: var(--or); -webkit-text-fill-color: var(--or); animation: none; transition: none; } }
+.ld-lien:focus-visible { outline: var(--filet) solid var(--or); outline-offset: 4px; }
+
+/* — Eyebrow / titre de section — */
+/* L'or est RARE : au plus une occurrence par page. L'eyebrow, présent à chaque section,
+   ne peut donc pas le porter — il passe en gris foncé. Pour la seule occurrence voulue,
+   ajouter .ld-eyebrow--or explicitement. */
+.ld-eyebrow { display: block; margin: 0 0 var(--esp-4); font-family: var(--font-tertiaire); font-weight: var(--poids-tert); font-size: var(--tert-eyebrow); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--gris-fonce); }
+.ld-eyebrow--or { color: var(--or); }
+.ld-titre-section { margin-bottom: var(--section-head-bas); }
+.ld-titre-section__titre { font-size: var(--titre-section); line-height: var(--lh-titre); margin-bottom: var(--esp-3); }
+.ld-titre-section__titre::first-letter { text-shadow: var(--lueur-initiale); }
+.ld-on-blanc .ld-titre-section__titre::first-letter { text-shadow: var(--lueur-initiale-claire); }
+/* La lettrine porte la même lueur, à son échelle. */
+.ld-lettrine::first-letter { text-shadow: var(--lueur-initiale); }
+.ld-on-blanc .ld-lettrine::first-letter { text-shadow: var(--lueur-initiale-claire); }
+.ld-titre-section__chapeau { font-size: var(--corps); line-height: var(--lh-lede); max-width: var(--largeur-lede); color: var(--ld-secondaire); margin-top: var(--esp-4); }
+
+/* — Étiquette Cinzel — */
+.ld-etiquette { display: block; font-family: var(--font-tertiaire); font-weight: var(--poids-tag); font-size: var(--tert-tag); letter-spacing: var(--ls-tag); text-transform: uppercase; }
+.ld-etiquette--role { font-weight: var(--poids-tert); font-size: var(--tert-role); letter-spacing: var(--ls-role); color: var(--gris-fonce); }
+.ld-etiquette__desc { margin-top: var(--esp-1); font-family: var(--font-corps); font-style: italic; font-size: var(--corps-sm); color: var(--ld-secondaire); text-transform: none; letter-spacing: 0; }
+
+/* — Lettrine — */
+.ld-lettrine { font-size: 18px; line-height: var(--lh-lettrine); max-width: var(--largeur-texte); }
+.ld-lettrine::first-letter { float: left; font-family: var(--font-titre); font-weight: var(--poids-titre); font-size: 4.4em; line-height: 0.8; padding-right: 10px; padding-top: 6px; }
+
+/* — Citations empilées : italique, filet gris à gauche — */
+.ld-empilees { margin: 0; padding: 0; list-style: none; }
+.ld-empilees li { font-family: var(--font-corps); font-weight: var(--poids-italique); font-style: italic; font-size: var(--citation); line-height: var(--lh-citation); padding-left: var(--esp-5); border-left: var(--filet) solid var(--gris); max-width: var(--largeur-corps-court); margin-bottom: var(--esp-7); }
+.ld-empilees li:last-child { margin-bottom: 0; }
+
+/* — Chiffres clés et sélecteur de langue : séparateur « trait à deux points » — */
+.ld-stat { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-3); font-family: var(--font-tertiaire); font-size: var(--tert); letter-spacing: var(--ls-stat); }
+/* Chaque entrée après la première embarque son séparateur : il ne peut donc jamais
+   se retrouver seul en fin de ligne quand le bandeau passe à la ligne. */
+.ld-stat__groupe { display: flex; align-items: center; gap: var(--esp-3); }
+.ld-stat__sep { position: relative; flex: none; width: 20px; height: var(--filet); background: var(--gris); }
+.ld-stat__sep::before, .ld-stat__sep::after { content: ''; position: absolute; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--gris-fonce); transform: translateY(-50%); }
+.ld-stat__sep::before { left: -2px; }
+.ld-stat__sep::after { right: -2px; }
+.ld-langues { letter-spacing: var(--ls-lang); text-transform: uppercase; }
+.ld-langues__item { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; letter-spacing: inherit; color: inherit; transition: filter var(--transition); }
+.ld-langues__item:focus-visible { outline: none; }
+.ld-langues__item:active { filter: drop-shadow(0 0 10px var(--or-a55)); }
+/* La langue choisie passe en or : c'est la seule marque d'or admise au repos dans le header.
+   Au survol, chaque langue reçoit le balayage d'or du CTA (voir plus haut). */
+.ld-langues__item[aria-current="true"] { color: var(--or); }
+.ld-langues__item--zh { font-family: var(--font-chinois); font-size: 1.5em; letter-spacing: 0.06em; }
+
+/* — Cadre média annoté (geste signature n° 1) — */
+/* Le fond de page porte désormais le dégradé chaud : le cadre doit s'en détacher.
+   Un filet 1px et une élévation de blanc à 3 % suffisent — pas une seconde couleur. */
+.ld-media { position: relative; width: 100%; max-width: 460px; aspect-ratio: 4 / 5; border-radius: var(--rayon-cadre); overflow: hidden; border: var(--filet) solid var(--filet-blanc); background: radial-gradient(ellipse at 50% 26%, rgba(246,245,241,0.07), transparent 58%), linear-gradient(180deg, rgba(246,245,241,0.035), rgba(246,245,241,0.012)); }
+.ld-media__coin { position: absolute; width: 16px; height: 16px; opacity: 0.8; }
+.ld-media__coin--tl { top: 14px; left: 14px; border-top: var(--filet) solid var(--gris); border-left: var(--filet) solid var(--gris); }
+.ld-media__coin--tr { top: 14px; right: 14px; border-top: var(--filet) solid var(--gris); border-right: var(--filet) solid var(--gris); }
+.ld-media__coin--bl { bottom: 14px; left: 14px; border-bottom: var(--filet) solid var(--gris); border-left: var(--filet) solid var(--gris); }
+.ld-media__coin--br { bottom: 14px; right: 14px; border-bottom: var(--filet) solid var(--gris); border-right: var(--filet) solid var(--gris); }
+.ld-media__filigrane { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 20%; font-family: var(--font-tertiaire); font-size: var(--tert-leader); letter-spacing: var(--ls-role); text-transform: uppercase; color: var(--gris-a40); }
+.ld-media__legende { text-align: center; margin-top: var(--esp-6); max-width: 480px; margin-inline: auto; font-size: var(--corps-legende); color: var(--blanc-sec); }
+
+/* — Annotation (leader) : point, filet, étiquette sur voile — */
+.ld-leader { display: flex; align-items: center; gap: var(--esp-2); }
+.ld-leader--pose { position: absolute; }
+.ld-leader--inverse { flex-direction: row-reverse; }
+.ld-leader__dot { width: 5px; height: 5px; border-radius: 50%; flex: none; background: var(--gris); }
+.ld-leader__line { width: 28px; height: var(--filet); flex: none; opacity: 0.8; background: var(--gris); }
+.ld-leader__label { font-family: var(--font-tertiaire); font-size: var(--tert-leader); letter-spacing: var(--ls-leader); text-transform: uppercase; color: var(--blanc); background: var(--voile-noir); padding: 3px 7px; border-radius: var(--rayon-2); white-space: nowrap; }
+.ld-leader--or .ld-leader__dot { background: var(--or); box-shadow: var(--lueur-dot); }
+.ld-leader--or .ld-leader__line { background: var(--or); }
+.ld-leader--or .ld-leader__label { color: var(--or); }
+
+/* — Chrono (geste signature n° 2) — */
+.ld-chrono { position: relative; max-width: var(--largeur-texte); margin: 0; padding: 0; list-style: none; }
+.ld-chrono__item { position: relative; display: grid; grid-template-columns: 26px 1fr; gap: var(--esp-6); padding-bottom: 42px; }
+.ld-chrono__item:last-child { padding-bottom: 0; }
+.ld-chrono__spine { position: relative; display: flex; justify-content: center; }
+.ld-chrono__spine::before { content: ''; position: absolute; top: 4px; bottom: -42px; left: 50%; width: var(--filet); background: var(--spine-blanc); transform: translateX(-50%); }
+.ld-chrono__item:last-child .ld-chrono__spine::before { display: none; }
+.ld-chrono__dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; z-index: 1; background: var(--blanc-sec); }
+.ld-chrono__item--sommet .ld-chrono__dot { background: var(--or); box-shadow: var(--lueur-point); }
+/* Aucune année en or : le seul or de la chrono est le point du sommet — une occurrence. */
+.ld-chrono__annee { font-family: var(--font-tertiaire); font-size: var(--tert-annee); letter-spacing: var(--ls-tert); color: var(--gris-fonce); }
+.ld-chrono__titre { margin-top: var(--esp-1); font-family: var(--font-corps); font-weight: var(--poids-tag); font-style: italic; font-size: var(--titre-4); letter-spacing: 0; }
+.ld-chrono__detail { margin-top: var(--esp-1); font-size: var(--corps-sm); color: var(--blanc-sec); }
+.ld-chrono__lueur { position: absolute; left: 13px; top: 0; width: 15px; height: 15px; border-radius: 50%; transform: translateX(-50%); pointer-events: none; background: radial-gradient(circle, rgba(246,245,241,0.9), rgba(169,129,74,0.6) 45%, transparent 72%); filter: blur(2px); animation: ld-travel 6s ease-in-out infinite alternate; }
+@keyframes ld-travel { 0% { top: 0; } 100% { top: calc(100% - 15px); } }
+@media (prefers-reduced-motion: reduce) { .ld-chrono__lueur { animation: none; top: 38%; } }
+
+/* — Encadré de composition (héritage) — */
+.ld-composition { position: relative; width: 100%; aspect-ratio: 16 / 10; border-radius: var(--rayon-cadre); overflow: hidden; background: linear-gradient(180deg, rgba(246,245,241,0.95), rgba(199,196,188,0.65)); }
+.ld-composition__marque { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--noir); bottom: 20%; left: 68%; }
+.ld-composition__legende { margin-top: var(--esp-4); max-width: 420px; font-size: var(--corps-legende); line-height: 1.6; color: var(--ld-secondaire); }
+
+/* — Motif roofline — */
+.ld-roofline { width: 100%; max-width: 280px; height: auto; display: block; }
+/* La vague n'est pas une image teintée : c'est le fond sombre lui-même, découpé en masque.
+   Il ne peut donc jamais dériver de la section qu'il rejoint. Le bandeau de légende continue
+   le même fond, sans couture. */
+/* Le grain des deux surfaces en dégradé est porté par leur ::after (voir le bloc Grain) :
+   sur .ld-roof il est découpé par le même masque que le fond, donc il suit la vague. */
+.ld-roof { display: block; position: relative; isolation: isolate; z-index: 2; height: 56px; margin-bottom: -1px; background: var(--fond-sombre); background-attachment: fixed; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: bottom; mask-position: bottom; }
+.ld-roof__legende { position: relative; isolation: isolate; text-align: center; padding: 10px 0 14px; font-family: var(--font-tertiaire); font-size: var(--tert-role); letter-spacing: var(--ls-role); text-transform: uppercase; color: var(--gris-fonce); background: var(--fond-sombre); background-attachment: fixed; }
+.ld-roof-bloc { background: var(--fond-sombre); background-attachment: fixed; }
+
+/* — Note et caveat : filet vertical à gauche — */
+.ld-note { margin-top: var(--esp-7); padding-left: var(--esp-4); border-left: var(--filet) solid var(--gris); max-width: var(--largeur-texte); font-size: var(--corps-note); line-height: var(--lh-lede); color: var(--ld-secondaire); }
+.ld-note--or { border-left-color: var(--or); }
+
+/* — Formule — */
+.ld-formule { display: flex; flex-direction: column; gap: var(--esp-5); padding: 28px 26px; border: var(--filet) solid var(--ld-filet); border-radius: var(--rayon-cadre); transition: border-color var(--transition), box-shadow var(--transition); }
+.ld-formule:hover { border-color: var(--or-a40); box-shadow: var(--lueur-douce); }
+.ld-formule--mise-en-avant { border-color: var(--or); }
+.ld-formule__prix { font-family: var(--font-tertiaire); font-size: var(--tert-prix); letter-spacing: var(--ls-tert); }
+.ld-formule__prix span { color: var(--ld-secondaire); }
+.ld-formule__detail { font-size: var(--corps-note); color: var(--ld-secondaire); }
+.ld-formule__pied { margin-top: auto; }
+
+/* — Emphase — */
+.ld-emphase { font-family: var(--font-corps); font-weight: var(--poids-italique); font-style: italic; color: var(--or); }
+.ld-emphase--zh { font-family: var(--font-chinois-exception); font-style: normal; font-weight: 400; }
+.ld-chinois { font-family: var(--font-chinois); line-height: 1.6; }
+
+/* — Réseaux (bloc contact) : marques de tiers, cible 44px, or au survol seulement — */
+.ld-reseaux { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); margin: 0; padding: 0; list-style: none; }
+.ld-reseau { display: inline-flex; align-items: center; justify-content: center; gap: var(--esp-3); min-width: 44px; min-height: 44px; border-bottom: 0; color: var(--ld-encre); text-decoration: none; transition: color var(--transition); }
+.ld-reseau:hover, .ld-reseau:focus-visible { color: var(--or); }
+.ld-reseau:focus-visible { outline: var(--filet) solid var(--or); outline-offset: 2px; }
+.ld-reseau__nom { font-family: var(--font-tertiaire); font-weight: var(--poids-tert); font-size: var(--tert-tag); letter-spacing: var(--ls-tag); text-transform: uppercase; }
+/* Version en colonne : la marque et le nom s'alignent à gauche, un filet sépare les lignes. */
+.ld-reseaux--libelles { flex-direction: column; align-items: stretch; gap: 0; }
+.ld-reseaux--libelles .ld-reseau { justify-content: flex-start; padding-inline: 2px; border-bottom: var(--filet) solid var(--ld-filet); }
+.ld-reseaux--libelles li:last-child .ld-reseau { border-bottom: 0; }
+
+/* — Header flottant — */
+/* Transparent et posé PAR-DESSUS le contenu : la marge négative lui retire sa bande dans le
+   flux, la première section démarre donc à 0 et passe derrière lui. Aucun aplat, aucun filet ;
+   l'encre du header se dérive du fond qui se trouve réellement sous lui. */
+.ld-header { position: sticky; top: 0; z-index: 20; background: transparent; margin-bottom: calc(-1 * var(--hauteur-header)); }
+/* data-ton est posé au défilement par header-flottant.js. Les !important sont nécessaires :
+   les composants du système posent leurs propres variables de ton en style inline. */
+.ld-header[data-ton="clair"] { color: var(--noir); --ld-encre: var(--noir) !important; --ld-secondaire: var(--noir-sec) !important; --ld-filet: var(--gris) !important; }
+.ld-header[data-ton="sombre"] { color: var(--blanc); --ld-encre: var(--blanc) !important; --ld-secondaire: var(--blanc-sec) !important; --ld-filet: var(--filet-blanc) !important; }
+/* Le sceau est une image (noire ou blanche) : sur fond sombre, la version noire s'inverse. */
+.ld-header[data-ton="sombre"] .ld-sceau[data-adaptatif] { filter: invert(1); }
+
+/* — Enveloppes de page — */
+.ld-wrap { max-width: var(--largeur-page); margin: 0 auto; padding-inline: var(--marge-page); }
+.ld-section { padding-block: var(--section-y); }
+/* Le fond sombre n'est pas un aplat : dégradé chaud vertical + ellipse de lumière douce.
+   `background-attachment: fixed` évite la couture entre deux sections sombres consécutives. */
+.ld-on-noir { background: var(--fond-sombre); background-attachment: fixed; color: var(--blanc); }
+.ld-on-blanc { background: var(--blanc); color: var(--noir); }
+/* — Fonds texturés. Une matière, pas un motif : chaque tuile est en miroir donc sans couture,
+   et `fixed` lui évite de glisser d'une section à l'autre. La texture ne change jamais la
+   hiérarchie ni l'encre, seulement la température. Le grain n'y est jamais cumulé —
+   la matière le remplace. — */
+.ld-texture { background-repeat: repeat; background-size: var(--texture-taille) auto; background-attachment: fixed; }
+.ld-texture--lin { background-color: var(--lin); background-image: var(--texture-lin); color: var(--noir); }
+.ld-texture--enduit { background-color: var(--enduit-noir); background-image: var(--texture-enduit); color: var(--blanc); }
+.ld-texture--metal { background-color: var(--metal-noir); background-image: var(--texture-metal); color: var(--blanc); }
+/* Alias historique du premier fond texturé. */
+.ld-on-lin { background-color: var(--lin); background-image: var(--texture-lin); background-size: var(--texture-taille) auto; background-repeat: repeat; background-attachment: fixed; color: var(--noir); }
+/* Sans image, la couleur de repli suffit : c'est la moyenne exacte de la tuile. */
+@media (prefers-reduced-transparency: reduce) { .ld-texture, .ld-on-lin { background-image: none; } }
+@media (min-width: 900px) {
+  .ld-wrap { padding-inline: var(--marge-page-large); }
+  .ld-section { padding-block: var(--section-y-large); }
+  .ld-roof { height: 80px; }
+}

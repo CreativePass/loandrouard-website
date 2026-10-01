@@ -1,0 +1,36 @@
+/* Filets, rayons, lueurs, grain, transitions — relevés dans le fichier source. */
+:root {
+  --filet: 1px;
+  --filet-motif: 1.1px;   /* trait du motif roofline */
+
+  --rayon-2: 2px;         /* étiquette d'annotation */
+  --rayon-4: 4px;         /* boutons secondaires, encadré de composition */
+  --rayon-6: 6px;         /* CTA primaire, cadre média, blocs de palette */
+  --rayon-8: 8px;         /* encadré de démonstration */
+  --rayon-cadre: 24px;      /* tous les cadres/panneaux : formule, cadre média, encadré de composition */
+  --rayon-bouton: 12px;   /* les trois coins arrondis du CTA primaire */
+  --coupe-bouton: 16px;   /* coin inférieur gauche du CTA primaire — toujours net */
+
+  /* Aucune ombre portée : la profondeur vient de la lueur or. */
+  --ombre: none; /* @kind shadow */
+  --lueur-point: 0 0 9px 2px var(--or-a55);
+  --lueur-dot: 0 0 6px rgba(169, 129, 74, 0.8);
+  --lueur-douce: 0 0 40px -10px var(--or-a40);
+  /* Lueur de l'initiale des titres — franche sur fond sombre, retenue sur fond clair. */
+  --lueur-initiale: 0 0 14px rgba(246, 245, 241, 0.75), 0 0 34px rgba(246, 245, 241, 0.4), 0 0 52px var(--or-a40);
+  --lueur-initiale-claire: 0 0 16px rgba(169, 129, 74, 0.3), 0 0 34px rgba(169, 129, 74, 0.16);
+
+  --transition: 0.35s ease; /* @kind other */
+  --transition-texte: 0.2s ease; /* @kind other */
+  --balayage-or: 0.9s cubic-bezier(0.33, 0.02, 0.2, 1); /* @kind other */
+  /* durée d'un cycle du balayage d'or en boucle */
+  --balayage-entree: 0.9s; /* @kind other */
+  --balayage-pause: 2s; /* @kind other */
+  --balayage-boucle: 3.4s; /* @kind other */
+
+  /* Grain — fractalNoise 0.85, 2 octaves, en overlay. Une seule valeur par fond :
+     tout ce qui est sombre (aplat de noir comme zone en dégradé) prend --grain-opacite-sombre. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); /* @kind other */
+  --grain-opacite-sombre: 0.8; /* @kind other */
+  --grain-opacite-clair: 0.025; /* @kind other */
+}

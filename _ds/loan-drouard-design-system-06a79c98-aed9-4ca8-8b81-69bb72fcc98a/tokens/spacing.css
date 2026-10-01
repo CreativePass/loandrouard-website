@@ -1,0 +1,31 @@
+/* Espacement — relevé dans le fichier source. */
+:root {
+  --esp-1: 4px;
+  --esp-2: 8px;
+  --esp-3: 12px;
+  --esp-4: 16px;
+  --esp-5: 20px;
+  --esp-6: 22px;
+  --esp-7: 32px;
+  --esp-8: 48px;
+  --esp-9: 56px;
+  --esp-10: 72px;
+
+  /* Rythme de page */
+  --section-y: 64px;            /* < 900px */
+  --section-y-large: 100px;     /* >= 900px */
+  --cover-y-haut: 80px;
+  --cover-y-haut-large: 120px;
+  --cover-y-bas: 56px;
+  --cover-y-bas-large: 80px;
+  --section-head-bas: 48px;
+  /* Hauteur du header flottant : il est transparent et hors flux, le contenu passe dessous. */
+  --hauteur-header: 68px;
+
+  --largeur-page: 1180px;
+  --largeur-texte: 640px;
+  --largeur-lede: 640px;
+  --largeur-corps-court: 600px;
+  --marge-page: 24px;
+  --marge-page-large: 72px;
+}

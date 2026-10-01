@@ -1,0 +1,17 @@
+/* Réinitialisations partagées. */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface); color: var(--text-1); font-family: var(--font-corps); font-size: var(--corps); line-height: var(--lh-corps); -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; }
+h1, h2, h3, h4 { margin: 0; font-family: var(--font-titre); font-weight: var(--poids-titre); letter-spacing: var(--ls-titre); text-wrap: balance; }
+/* L'initiale de chaque titre porte une lueur — la marque s'allume sur sa première lettre. */
+h1::first-letter, h2::first-letter, h3::first-letter { text-shadow: var(--lueur-initiale); }
+[data-theme="clair"] h1::first-letter, [data-theme="clair"] h2::first-letter, [data-theme="clair"] h3::first-letter,
+.ld-on-blanc h1::first-letter, .ld-on-blanc h2::first-letter, .ld-on-blanc h3::first-letter { text-shadow: var(--lueur-initiale-claire); }
+p { margin: 0; }
+em { font-style: italic; color: var(--or); }
+a { color: var(--noir); text-decoration: none; border-bottom: var(--filet) solid var(--or); }
+a:hover { color: var(--or); }
+[data-theme="clair"] a, .ld-on-blanc a { color: var(--noir); }
+.ld-on-noir a { color: var(--blanc); }
+::selection { background: var(--or-a16); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

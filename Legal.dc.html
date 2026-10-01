@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="chargement.js?v=7"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/colors.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/typography.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/effects.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/textures.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/base.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/components/loan.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/styles.css">
+<script src="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/_ds_bundle.js"></script>
+<script src="header-flottant.js?v=4"></script>
+<style>
+body { margin: 0; background: #161616; }
+a { color: #F6F5F1; }
+a:hover { color: #A9814A; }
+.lg { max-width: 740px; }
+.lg-h1 { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(38px, 5.4vw, 64px); line-height: 1.06; letter-spacing: .01em; text-wrap: balance; }
+.lg-lede { margin: 24px 0 0; font-size: 20px; line-height: 1.7; color: rgba(246,245,241,.82); text-wrap: pretty; }
+.lg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; margin-top: 28px; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #A9A59A; }
+.lg-toc { margin-top: 64px; }
+.lg-toc-t { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12.5px; letter-spacing: .16em; text-transform: uppercase; color: #A9A59A; }
+.lg-toc-t::before { content: ""; width: 34px; height: 1px; background: currentColor; opacity: .6; }
+.lg-toc ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); column-gap: 40px; }
+.lg-toc a { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 10px 0; border-top: 1px solid rgba(246,245,241,.14); color: rgba(246,245,241,.82); text-decoration: none; font-size: 18px; line-height: 1.35; transition: color .25s ease; }
+.lg-toc a b { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 11px; letter-spacing: .1em; color: #A9A59A; transition: color .25s ease; }
+.lg-toc a:hover { color: #F6F5F1; }
+.lg-toc a:hover b { color: #A9814A; }
+.lg-art { scroll-margin-top: 96px; margin-top: 72px; }
+.lg-art h2 { margin: 0 0 22px; display: flex; align-items: baseline; gap: 16px; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(26px, 3.2vw, 36px); line-height: 1.15; letter-spacing: .01em; text-wrap: balance; }
+.lg-art h2 span { flex: none; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12px; letter-spacing: .12em; color: #A9A59A; }
+.lg-art h3 { margin: 30px 0 10px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #C7C4BC; }
+.lg-art p, .lg-art li { font-size: 19px; line-height: 1.75; color: rgba(246,245,241,.86); text-wrap: pretty; }
+.lg-art p { margin: 0 0 16px; }
+.lg-art ul, .lg-art ol { margin: 0 0 18px; padding: 0; list-style: none; display: grid; gap: 8px; }
+.lg-art ul > li { position: relative; padding-left: 26px; }
+.lg-art ul > li::before { content: ""; position: absolute; left: 0; top: .9em; width: 14px; height: 1px; background: #C7C4BC; opacity: .7; }
+.lg-art ol { counter-reset: e; }
+.lg-art ol > li { position: relative; padding-left: 38px; counter-increment: e; }
+.lg-art ol > li::before { content: counter(e, decimal-leading-zero); position: absolute; left: 0; top: .62em; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .1em; line-height: 1; color: #A9A59A; }
+.lg-art strong { font-weight: 600; color: #F6F5F1; }
+.lg-art a { color: #F6F5F1; text-decoration: underline; text-decoration-color: rgba(246,245,241,.4); text-underline-offset: 3px; }
+.lg-art a:hover { color: #A9814A; text-decoration-color: currentColor; }
+.lg-todo { background: rgba(198,160,94,.14); color: #E3D5B8; outline: 1px dashed rgba(198,160,94,.75); outline-offset: 1px; border-radius: 3px; padding: 0 6px; font-family: 'Cinzel', Georgia, serif; font-size: .74em; letter-spacing: .06em; }
+.lg-cadre { margin: 22px 0 18px; padding: 26px 30px; border: 1px solid rgba(246,245,241,.18); border-radius: 24px; }
+.lg-cadre p { font-size: 17.5px; margin-bottom: 10px; }
+.lg-cadre p:last-child { margin-bottom: 0; }
+.lg-fin { margin-top: 80px; padding-top: 22px; border-top: 1px solid rgba(246,245,241,.14); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 28px; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #A9A59A; }
+.lg-fin a { color: inherit; text-decoration: none; }
+.lg-fin a:hover { color: #F6F5F1; }
+</style>
+</helmet>
+<div style="font-family:'Cormorant',Georgia,serif;font-size:19px;line-height:1.65;background:#161616;color:#F6F5F1">
+
+<header class="ld-header" data-ton="sombre">
+<div style="max-width:none;margin:0;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:32px">
+<div style="display:flex;align-items:center;gap:12px"><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Sceau" taille="26" couleur="blanc" hint-size="26px,26px"></x-import><span style="font-family:'Cormorant SC',Georgia,serif;font-weight:600;font-size:19px;letter-spacing:.01em">LOAN DROUARD</span></div>
+<nav style="display:flex;gap:26px;font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase">
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">Home</span>
+<a class="ld-balaie" href="Video Feedback.dc.html" style="color:inherit;opacity:.64;text-decoration:none;border:0">Video Feedback</a>
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">The Journey</span>
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">Press / Contact</span>
+</nav>
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.SelecteurLangue" ton="sombre" langue="{{ langue }}" langues="{{ langues }}" onChange="{{ changerLangue }}" hint-size="100px,20px"></x-import>
+</div>
+</header>
+
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Section" ton="sombre" hint-size="100%,1400px">
+<div class="lg">
+<sc-if value="{{ en }}" hint-placeholder-val="{{ true }}">
+<div class="ld-etiquette ld-etiquette--role" style="margin-bottom:16px">Legal</div>
+<h1 class="lg-h1">Legal Notice</h1>
+<p class="lg-lede">Who publishes loandrouard.com, and who hosts it.</p>
+<div class="lg-meta"><span>Version of 1 October 2026</span><span>The French version prevails</span><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" taille="sm" onClick="{{ versFr }}" hint-size="130px,28px">Lire en français</x-import></div>
+
+<nav class="lg-toc" aria-label="Contents">
+<div class="lg-toc-t">Contents</div>
+<ol>
+<li><a href="#publisher"><b>01</b><span>Publisher</span></a></li>
+<li><a href="#director"><b>02</b><span>Publication director</span></a></li>
+<li><a href="#hosting"><b>03</b><span>Hosting</span></a></li>
+<li><a href="#ip"><b>04</b><span>Intellectual property</span></a></li>
+<li><a href="#links"><b>05</b><span>Links</span></a></li>
+<li><a href="#more"><b>06</b><span>Personal data and terms of sale</span></a></li>
+</ol>
+</nav>
+
+<section id="publisher" class="lg-art">
+<h2><span>01</span>Publisher</h2>
+<ul>
+<li><strong>Loan Drouard</strong>, individual entrepreneur (entrepreneur individuel, EI), under the French micro-enterprise scheme</li>
+<li>SIRET 109 709 014 00012, registered in the French National Business Register (RNE)</li>
+<li>Route de Solignat, 63500 Issoire, France</li>
+<li>Email: <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a></li>
+<li>Phone: <a href="tel:+33772041266">+33 7 72 04 12 66</a> (WhatsApp)</li>
+<li>VAT not applicable, article 293 B of the French General Tax Code (CGI)</li>
+</ul>
+</section>
+
+<section id="director" class="lg-art">
+<h2><span>02</span>Publication director</h2>
+<p>Loan Drouard.</p>
+</section>
+
+<section id="hosting" class="lg-art">
+<h2><span>03</span>Hosting</h2>
+<p>Cloudflare, Inc. — 101 Townsend St, San Francisco, CA 94107, United States — +1 650 319 8930 — <a href="https://www.cloudflare.com" target="_blank" rel="noreferrer">cloudflare.com</a>.</p>
+</section>
+
+<section id="ip" class="lg-art">
+<h2><span>04</span>Intellectual property</h2>
+<ul>
+<li>All content on this site (texts, photographs, videos, logos, the seal, layout) is protected by copyright and belongs to Loan Drouard or to its authors. Any reproduction without permission is prohibited.</li>
+<li>Press kit photographs may be used by the media to illustrate an article about Loan Drouard, with the photo credit.</li>
+<li>Photo credits: <mark class="lg-todo">[À COMPLÉTER : photographes]</mark></li>
+<li>Partner names and logos belong to their respective owners.</li>
+</ul>
+</section>
+
+<section id="links" class="lg-art">
+<h2><span>05</span>Links</h2>
+<p>This site links to other sites (social networks, partners, Stripe, WhatsApp). I am not responsible for their content.</p>
+</section>
+
+<section id="more" class="lg-art">
+<h2><span>06</span>Personal data and terms of sale</h2>
+<p>How your data is handled: <a href="Privacy.dc.html">Privacy Policy</a>. Conditions for Video Feedback purchases: <a href="CGV.dc.html">Terms of Sale</a>. Any question: <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>.</p>
+</section>
+<div class="lg-fin"><span>Loan Drouard EI · SIRET 109 709 014 00012</span><span style="display:flex;gap:22px;flex-wrap:wrap"><a href="CGV.dc.html">Terms of sale</a><a href="Privacy.dc.html">Privacy</a><a href="Legal.dc.html">Legal notice</a></span></div>
+</sc-if>
+
+<sc-if value="{{ fr }}" hint-placeholder-val="{{ false }}">
+<div class="ld-etiquette ld-etiquette--role" style="margin-bottom:16px">Legal</div>
+<h1 class="lg-h1">Mentions légales</h1>
+<p class="lg-lede">Qui édite loandrouard.com, et qui l’héberge.</p>
+<div class="lg-meta"><span>Version du 1er octobre 2026</span><span>La version française fait foi</span><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" taille="sm" onClick="{{ versEn }}" hint-size="130px,28px">Read in English</x-import></div>
+
+<nav class="lg-toc" aria-label="Sommaire">
+<div class="lg-toc-t">Sommaire</div>
+<ol>
+<li><a href="#publisher"><b>01</b><span>Éditeur du site</span></a></li>
+<li><a href="#director"><b>02</b><span>Directeur de la publication</span></a></li>
+<li><a href="#hosting"><b>03</b><span>Hébergement</span></a></li>
+<li><a href="#ip"><b>04</b><span>Propriété intellectuelle</span></a></li>
+<li><a href="#links"><b>05</b><span>Liens</span></a></li>
+<li><a href="#more"><b>06</b><span>Données personnelles et CGV</span></a></li>
+</ol>
+</nav>
+
+<section id="publisher" class="lg-art">
+<h2><span>01</span>Éditeur du site</h2>
+<ul>
+<li><strong>Loan Drouard</strong>, entrepreneur individuel (EI), sous le régime de la micro-entreprise</li>
+<li>SIRET 109 709 014 00012, inscrit au Registre national des entreprises (RNE)</li>
+<li>Route de Solignat, 63500 Issoire, France</li>
+<li>E-mail : <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a></li>
+<li>Téléphone : <a href="tel:+33772041266">+33 7 72 04 12 66</a> (WhatsApp)</li>
+<li>TVA non applicable, article 293 B du CGI</li>
+</ul>
+</section>
+
+<section id="director" class="lg-art">
+<h2><span>02</span>Directeur de la publication</h2>
+<p>Loan Drouard.</p>
+</section>
+
+<section id="hosting" class="lg-art">
+<h2><span>03</span>Hébergement</h2>
+<p>Cloudflare, Inc. — 101 Townsend St, San Francisco, CA 94107, États-Unis — +1 650 319 8930 — <a href="https://www.cloudflare.com" target="_blank" rel="noreferrer">cloudflare.com</a>.</p>
+</section>
+
+<section id="ip" class="lg-art">
+<h2><span>04</span>Propriété intellectuelle</h2>
+<ul>
+<li>L’ensemble du site (textes, photographies, vidéos, logos, sceau, mise en page) est protégé par le droit d’auteur et appartient à Loan Drouard ou à ses auteurs. Toute reproduction sans autorisation est interdite.</li>
+<li>Les photos du kit presse peuvent être utilisées par les médias pour illustrer un article consacré à Loan Drouard, avec mention du crédit photo.</li>
+<li>Crédits photo : <mark class="lg-todo">[À COMPLÉTER : photographes]</mark></li>
+<li>Les noms et logos des partenaires appartiennent à leurs titulaires.</li>
+</ul>
+</section>
+
+<section id="links" class="lg-art">
+<h2><span>05</span>Liens</h2>
+<p>Ce site renvoie vers d’autres sites (réseaux sociaux, partenaires, Stripe, WhatsApp). Je ne suis pas responsable de leur contenu.</p>
+</section>
+
+<section id="more" class="lg-art">
+<h2><span>06</span>Données personnelles et CGV</h2>
+<p>Traitement de vos données : <a href="Privacy.dc.html?lang=fr">Politique de confidentialité</a>. Conditions d’achat Video Feedback : <a href="CGV.dc.html?lang=fr">Conditions générales de vente</a>. Pour toute question : <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>.</p>
+</section>
+<div class="lg-fin"><span>Loan Drouard EI · SIRET 109 709 014 00012</span><span style="display:flex;gap:22px;flex-wrap:wrap"><a href="CGV.dc.html?lang=fr">CGV</a><a href="Privacy.dc.html?lang=fr">Confidentialité</a><a href="Legal.dc.html?lang=fr">Mentions légales</a></span></div>
+</sc-if>
+
+</div>
+</x-import>
+
+<dc-import name="Sponsors" hint-size="100%,860px"></dc-import>
+
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;langue&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;fr&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Langue&quot;}}">
+class Component extends DCLogic {
+  state = { langue: null };
+  componentDidMount() {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q === "fr" || q === "en") this.setState({ langue: q });
+    document.documentElement.lang = q === "fr" ? "fr" : (this.props.langue ?? "en");
+  }
+  changerLangue = (code) => {
+    if (code !== "fr" && code !== "en") return;
+    this.setState({ langue: code });
+    document.documentElement.lang = code;
+    try { const u = new URL(location.href); u.searchParams.set("lang", code); history.replaceState(null, "", u); } catch (e) {}
+    if (!location.hash) window.scrollTo({ top: 0 });
+  };
+  renderVals() {
+    const l = this.state.langue ?? this.props.langue ?? "en";
+    return {
+      en: l === "en",
+      fr: l === "fr",
+      langue: l,
+      langues: ["en", "fr"],
+      changerLangue: this.changerLangue,
+      versFr: () => this.changerLangue("fr"),
+      versEn: () => this.changerLangue("en"),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="chargement.js?v=7"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/colors.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/typography.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/effects.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/textures.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/tokens/base.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/components/loan.css">
+<link rel="stylesheet" href="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/styles.css">
+<script src="_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/_ds_bundle.js"></script>
+<script src="header-flottant.js?v=4"></script>
+<style>
+body { margin: 0; background: #161616; }
+a { color: #F6F5F1; }
+a:hover { color: #A9814A; }
+.lg { max-width: 740px; }
+.lg-h1 { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(38px, 5.4vw, 64px); line-height: 1.06; letter-spacing: .01em; text-wrap: balance; }
+.lg-lede { margin: 24px 0 0; font-size: 20px; line-height: 1.7; color: rgba(246,245,241,.82); text-wrap: pretty; }
+.lg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; margin-top: 28px; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #A9A59A; }
+.lg-toc { margin-top: 64px; }
+.lg-toc-t { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12.5px; letter-spacing: .16em; text-transform: uppercase; color: #A9A59A; }
+.lg-toc-t::before { content: ""; width: 34px; height: 1px; background: currentColor; opacity: .6; }
+.lg-toc ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); column-gap: 40px; }
+.lg-toc a { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 10px 0; border-top: 1px solid rgba(246,245,241,.14); color: rgba(246,245,241,.82); text-decoration: none; font-size: 18px; line-height: 1.35; transition: color .25s ease; }
+.lg-toc a b { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 11px; letter-spacing: .1em; color: #A9A59A; transition: color .25s ease; }
+.lg-toc a:hover { color: #F6F5F1; }
+.lg-toc a:hover b { color: #A9814A; }
+.lg-art { scroll-margin-top: 96px; margin-top: 72px; }
+.lg-art h2 { margin: 0 0 22px; display: flex; align-items: baseline; gap: 16px; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(26px, 3.2vw, 36px); line-height: 1.15; letter-spacing: .01em; text-wrap: balance; }
+.lg-art h2 span { flex: none; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12px; letter-spacing: .12em; color: #A9A59A; }
+.lg-art h3 { margin: 30px 0 10px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #C7C4BC; }
+.lg-art p, .lg-art li { font-size: 19px; line-height: 1.75; color: rgba(246,245,241,.86); text-wrap: pretty; }
+.lg-art p { margin: 0 0 16px; }
+.lg-art ul, .lg-art ol { margin: 0 0 18px; padding: 0; list-style: none; display: grid; gap: 8px; }
+.lg-art ul > li { position: relative; padding-left: 26px; }
+.lg-art ul > li::before { content: ""; position: absolute; left: 0; top: .9em; width: 14px; height: 1px; background: #C7C4BC; opacity: .7; }
+.lg-art ol { counter-reset: e; }
+.lg-art ol > li { position: relative; padding-left: 38px; counter-increment: e; }
+.lg-art ol > li::before { content: counter(e, decimal-leading-zero); position: absolute; left: 0; top: .62em; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .1em; line-height: 1; color: #A9A59A; }
+.lg-art strong { font-weight: 600; color: #F6F5F1; }
+.lg-art a { color: #F6F5F1; text-decoration: underline; text-decoration-color: rgba(246,245,241,.4); text-underline-offset: 3px; }
+.lg-art a:hover { color: #A9814A; text-decoration-color: currentColor; }
+.lg-todo { background: rgba(198,160,94,.14); color: #E3D5B8; outline: 1px dashed rgba(198,160,94,.75); outline-offset: 1px; border-radius: 3px; padding: 0 6px; font-family: 'Cinzel', Georgia, serif; font-size: .74em; letter-spacing: .06em; }
+.lg-cadre { margin: 22px 0 18px; padding: 26px 30px; border: 1px solid rgba(246,245,241,.18); border-radius: 24px; }
+.lg-cadre p { font-size: 17.5px; margin-bottom: 10px; }
+.lg-cadre p:last-child { margin-bottom: 0; }
+.lg-fin { margin-top: 80px; padding-top: 22px; border-top: 1px solid rgba(246,245,241,.14); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 28px; font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #A9A59A; }
+.lg-fin a { color: inherit; text-decoration: none; }
+.lg-fin a:hover { color: #F6F5F1; }
+</style>
+</helmet>
+<div style="font-family:'Cormorant',Georgia,serif;font-size:19px;line-height:1.65;background:#161616;color:#F6F5F1">
+
+<header class="ld-header" data-ton="sombre">
+<div style="max-width:none;margin:0;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:32px">
+<div style="display:flex;align-items:center;gap:12px"><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Sceau" taille="26" couleur="blanc" hint-size="26px,26px"></x-import><span style="font-family:'Cormorant SC',Georgia,serif;font-weight:600;font-size:19px;letter-spacing:.01em">LOAN DROUARD</span></div>
+<nav style="display:flex;gap:26px;font-family:'Cinzel',Georgia,serif;font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase">
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">Home</span>
+<a class="ld-balaie" href="Video Feedback.dc.html" style="color:inherit;opacity:.64;text-decoration:none;border:0">Video Feedback</a>
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">The Journey</span>
+<span aria-disabled="true" style="color:inherit;opacity:.28;cursor:default;user-select:none">Press / Contact</span>
+</nav>
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.SelecteurLangue" ton="sombre" langue="{{ langue }}" langues="{{ langues }}" onChange="{{ changerLangue }}" hint-size="100px,20px"></x-import>
+</div>
+</header>
+
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Section" ton="sombre" hint-size="100%,1400px">
+<div class="lg">
+
+<sc-if value="{{ en }}" hint-placeholder-val="{{ true }}">
+<div class="ld-etiquette ld-etiquette--role" style="margin-bottom:16px">Video Feedback</div>
+<h1 class="lg-h1">Terms of Sale</h1>
+<p class="lg-lede">These terms apply to every Video Feedback purchase on loandrouard.com: remote analysis of your wushu videos by Loan Drouard.</p>
+<div class="lg-meta"><span>Version of 1 October 2026</span><span>The French version prevails</span><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" taille="sm" onClick="{{ versFr }}" hint-size="130px,28px">Lire en français</x-import></div>
+
+<nav class="lg-toc" aria-label="Contents">
+<div class="lg-toc-t">Contents</div>
+<ol>
+<li><a href="#seller"><b>01</b><span>The seller</span></a></li>
+<li><a href="#scope"><b>02</b><span>Scope</span></a></li>
+<li><a href="#services"><b>03</b><span>The services</span></a></li>
+<li><a href="#process"><b>04</b><span>How it works</span></a></li>
+<li><a href="#prices"><b>05</b><span>Prices</span></a></li>
+<li><a href="#payment"><b>06</b><span>Payment and invoicing</span></a></li>
+<li><a href="#timing"><b>07</b><span>Response times and validity</span></a></li>
+<li><a href="#withdrawal"><b>08</b><span>Right of withdrawal</span></a></li>
+<li><a href="#refunds"><b>09</b><span>Non-performance and refunds</span></a></li>
+<li><a href="#subscription"><b>10</b><span>Quarterly program: renewal and cancellation</span></a></li>
+<li><a href="#client"><b>11</b><span>Your obligations</span></a></li>
+<li><a href="#health"><b>12</b><span>Health and responsibility</span></a></li>
+<li><a href="#rights"><b>13</b><span>Videos, feedback and image rights</span></a></li>
+<li><a href="#data"><b>14</b><span>Personal data</span></a></li>
+<li><a href="#mediation"><b>15</b><span>Complaints and mediation</span></a></li>
+<li><a href="#law"><b>16</b><span>Applicable law and disputes</span></a></li>
+</ol>
+</nav>
+
+<section id="seller" class="lg-art">
+<h2><span>01</span>The seller</h2>
+<p>The services are sold by:</p>
+<ul>
+<li><strong>Loan Drouard</strong>, individual entrepreneur (entrepreneur individuel, EI), under the French micro-enterprise scheme</li>
+<li>SIRET 109 709 014 00012, registered in the French National Business Register (RNE)</li>
+<li>Route de Solignat, 63500 Issoire, France</li>
+<li>Email: <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a></li>
+<li>Phone: <a href="tel:+33772041266">+33 7 72 04 12 66</a> (WhatsApp)</li>
+</ul>
+<p>In these terms, “I” means Loan Drouard and “you” means the client who buys a package.</p>
+</section>
+
+<section id="scope" class="lg-art">
+<h2><span>02</span>Scope</h2>
+<ul>
+<li>These terms apply to every purchase of a Video Feedback package on loandrouard.com. They also apply to clubs and professionals, except for the rules reserved to consumers (withdrawal, mediation).</li>
+<li>By ticking the box at checkout, you confirm that you have read and accepted them. The version that applies is the one online on the day of your order; you can save or print this page.</li>
+<li>These terms exist in French and English. If the two differ, the French version prevails.</li>
+<li><strong>Minors.</strong> If you are under 18, a parent or legal guardian must place the order. They accept these terms and give the consents needed for your videos (article 13).</li>
+</ul>
+</section>
+
+<section id="services" class="lg-art">
+<h2><span>03</span>The services</h2>
+<p>Video Feedback is a remote analysis of your wushu videos. I watch your video and reply with a full analysis, written or by voice message: technique, rhythm, jumps, transitions, with corrections ranked by priority. The detailed content of each package is the one shown on the <a href="Video Feedback.dc.html#formules">Video Feedback page</a> when you order.</p>
+<h3>Single feedback — 49&nbsp;€</h3>
+<p>A full analysis of one routine.</p>
+<h3>3× feedback pack — 129&nbsp;€</h3>
+<p>Three analyses, sent whenever you need them, with targeted exercises after each video and progress tracked from one video to the next. Valid 6 months from your first video.</p>
+<h3>Quarterly program — 499&nbsp;€ every 3 months (subscription)</h3>
+<p>One analysis every week, priorities set together, written check-ins whenever you need them, then a final review with a plan going forward. This is a subscription, renewed automatically every 3 months until you cancel it (article 10).</p>
+<h3>Limited places</h3>
+<p>To keep time for everyone, the pack is limited to 6 clients at the same time and the program to 2. When all places are taken, the package cannot be ordered until one becomes free.</p>
+</section>
+
+<section id="process" class="lg-art">
+<h2><span>04</span>How it works</h2>
+<ol>
+<li><strong>Order.</strong> Choose a package on the Video Feedback page and pay online through Stripe. You tick the box that accepts these terms and asks for the service to start straight away (article 8).</li>
+<li><strong>Confirmation.</strong> You receive a receipt by email. Access to my WhatsApp appears on the page and in your confirmation email. The contract is concluded at that moment.</li>
+<li><strong>Send your video.</strong> On WhatsApp, attach it as a <em>document</em>, not from your gallery, so its quality stays intact. Per analysis: up to 3 videos under 30 seconds, or 2 videos under 2 minutes.</li>
+<li><strong>Receive your feedback.</strong> I reply on WhatsApp, in writing or by voice message, within the time given in article 7.</li>
+<li><strong>Pack and program.</strong> Send your next videos the same way, until the package ends.</li>
+</ol>
+<p>The service requires a WhatsApp account. WhatsApp is a free third-party app with its own terms.</p>
+</section>
+
+<section id="prices" class="lg-art">
+<h2><span>05</span>Prices</h2>
+<ul>
+<li>Prices are in euros, all taxes included. VAT not applicable, article 293 B of the French General Tax Code (CGI): the price shown is the price you pay, with no extra fees.</li>
+<li>Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period.</li>
+<li>I may change my prices at any time. The price that applies is the one shown when you order. For the program, a new price only applies from the next period, after an email sent at least one month beforehand; you can cancel before it applies.</li>
+</ul>
+</section>
+
+<section id="payment" class="lg-art">
+<h2><span>06</span>Payment and invoicing</h2>
+<ul>
+<li>You pay online when you order, through Stripe: card, Apple Pay, Google Pay, Klarna, Link or Revolut Pay, depending on your country and device.</li>
+<li>Payment is secure: your card details go straight to Stripe. I never see or store them.</li>
+<li>If you pay in instalments with Klarna, that instalment plan is a separate agreement between you and Klarna.</li>
+<li>Program: the 499&nbsp;€ are charged automatically at the start of each 3-month period, to the payment method you used.</li>
+<li>If a renewal payment fails, Stripe tries again. The program is suspended until payment goes through, and ends if it is not settled.</li>
+<li>A receipt is emailed to you after each payment. An invoice is available on request at <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>.</li>
+</ul>
+</section>
+
+<section id="timing" class="lg-art">
+<h2><span>07</span>Response times and validity</h2>
+<h3>Response times</h3>
+<p>In calendar days, from receipt of a usable video (article 11):</p>
+<ul>
+<li>Single feedback: 4 to 6 days</li>
+<li>3× feedback pack: 3 to 5 days</li>
+<li>Quarterly program: 2 to 3 days</li>
+</ul>
+<p>If I am away (competition, training camp), I give you a new reply date on WhatsApp as soon as possible. If it does not suit you, you can ask for that analysis to be refunded.</p>
+<h3>Validity</h3>
+<ul>
+<li><strong>Single feedback:</strong> send your video within 6 months of payment.</li>
+<li><strong>3× feedback pack:</strong> send your first video within 6 months of payment. The three analyses are then valid 6 months from the date of that first video.</li>
+<li><strong>Quarterly program:</strong> one analysis per week of the current 3-month period. A week without a video can be made up later in the same period; unused analyses do not carry over to the next period.</li>
+</ul>
+<p>An analysis not used before the end of its validity is lost and is not refunded, unless the delay is caused by me.</p>
+</section>
+
+<section id="withdrawal" class="lg-art">
+<h2><span>08</span>Right of withdrawal</h2>
+<ul>
+<li>As a consumer, you normally have 14 days from your order to withdraw, without giving a reason (article L221-18 of the French Consumer Code).</li>
+<li><strong>Exception.</strong> Under article L221-28 1° of the Consumer Code, this right can no longer be used for a service fully performed before the 14 days are over, when you asked for it to start and acknowledged that you would lose your right of withdrawal once it is performed.</li>
+<li>Because the analysis starts as soon as you send your video, checkout includes a <strong>mandatory box</strong>: by ticking it, you ask for the service to start before the 14 days are over and acknowledge that you lose this right once the service is fully performed. Your choice is confirmed in your confirmation email.</li>
+</ul>
+<h3>In practice</h3>
+<ul>
+<li><strong>Before your first feedback:</strong> you can withdraw within the 14 days and get a full refund.</li>
+<li><strong>Single feedback received:</strong> the service is fully performed; withdrawal is no longer possible.</li>
+<li><strong>Pack or program partly performed:</strong> you can withdraw within the 14 days. You then pay only for what was provided before your request (article L221-25): 43&nbsp;€ per analysis received for the pack; for the program, the share of the price matching the analyses received, out of the 13 planned for the period.</li>
+</ul>
+<h3>How to withdraw</h3>
+<p>Before the 14 days are over, send me a clear statement by email to <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>, for instance using the form below. I refund you within 14 days of your request, using the payment method you used, at no cost to you.</p>
+<div class="lg-cadre">
+<p><strong>Model withdrawal form</strong></p>
+<p>To Loan Drouard EI, Route de Solignat, 63500 Issoire, France — contact@loandrouard.com:</p>
+<p>I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract for the provision of the following service: …</p>
+<p>Ordered on: … · Name of consumer(s): … · Address of consumer(s): … · Signature of consumer(s) (only if this form is sent on paper): … · Date: …</p>
+<p>(*) Delete as appropriate.</p>
+</div>
+</section>
+
+<section id="refunds" class="lg-art">
+<h2><span>09</span>Non-performance and refunds</h2>
+<ul>
+<li>If I cannot provide an analysis you paid for (injury, illness, unavailability or any other reason on my side), I refund every analysis not provided: 49&nbsp;€ for the single feedback, 43&nbsp;€ per remaining analysis of the pack, and, for the program, the share of the current period not provided.</li>
+<li>If I go more than 7 days beyond the time in article 7 without agreeing a new date with you, you can cancel that analysis and have it refunded.</li>
+<li>Refunds are made within 14 days of your request, using the payment method you used.</li>
+<li>No refund is due when the analysis could not take place because of you: no video sent within the validity period, or videos still unusable after I asked for a new one.</li>
+<li>These rules add to your legal rights and do not limit them.</li>
+</ul>
+</section>
+
+<section id="subscription" class="lg-art">
+<h2><span>10</span>Quarterly program: renewal and cancellation</h2>
+<ul>
+<li>The program runs in 3-month periods from the date of payment. It renews automatically for a new 3-month period, at the same price, until you cancel.</li>
+<li>You can cancel at any time, in a few clicks, from your <a href="https://billing.stripe.com/p/login/7sYbJ12q5c2l0j1bMj4ko00" target="_blank" rel="noreferrer">Stripe customer portal</a>, or by email. Cancellation takes effect at the end of the current period: you keep your analyses until then and nothing more is charged. The current period is not refunded.</li>
+<li>Before each renewal, you receive a reminder email with the renewal date and your right not to renew. If this reminder is not sent to you, you can end the program at any time, at no cost, as provided by article L215-1 of the Consumer Code.</li>
+<li>I can end the program at the end of a period, with at least one month’s notice by email.</li>
+</ul>
+</section>
+
+<section id="client" class="lg-art">
+<h2><span>11</span>Your obligations</h2>
+<ul>
+<li>Send usable videos: the whole routine, filmed front on, full body in frame, with good light and a steady camera.</li>
+<li>Attach the video as a document on WhatsApp, not from your gallery, so its quality stays intact.</li>
+<li>Respect the format: per analysis, up to 3 videos under 30 seconds or 2 videos under 2 minutes.</li>
+<li>Only send videos you are allowed to share: if other people appear, make sure they agree.</li>
+<li>Tell me what matters for your training: level, recent injury, competition date.</li>
+<li>Keep our exchanges courteous. In case of abusive behaviour, I can end the service and refund the part not provided.</li>
+</ul>
+<p>If a video cannot be used, I ask you once to send a new one; the response time starts again when I receive it.</p>
+</section>
+
+<section id="health" class="lg-art">
+<h2><span>12</span>Health and responsibility</h2>
+<ul>
+<li>My analysis is technical sports advice from an athlete and coach. It is <strong>not medical advice</strong>. It does not replace a doctor, a physiotherapist, or a coach supervising you in person.</li>
+<li><strong>You train under your own responsibility.</strong> Make sure your health allows you to practise wushu (ask your doctor if in doubt), warm up, train on a suitable surface, and work on difficult elements (jumps, acrobatics) progressively and with suitable supervision.</li>
+<li>If you feel pain, stop and see a health professional. For a minor, the parent or guardian remains responsible for supervision during training.</li>
+<li>I commit to careful, honest analyses (an obligation of means). I cannot guarantee a result, a score or a ranking.</li>
+<li>I am not responsible for injuries or damage resulting from how you train or apply the advice, unless I am at fault. Nothing in these terms limits my liability where the law does not allow it.</li>
+</ul>
+</section>
+
+<section id="rights" class="lg-art">
+<h2><span>13</span>Videos, feedback and image rights</h2>
+<ul>
+<li><strong>Your videos remain yours.</strong> You only allow me to watch, copy and annotate them to carry out your analysis.</li>
+<li><strong>Nothing is published without your consent.</strong> I do not publish, share or use your videos, your image or your name (website, social networks, advertising) without your prior written agreement for that specific use. You can withdraw it at any time. For a minor, the parent or guardian’s agreement is required.</li>
+<li><strong>My feedback</strong> (texts, voice messages, annotated images, exercises) is my work. You may use it freely for your own training, but not publish, resell or distribute it without my agreement.</li>
+</ul>
+</section>
+
+<section id="data" class="lg-art">
+<h2><span>14</span>Personal data</h2>
+<ul>
+<li>I process your data only to provide the service, handle payment and meet my legal obligations. Everything is detailed in the <a href="Privacy.dc.html">Privacy Policy</a>.</li>
+<li>Stripe processes your payment; your card details go straight to Stripe.</li>
+<li>WhatsApp (Meta) carries our exchanges and your videos; its own terms and privacy policy apply.</li>
+<li>Your videos are deleted 3 months after your last feedback.</li>
+</ul>
+</section>
+
+<section id="mediation" class="lg-art">
+<h2><span>15</span>Complaints and mediation</h2>
+<ul>
+<li>For any question or complaint, write to <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>. I reply within 7 days.</li>
+<li>If we cannot find a solution, you can refer the dispute free of charge to the consumer mediator I have joined (articles L.616-1 and R.616-1 of the French Consumer Code): <b>MED CONSO DEV – Médiation Consommation Développement</b>, Centre d’Affaires Stéphanois SAS, Immeuble L’Horizon – Esplanade de France, 3 rue J. Constant Milleret, 42000 Saint-Étienne, France — <a href="https://www.medconsodev.eu/" target="_blank" rel="noopener">medconsodev.eu</a>, where you can file your request online or by post. The procedure is conducted in French. You must first have sent me a written complaint, and contact the mediator within one year of it.</li>
+</ul>
+</section>
+
+<section id="law" class="lg-art">
+<h2><span>16</span>Applicable law and disputes</h2>
+<ul>
+<li>These terms are governed by French law.</li>
+<li>If you live in another country of the European Union, you keep the protection of the mandatory rules of your country.</li>
+<li>Failing an amicable solution, the dispute is brought before the competent French courts. As a consumer, you can also go to the court of your place of residence.</li>
+<li>The French version of these terms prevails.</li>
+</ul>
+</section>
+
+<div class="lg-fin"><span>Loan Drouard EI · SIRET 109 709 014 00012</span><span style="display:flex;gap:22px;flex-wrap:wrap"><a href="Privacy.dc.html">Privacy</a><a href="Legal.dc.html">Legal notice</a></span></div>
+</sc-if>
+
+<sc-if value="{{ fr }}" hint-placeholder-val="{{ false }}">
+<div class="ld-etiquette ld-etiquette--role" style="margin-bottom:16px">Video Feedback</div>
+<h1 class="lg-h1">Conditions générales de vente</h1>
+<p class="lg-lede">Ces conditions s’appliquent à tout achat Video Feedback sur loandrouard.com : l’analyse à distance de vos vidéos de wushu par Loan Drouard.</p>
+<div class="lg-meta"><span>Version du 1er octobre 2026</span><span>La version française fait foi</span><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" taille="sm" onClick="{{ versEn }}" hint-size="130px,28px">Read in English</x-import></div>
+
+<nav class="lg-toc" aria-label="Sommaire">
+<div class="lg-toc-t">Sommaire</div>
+<ol>
+<li><a href="#seller"><b>01</b><span>Le vendeur</span></a></li>
+<li><a href="#scope"><b>02</b><span>Champ d’application</span></a></li>
+<li><a href="#services"><b>03</b><span>Les prestations</span></a></li>
+<li><a href="#process"><b>04</b><span>Déroulement</span></a></li>
+<li><a href="#prices"><b>05</b><span>Prix</span></a></li>
+<li><a href="#payment"><b>06</b><span>Paiement et facturation</span></a></li>
+<li><a href="#timing"><b>07</b><span>Délais et validité</span></a></li>
+<li><a href="#withdrawal"><b>08</b><span>Droit de rétractation</span></a></li>
+<li><a href="#refunds"><b>09</b><span>Non-exécution et remboursement</span></a></li>
+<li><a href="#subscription"><b>10</b><span>Programme trimestriel : reconduction et résiliation</span></a></li>
+<li><a href="#client"><b>11</b><span>Vos engagements</span></a></li>
+<li><a href="#health"><b>12</b><span>Santé et responsabilité</span></a></li>
+<li><a href="#rights"><b>13</b><span>Vidéos, retours et droit à l’image</span></a></li>
+<li><a href="#data"><b>14</b><span>Données personnelles</span></a></li>
+<li><a href="#mediation"><b>15</b><span>Réclamations et médiation</span></a></li>
+<li><a href="#law"><b>16</b><span>Droit applicable et litiges</span></a></li>
+</ol>
+</nav>
+
+<section id="seller" class="lg-art">
+<h2><span>01</span>Le vendeur</h2>
+<p>Les prestations sont vendues par :</p>
+<ul>
+<li><strong>Loan Drouard</strong>, entrepreneur individuel (EI), sous le régime de la micro-entreprise</li>
+<li>SIRET 109 709 014 00012, inscrit au Registre national des entreprises (RNE)</li>
+<li>Route de Solignat, 63500 Issoire, France</li>
+<li>E-mail : <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a></li>
+<li>Téléphone : <a href="tel:+33772041266">+33 7 72 04 12 66</a> (WhatsApp)</li>
+</ul>
+<p>Dans ces conditions, « je » désigne Loan Drouard et « vous » le client qui achète une formule.</p>
+</section>
+
+<section id="scope" class="lg-art">
+<h2><span>02</span>Champ d’application</h2>
+<ul>
+<li>Ces conditions générales de vente (CGV) s’appliquent à tout achat d’une formule Video Feedback sur loandrouard.com. Elles s’appliquent aussi aux clubs et aux professionnels, sauf les règles réservées aux consommateurs (rétractation, médiation).</li>
+<li>En cochant la case prévue lors du paiement, vous confirmez les avoir lues et acceptées. La version applicable est celle en ligne le jour de votre commande ; vous pouvez l’enregistrer ou l’imprimer.</li>
+<li>Ces CGV existent en français et en anglais. En cas de différence, la version française fait foi.</li>
+<li><strong>Mineurs.</strong> Si vous avez moins de 18 ans, la commande doit être passée par un parent ou un représentant légal. Il accepte ces CGV et donne les autorisations nécessaires pour vos vidéos (article 13).</li>
+</ul>
+</section>
+
+<section id="services" class="lg-art">
+<h2><span>03</span>Les prestations</h2>
+<p>Video Feedback est une analyse à distance de vos vidéos de wushu. Je regarde votre vidéo et vous réponds par une analyse complète, écrite ou en message vocal : technique, rythme, sauts, transitions, avec des corrections classées par priorité. Le contenu détaillé de chaque formule est celui affiché sur la <a href="Video Feedback.dc.html#formules">page Video Feedback</a> au moment de votre commande.</p>
+<h3>Single feedback — 49&nbsp;€</h3>
+<p>L’analyse complète d’un enchaînement.</p>
+<h3>3× feedback pack — 129&nbsp;€</h3>
+<p>Trois analyses, à envoyer quand vous le souhaitez, avec des exercices ciblés après chaque vidéo et un suivi de vos progrès d’une vidéo à l’autre. Valable 6 mois à compter de votre première vidéo.</p>
+<h3>Quarterly program — 499&nbsp;€ tous les 3 mois (abonnement)</h3>
+<p>Une analyse chaque semaine, des priorités fixées ensemble, des échanges écrits quand vous en avez besoin, puis un bilan final avec un plan pour la suite. C’est un abonnement, reconduit automatiquement tous les 3 mois jusqu’à sa résiliation (article 10).</p>
+<h3>Places limitées</h3>
+<p>Pour garder du temps pour chacun, le pack est limité à 6 clients en même temps et le programme à 2. Quand toutes les places sont prises, la formule ne peut pas être commandée jusqu’à ce qu’une place se libère.</p>
+</section>
+
+<section id="process" class="lg-art">
+<h2><span>04</span>Déroulement</h2>
+<ol>
+<li><strong>Commande.</strong> Vous choisissez une formule sur la page Video Feedback et payez en ligne via Stripe. Vous cochez la case qui accepte ces CGV et demande que la prestation commence sans attendre (article 8).</li>
+<li><strong>Confirmation.</strong> Vous recevez un reçu par e-mail. L’accès à mon WhatsApp s’affiche sur la page et figure dans l’e-mail de confirmation. Le contrat est conclu à ce moment-là.</li>
+<li><strong>Envoi de la vidéo.</strong> Sur WhatsApp, joignez-la comme <em>document</em>, et non depuis la galerie, pour conserver sa qualité. Par analyse : jusqu’à 3 vidéos de moins de 30 secondes, ou 2 vidéos de moins de 2 minutes.</li>
+<li><strong>Retour.</strong> Je vous réponds sur WhatsApp, par écrit ou en message vocal, dans le délai indiqué à l’article 7.</li>
+<li><strong>Pack et programme.</strong> Vous envoyez les vidéos suivantes de la même façon, jusqu’à la fin de la formule.</li>
+</ol>
+<p>Le service nécessite un compte WhatsApp. WhatsApp est une application tierce et gratuite, soumise à ses propres conditions.</p>
+</section>
+
+<section id="prices" class="lg-art">
+<h2><span>05</span>Prix</h2>
+<ul>
+<li>Les prix sont indiqués en euros, toutes taxes comprises. TVA non applicable, article 293 B du CGI : le prix affiché est le prix payé, sans frais supplémentaires.</li>
+<li>Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois.</li>
+<li>Je peux modifier mes prix à tout moment. Le prix applicable est celui affiché lors de votre commande. Pour le programme, un nouveau prix ne s’applique qu’à la période suivante, après un e-mail envoyé au moins un mois avant ; vous pouvez résilier avant qu’il s’applique.</li>
+</ul>
+</section>
+
+<section id="payment" class="lg-art">
+<h2><span>06</span>Paiement et facturation</h2>
+<ul>
+<li>Le paiement se fait en ligne au moment de la commande, via Stripe : carte bancaire, Apple Pay, Google Pay, Klarna, Link ou Revolut Pay, selon votre pays et votre appareil.</li>
+<li>Le paiement est sécurisé : vos données bancaires sont transmises directement à Stripe. Je ne les vois pas et ne les conserve pas.</li>
+<li>Si vous payez en plusieurs fois avec Klarna, ce paiement fractionné fait l’objet d’un contrat distinct entre vous et Klarna.</li>
+<li>Programme : les 499&nbsp;€ sont prélevés automatiquement au début de chaque période de 3 mois, sur le moyen de paiement utilisé.</li>
+<li>Si un prélèvement échoue, Stripe fait de nouvelles tentatives. Le programme est suspendu jusqu’au paiement, puis prend fin s’il n’est pas réglé.</li>
+<li>Un reçu vous est envoyé par e-mail après chaque paiement. Une facture vous est remise sur simple demande à <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>.</li>
+</ul>
+</section>
+
+<section id="timing" class="lg-art">
+<h2><span>07</span>Délais et validité</h2>
+<h3>Délais de réponse</h3>
+<p>En jours calendaires, à partir de la réception d’une vidéo exploitable (article 11) :</p>
+<ul>
+<li>Single feedback : 4 à 6 jours</li>
+<li>3× feedback pack : 3 à 5 jours</li>
+<li>Quarterly program : 2 à 3 jours</li>
+</ul>
+<p>Si je suis absent (compétition, stage), je vous indique dès que possible sur WhatsApp une nouvelle date de retour. Si elle ne vous convient pas, vous pouvez demander le remboursement de cette analyse.</p>
+<h3>Durée de validité</h3>
+<ul>
+<li><strong>Single feedback :</strong> envoyez votre vidéo dans les 6 mois suivant le paiement.</li>
+<li><strong>3× feedback pack :</strong> envoyez votre première vidéo dans les 6 mois suivant le paiement. Les trois analyses sont ensuite valables 6 mois à compter de la date de cette première vidéo.</li>
+<li><strong>Quarterly program :</strong> une analyse par semaine pendant la période de 3 mois en cours. Une semaine sans vidéo peut être rattrapée plus tard dans la même période ; les analyses non utilisées ne sont pas reportées sur la période suivante.</li>
+</ul>
+<p>Une analyse non utilisée avant la fin de sa validité est perdue et n’est pas remboursée, sauf si le retard vient de moi.</p>
+</section>
+
+<section id="withdrawal" class="lg-art">
+<h2><span>08</span>Droit de rétractation</h2>
+<ul>
+<li>En tant que consommateur, vous disposez en principe de 14 jours à compter de votre commande pour vous rétracter, sans avoir à vous justifier (article L221-18 du Code de la consommation).</li>
+<li><strong>Exception.</strong> Selon l’article L221-28 1° du Code de la consommation, ce droit ne peut plus être exercé pour un service entièrement exécuté avant la fin de ces 14 jours, lorsque vous avez demandé qu’il commence et reconnu perdre votre droit de rétractation une fois le service exécuté.</li>
+<li>Comme l’analyse commence dès l’envoi de votre vidéo, le paiement comporte une <strong>case obligatoire</strong> : en la cochant, vous demandez que la prestation commence avant la fin des 14 jours et reconnaissez perdre ce droit une fois la prestation pleinement exécutée. Ce choix vous est confirmé dans l’e-mail de confirmation.</li>
+</ul>
+<h3>Concrètement</h3>
+<ul>
+<li><strong>Avant votre premier retour :</strong> vous pouvez vous rétracter pendant les 14 jours et êtes remboursé intégralement.</li>
+<li><strong>Single feedback reçu :</strong> la prestation est entièrement exécutée, la rétractation n’est plus possible.</li>
+<li><strong>Pack ou programme en partie exécuté :</strong> vous pouvez vous rétracter pendant les 14 jours. Vous payez alors seulement ce qui a été fourni avant votre demande (article L221-25) : 43&nbsp;€ par analyse reçue pour le pack ; pour le programme, la part du prix correspondant aux analyses reçues, sur les 13 prévues dans la période.</li>
+</ul>
+<h3>Comment faire</h3>
+<p>Avant la fin des 14 jours, envoyez-moi une déclaration claire par e-mail à <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>, par exemple avec le formulaire ci-dessous. Je vous rembourse dans les 14 jours suivant votre demande, par le moyen de paiement utilisé, sans frais.</p>
+<div class="lg-cadre">
+<p><strong>Formulaire de rétractation</strong></p>
+<p>À l’attention de Loan Drouard EI, Route de Solignat, 63500 Issoire, France — contact@loandrouard.com :</p>
+<p>Je/Nous (*) vous notifie/notifions (*) par la présente ma/notre (*) rétractation du contrat portant sur la prestation de services ci-dessous : …</p>
+<p>Commandé le : … · Nom du (des) consommateur(s) : … · Adresse du (des) consommateur(s) : … · Signature du (des) consommateur(s) (uniquement en cas de notification du présent formulaire sur papier) : … · Date : …</p>
+<p>(*) Rayez la mention inutile.</p>
+</div>
+</section>
+
+<section id="refunds" class="lg-art">
+<h2><span>09</span>Non-exécution et remboursement</h2>
+<ul>
+<li>Si je ne peux pas fournir une analyse payée (blessure, maladie, indisponibilité ou toute autre raison qui me concerne), je vous rembourse chaque analyse non fournie : 49&nbsp;€ pour le single feedback, 43&nbsp;€ par analyse restante du pack, et pour le programme, la part de la période en cours non fournie.</li>
+<li>Si je dépasse de plus de 7 jours le délai de l’article 7 sans avoir convenu d’une nouvelle date avec vous, vous pouvez annuler cette analyse et en obtenir le remboursement.</li>
+<li>Le remboursement intervient dans les 14 jours suivant votre demande, par le moyen de paiement utilisé.</li>
+<li>Aucun remboursement n’est dû si l’analyse n’a pas pu avoir lieu de votre fait : aucune vidéo envoyée pendant la durée de validité, ou vidéos toujours inexploitables après une demande de nouvel envoi.</li>
+<li>Ces règles s’ajoutent aux droits que vous donne la loi et ne les limitent pas.</li>
+</ul>
+</section>
+
+<section id="subscription" class="lg-art">
+<h2><span>10</span>Programme trimestriel : reconduction et résiliation</h2>
+<ul>
+<li>Le programme fonctionne par périodes de 3 mois à partir de la date du paiement. Il est reconduit automatiquement pour une nouvelle période de 3 mois, au même prix, jusqu’à sa résiliation.</li>
+<li>Vous pouvez résilier à tout moment, en quelques clics, depuis votre <a href="https://billing.stripe.com/p/login/7sYbJ12q5c2l0j1bMj4ko00" target="_blank" rel="noreferrer">espace client Stripe</a>, ou par e-mail. La résiliation prend effet à la fin de la période en cours : vous gardez vos analyses jusque-là et rien d’autre n’est prélevé. La période en cours n’est pas remboursée.</li>
+<li>Avant chaque reconduction, vous recevez un e-mail de rappel indiquant la date de reconduction et votre droit de ne pas reconduire. Si ce rappel ne vous est pas envoyé, vous pouvez mettre fin au programme à tout moment, sans frais, comme le prévoit l’article L215-1 du Code de la consommation.</li>
+<li>Je peux mettre fin au programme à la fin d’une période, en vous prévenant par e-mail au moins un mois à l’avance.</li>
+</ul>
+</section>
+
+<section id="client" class="lg-art">
+<h2><span>11</span>Vos engagements</h2>
+<ul>
+<li>Envoyer des vidéos exploitables : l’enchaînement complet, filmé de face, corps entier dans le cadre, avec une bonne lumière et une caméra stable.</li>
+<li>Joindre la vidéo comme document sur WhatsApp, et non depuis la galerie, pour garder sa qualité.</li>
+<li>Respecter le format : par analyse, jusqu’à 3 vidéos de moins de 30 secondes ou 2 vidéos de moins de 2 minutes.</li>
+<li>N’envoyer que des vidéos que vous avez le droit de partager : si d’autres personnes apparaissent, assurez-vous de leur accord.</li>
+<li>Me signaler ce qui compte pour votre entraînement : niveau, blessure récente, date de compétition.</li>
+<li>Garder des échanges courtois. En cas de comportement abusif, je peux mettre fin à la prestation et rembourser la part non fournie.</li>
+</ul>
+<p>Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer ; le délai de réponse repart à sa réception.</p>
+</section>
+
+<section id="health" class="lg-art">
+<h2><span>12</span>Santé et responsabilité</h2>
+<ul>
+<li>Mon analyse est un conseil technique sportif, donné par un athlète et entraîneur. Ce n’est <strong>pas un avis médical</strong>. Elle ne remplace ni un médecin, ni un kinésithérapeute, ni un entraîneur qui vous encadre sur place.</li>
+<li><strong>Vous vous entraînez sous votre propre responsabilité.</strong> Vérifiez que votre état de santé permet la pratique du wushu (demandez à votre médecin en cas de doute), échauffez-vous, entraînez-vous sur une surface adaptée, et travaillez les éléments difficiles (sauts, acrobaties) progressivement et avec un encadrement adapté.</li>
+<li>En cas de douleur, arrêtez et consultez un professionnel de santé. Pour un mineur, le parent ou représentant légal reste responsable de sa surveillance pendant l’entraînement.</li>
+<li>Je m’engage à fournir des analyses sérieuses et honnêtes (obligation de moyens). Je ne peux pas garantir un résultat, une note ou un classement.</li>
+<li>Je ne suis pas responsable des blessures ou dommages liés à votre façon de vous entraîner ou d’appliquer les conseils, sauf faute de ma part. Rien dans ces CGV ne limite ma responsabilité lorsque la loi l’interdit.</li>
+</ul>
+</section>
+
+<section id="rights" class="lg-art">
+<h2><span>13</span>Vidéos, retours et droit à l’image</h2>
+<ul>
+<li><strong>Vos vidéos restent les vôtres.</strong> Vous m’autorisez seulement à les regarder, les copier et les annoter pour réaliser votre analyse.</li>
+<li><strong>Aucune diffusion sans votre accord.</strong> Je ne publie, ne partage ni n’utilise vos vidéos, votre image ou votre nom (site, réseaux sociaux, publicité) sans votre accord écrit préalable, donné pour cet usage précis. Vous pouvez le retirer à tout moment. Pour un mineur, l’accord du parent ou représentant légal est nécessaire.</li>
+<li><strong>Mes retours</strong> (textes, messages vocaux, images annotées, exercices) sont mon œuvre. Vous pouvez les utiliser librement pour votre propre entraînement, mais pas les publier, les revendre ou les diffuser sans mon accord.</li>
+</ul>
+</section>
+
+<section id="data" class="lg-art">
+<h2><span>14</span>Données personnelles</h2>
+<ul>
+<li>Je traite vos données uniquement pour fournir la prestation, gérer le paiement et respecter mes obligations légales. Tout est détaillé dans la <a href="Privacy.dc.html?lang=fr">Politique de confidentialité</a>.</li>
+<li>Stripe traite votre paiement ; vos données bancaires lui sont transmises directement.</li>
+<li>WhatsApp (Meta) transporte nos échanges et vos vidéos ; ses propres conditions et sa politique de confidentialité s’appliquent.</li>
+<li>Vos vidéos sont supprimées 3 mois après votre dernier retour.</li>
+</ul>
+</section>
+
+<section id="mediation" class="lg-art">
+<h2><span>15</span>Réclamations et médiation</h2>
+<ul>
+<li>Pour toute question ou réclamation, écrivez-moi à <a href="mailto:contact@loandrouard.com">contact@loandrouard.com</a>. Je vous réponds sous 7 jours.</li>
+<li>Si nous ne trouvons pas de solution, vous pouvez saisir gratuitement, conformément aux articles L.616-1 et R.616-1 du code de la consommation, le médiateur de la consommation dont je relève : <b>MED CONSO DEV – Médiation Consommation Développement</b>, Centre d’Affaires Stéphanois SAS, Immeuble L’Horizon – Esplanade de France, 3 rue J. Constant Milleret, 42000 Saint-Étienne — <a href="https://www.medconsodev.eu/" target="_blank" rel="noopener">medconsodev.eu</a> (demande en ligne ou par courrier). Vous devez d’abord m’avoir adressé une réclamation écrite, et saisir le médiateur dans l’année qui suit.</li>
+</ul>
+</section>
+
+<section id="law" class="lg-art">
+<h2><span>16</span>Droit applicable et litiges</h2>
+<ul>
+<li>Ces CGV sont soumises au droit français.</li>
+<li>Si vous résidez dans un autre pays de l’Union européenne, vous gardez la protection des règles impératives de votre pays.</li>
+<li>À défaut d’accord amiable, le litige est porté devant les tribunaux français compétents. En tant que consommateur, vous pouvez aussi saisir le tribunal de votre lieu de résidence.</li>
+<li>La version française de ces CGV fait foi.</li>
+</ul>
+</section>
+
+<div class="lg-fin"><span>Loan Drouard EI · SIRET 109 709 014 00012</span><span style="display:flex;gap:22px;flex-wrap:wrap"><a href="Privacy.dc.html?lang=fr">Confidentialité</a><a href="Legal.dc.html?lang=fr">Mentions légales</a></span></div>
+</sc-if>
+
+</div>
+</x-import>
+
+<dc-import name="Sponsors" hint-size="100%,860px"></dc-import>
+
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;langue&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;fr&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Langue&quot;}}">
+class Component extends DCLogic {
+  state = { langue: null };
+  componentDidMount() {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q === "fr" || q === "en") this.setState({ langue: q });
+    document.documentElement.lang = q === "fr" ? "fr" : (this.props.langue ?? "en");
+  }
+  changerLangue = (code) => {
+    if (code !== "fr" && code !== "en") return;
+    this.setState({ langue: code });
+    document.documentElement.lang = code;
+    try { const u = new URL(location.href); u.searchParams.set("lang", code); history.replaceState(null, "", u); } catch (e) {}
+    if (!location.hash) window.scrollTo({ top: 0 });
+  };
+  renderVals() {
+    const l = this.state.langue ?? this.props.langue ?? "en";
+    return {
+      en: l === "en",
+      fr: l === "fr",
+      langue: l,
+      langues: ["en", "fr"],
+      changerLangue: this.changerLangue,
+      versFr: () => this.changerLangue("fr"),
+      versEn: () => this.changerLangue("en"),
+    };
+  }
+}
+</script>
+</body>
+</html>

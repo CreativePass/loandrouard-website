@@ -1,0 +1,83 @@
+/* 01 — COULEURS. Valeurs relevées dans design-system-loan-clean.html.
+   Règle sans exception : l'or ne sert JAMAIS de fond derrière du texte,
+   ni au repos ni au survol — seulement en ligne, en contour, ou en couleur de texte. */
+:root {
+  /* Base — les cinq valeurs du fichier source */
+  --blanc: #F6F5F1;
+  --noir: #161616;
+  --noir-sec: rgba(22, 22, 22, 0.64);
+  --blanc-sec: rgba(246, 245, 241, 0.66);
+  --gris: #C7C4BC;
+  --gris-fonce: #A9A59A;
+  --or: #A9814A;
+
+  /* Alias historique */
+  --gris-clair: var(--gris);
+
+  /* Transparences utilitaires — aucune nouvelle teinte */
+  --filet-blanc: rgba(246, 245, 241, 0.18);
+  --spine-blanc: rgba(246, 245, 241, 0.22);
+  --voile-noir: rgba(20, 18, 15, 0.55);
+  --or-a55: rgba(169, 129, 74, 0.55);
+  --or-a40: rgba(169, 129, 74, 0.4);
+  --or-a16: rgba(169, 129, 74, 0.16);
+  --gris-a40: rgba(199, 196, 188, 0.4);
+
+  /* Rouge brique — UNIQUEMENT pour les mentions d'erreur du guide (« contraste insuffisant ») */
+  --alerte-clair: #9B3A2E;
+  --alerte-sombre: #D98F7F;
+
+  /* Fond sombre — ancré sur --noir #161616 : la borne HAUTE est exactement la couleur
+     principale, la borne basse descend d'un cran. Le dégradé ne s'éclaircit donc jamais
+     au-dessus du noir de base : à l'œil, sa valeur EST celle de --noir. Aucune teinte ajoutée. */
+  --noir-chaud-haut: #161616;
+  --noir-chaud-bas: #121212;
+  /* Voiles : modulations à peine perceptibles, sous le seuil du grain — jamais
+     un éclaircissement qui trahirait le dégradé face à un aplat de --noir. */
+  --voile-lumiere: rgba(246, 245, 241, 0.022);
+  --voile-lumiere-faible: rgba(246, 245, 241, 0.012);
+  --voile-ombre: rgba(10, 10, 10, 0.5);
+  /* Le fond sombre n'est pas un halo circulaire : quatre couches obliques et décentrées.
+     1. une nappe large qui monte en biais de l'épaule haut-gauche, très étirée ;
+     2. une seconde nappe, plus étroite et deux fois plus faible, décalée à droite —
+        les deux se recouvrent partiellement : la lumière n'a plus de centre lisible ;
+     3. une ombre douce qui se dépose en bas, pour que le regard descende ;
+     4. la base linéaire, légèrement hors d'axe (194deg), bornée en haut par --noir. */
+  --fond-sombre:
+    radial-gradient(124% 68% at 24% 6%, var(--voile-lumiere), var(--voile-lumiere-faible) 34%, transparent 66%),
+    radial-gradient(72% 46% at 80% 30%, var(--voile-lumiere-faible), transparent 58%),
+    radial-gradient(148% 92% at 54% 116%, var(--voile-ombre), transparent 58%),
+    linear-gradient(194deg, var(--noir-chaud-haut) 0%, #151515 44%, var(--noir-chaud-bas) 100%);
+
+  /* Sémantique — fond sombre (dominante) */
+  --surface-sombre: var(--noir);
+  --text-sombre-1: var(--blanc);
+  --text-sombre-2: var(--blanc-sec);
+  --text-sombre-3: var(--gris);
+  --border-sombre: var(--filet-blanc);
+
+  /* Sémantique — fond clair (ouverture + respiration « Héritage ») */
+  --surface-claire: var(--blanc);
+  --text-clair-1: var(--noir);
+  --text-clair-2: var(--noir-sec);
+  --text-clair-3: var(--gris-fonce);
+  --border-clair: var(--gris);
+
+  /* Accent */
+  --accent: var(--or);
+
+  /* Défauts (thème sombre) */
+  --surface: var(--surface-sombre);
+  --text-1: var(--text-sombre-1);
+  --text-2: var(--text-sombre-2);
+  --text-3: var(--text-sombre-3);
+  --border: var(--border-sombre);
+}
+
+[data-theme="clair"] {
+  --surface: var(--surface-claire);
+  --text-1: var(--text-clair-1);
+  --text-2: var(--text-clair-2);
+  --text-3: var(--text-clair-3);
+  --border: var(--border-clair);
+}

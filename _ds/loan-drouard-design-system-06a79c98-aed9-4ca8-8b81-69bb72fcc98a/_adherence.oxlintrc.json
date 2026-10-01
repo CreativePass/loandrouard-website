@@ -1,0 +1,581 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/**",
+              "components/actions/**",
+              "components/contenu/**",
+              "components/icones/**",
+              "components/layout/**",
+              "components/navigation/**",
+              "components/reseaux/**",
+              "components/typographie/**",
+              "header-flottant.js",
+              "ui_kits/site/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Cinzel|Cormorant|Cormorant SC|Long Cang|Ma Shan Zheng))/i]",
+        "message": "Font not provided by the design system. Available: Cinzel, Cormorant, Cormorant SC, Long Cang, Ma Shan Zheng."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='LienReseau'] > JSXAttribute > JSXIdentifier[name!=/^(?:reseau|href|nom|key|ref|className|style|children)$/]",
+        "message": "<LienReseau> doesn't accept that prop. Declared props: reseau, href, nom."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Bouton'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|ton|taille|coinCoupe|avecSceau|href|onClick|disabled|type|style|className|key|ref|className|style|children)$/]",
+        "message": "<Bouton> doesn't accept that prop. Declared props: children, ton, taille, coinCoupe, avecSceau, href, onClick, disabled, type, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Bouton'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<Bouton> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Bouton'] > JSXAttribute[name.name='taille'] > Literal[value!=/^(?:md|lg)$/]",
+        "message": "<Bouton> taille must be one of 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Bouton'] > JSXAttribute[name.name='coinCoupe'] > Literal[value!=/^(?:bg|bd|hg|hd)$/]",
+        "message": "<Bouton> coinCoupe must be one of 'bg' | 'bd' | 'hg' | 'hd'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Bouton'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:button|submit|reset)$/]",
+        "message": "<Bouton> type must be one of 'button' | 'submit' | 'reset'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Annotation'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|accent|pose|inverse|style|className|key|ref|className|style|children)$/]",
+        "message": "<Annotation> doesn't accept that prop. Declared props: children, accent, pose, inverse, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ChiffresCles'] > JSXAttribute > JSXIdentifier[name!=/^(?:items|ton|style|className|key|ref|className|style|children)$/]",
+        "message": "<ChiffresCles> doesn't accept that prop. Declared props: items, ton, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ChiffresCles'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<ChiffresCles> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ChronoEtape'] > JSXAttribute > JSXIdentifier[name!=/^(?:annee|titre|detail|sommet|key|ref|className|style|children)$/]",
+        "message": "<ChronoEtape> doesn't accept that prop. Declared props: annee, titre, detail, sommet."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CitationsEmpilees'] > JSXAttribute > JSXIdentifier[name!=/^(?:lignes|style|className|key|ref|className|style|children)$/]",
+        "message": "<CitationsEmpilees> doesn't accept that prop. Declared props: lignes, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Emphase'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|langue|style|className|key|ref|className|style|children)$/]",
+        "message": "<Emphase> doesn't accept that prop. Declared props: children, langue, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Emphase'] > JSXAttribute[name.name='langue'] > Literal[value!=/^(?:fr|zh)$/]",
+        "message": "<Emphase> langue must be one of 'fr' | 'zh'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Etiquette'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|description|variante|ton|as|style|className|key|ref|className|style|children)$/]",
+        "message": "<Etiquette> doesn't accept that prop. Declared props: children, description, variante, ton, as, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Etiquette'] > JSXAttribute[name.name='variante'] > Literal[value!=/^(?:tag|role)$/]",
+        "message": "<Etiquette> variante must be one of 'tag' | 'role'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Etiquette'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<Etiquette> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Formule'] > JSXAttribute > JSXIdentifier[name!=/^(?:etiquette|lignes|prix|detail|action|miseEnAvant|ton|style|className|key|ref|className|style|children)$/]",
+        "message": "<Formule> doesn't accept that prop. Declared props: etiquette, lignes, prix, detail, action, miseEnAvant, ton, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Formule'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<Formule> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Icone'] > JSXAttribute > JSXIdentifier[name!=/^(?:nom|taille|accent|titre|style|className|key|ref|className|style|children)$/]",
+        "message": "<Icone> doesn't accept that prop. Declared props: nom, taille, accent, titre, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconeReseau'] > JSXAttribute > JSXIdentifier[name!=/^(?:reseau|taille|titre|style|className|key|ref|className|style|children)$/]",
+        "message": "<IconeReseau> doesn't accept that prop. Declared props: reseau, taille, titre, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Lettrine'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|style|className|key|ref|className|style|children)$/]",
+        "message": "<Lettrine> doesn't accept that prop. Declared props: children, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='LienTrait'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|ton|taille|accent|href|onClick|style|className|key|ref|className|style|children)$/]",
+        "message": "<LienTrait> doesn't accept that prop. Declared props: children, ton, taille, accent, href, onClick, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='LienTrait'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<LienTrait> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='LienTrait'] > JSXAttribute[name.name='taille'] > Literal[value!=/^(?:md|lg)$/]",
+        "message": "<LienTrait> taille must be one of 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Note'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|accent|ton|style|className|key|ref|className|style|children)$/]",
+        "message": "<Note> doesn't accept that prop. Declared props: children, accent, ton, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Note'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<Note> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Roofline'] > JSXAttribute > JSXIdentifier[name!=/^(?:variante|legende|src|style|className|key|ref|className|style|children)$/]",
+        "message": "<Roofline> doesn't accept that prop. Declared props: variante, legende, src, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Roofline'] > JSXAttribute[name.name='variante'] > Literal[value!=/^(?:motif|transition)$/]",
+        "message": "<Roofline> variante must be one of 'motif' | 'transition'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Sceau'] > JSXAttribute > JSXIdentifier[name!=/^(?:taille|couleur|src|titre|style|className|key|ref|className|style|children)$/]",
+        "message": "<Sceau> doesn't accept that prop. Declared props: taille, couleur, src, titre, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Sceau'] > JSXAttribute[name.name='couleur'] > Literal[value!=/^(?:blanc|noir)$/]",
+        "message": "<Sceau> couleur must be one of 'blanc' | 'noir'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Section'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|ton|texture|grain|cover|largeur|style|className|key|ref|className|style|children)$/]",
+        "message": "<Section> doesn't accept that prop. Declared props: children, ton, texture, grain, cover, largeur, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Section'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<Section> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Section'] > JSXAttribute[name.name='texture'] > Literal[value!=/^(?:lin|enduit|metal)$/]",
+        "message": "<Section> texture must be one of 'lin' | 'enduit' | 'metal'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SelecteurLangue'] > JSXAttribute > JSXIdentifier[name!=/^(?:langue|langues|onChange|ton|style|className|key|ref|className|style|children)$/]",
+        "message": "<SelecteurLangue> doesn't accept that prop. Declared props: langue, langues, onChange, ton, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SelecteurLangue'] > JSXAttribute[name.name='langue'] > Literal[value!=/^(?:en|fr|zh)$/]",
+        "message": "<SelecteurLangue> langue must be one of 'en' | 'fr' | 'zh'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SelecteurLangue'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<SelecteurLangue> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Silhouette'] > JSXAttribute > JSXIdentifier[name!=/^(?:legende|marque|ton|children|style|className|key|ref|className|style|children)$/]",
+        "message": "<Silhouette> doesn't accept that prop. Declared props: legende, marque, ton, children, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Silhouette'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<Silhouette> ton must be one of 'sombre' | 'clair'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TexteChinois'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|taille|as|style|className|key|ref|className|style|children)$/]",
+        "message": "<TexteChinois> doesn't accept that prop. Declared props: children, taille, as, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TitreSection'] > JSXAttribute > JSXIdentifier[name!=/^(?:numero|surtitre|titre|chapeau|accent|ton|style|className|key|ref|className|style|children)$/]",
+        "message": "<TitreSection> doesn't accept that prop. Declared props: numero, surtitre, titre, chapeau, accent, ton, style, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TitreSection'] > JSXAttribute[name.name='ton'] > Literal[value!=/^(?:sombre|clair)$/]",
+        "message": "<TitreSection> ton must be one of 'sombre' | 'clair'."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "LienReseau": {
+        "replaces": []
+      },
+      "Bouton": {
+        "replaces": []
+      },
+      "Annotation": {
+        "replaces": []
+      },
+      "ChiffresCles": {
+        "replaces": []
+      },
+      "ChronoEtape": {
+        "replaces": []
+      },
+      "CitationsEmpilees": {
+        "replaces": []
+      },
+      "Emphase": {
+        "replaces": []
+      },
+      "Etiquette": {
+        "replaces": []
+      },
+      "Formule": {
+        "replaces": []
+      },
+      "Icone": {
+        "replaces": []
+      },
+      "IconeReseau": {
+        "replaces": []
+      },
+      "Lettrine": {
+        "replaces": []
+      },
+      "LienTrait": {
+        "replaces": []
+      },
+      "Note": {
+        "replaces": []
+      },
+      "Roofline": {
+        "replaces": []
+      },
+      "Sceau": {
+        "replaces": []
+      },
+      "Section": {
+        "replaces": []
+      },
+      "SelecteurLangue": {
+        "replaces": []
+      },
+      "Silhouette": {
+        "replaces": []
+      },
+      "TexteChinois": {
+        "replaces": []
+      },
+      "TitreSection": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--accent",
+      "--alerte-clair",
+      "--alerte-sombre",
+      "--balayage-boucle",
+      "--balayage-entree",
+      "--balayage-or",
+      "--balayage-pause",
+      "--blanc",
+      "--blanc-sec",
+      "--border",
+      "--border-clair",
+      "--border-sombre",
+      "--citation",
+      "--corps",
+      "--corps-legende",
+      "--corps-note",
+      "--corps-sm",
+      "--coupe-bouton",
+      "--cover-y-bas",
+      "--cover-y-bas-large",
+      "--cover-y-haut",
+      "--cover-y-haut-large",
+      "--enduit-noir",
+      "--esp-1",
+      "--esp-10",
+      "--esp-2",
+      "--esp-3",
+      "--esp-4",
+      "--esp-5",
+      "--esp-6",
+      "--esp-7",
+      "--esp-8",
+      "--esp-9",
+      "--filet",
+      "--filet-blanc",
+      "--filet-motif",
+      "--fond-sombre",
+      "--font-chinois",
+      "--font-chinois-exception",
+      "--font-corps",
+      "--font-tertiaire",
+      "--font-titre",
+      "--grain",
+      "--grain-opacite-clair",
+      "--grain-opacite-sombre",
+      "--gris",
+      "--gris-a40",
+      "--gris-clair",
+      "--gris-fonce",
+      "--hauteur-header",
+      "--largeur-corps-court",
+      "--largeur-lede",
+      "--largeur-page",
+      "--largeur-texte",
+      "--ld-encre",
+      "--ld-filet",
+      "--ld-secondaire",
+      "--lh-citation",
+      "--lh-corps",
+      "--lh-cover",
+      "--lh-lede",
+      "--lh-lettrine",
+      "--lh-long",
+      "--lh-titre",
+      "--lin",
+      "--ls-btn",
+      "--ls-eyebrow",
+      "--ls-lang",
+      "--ls-leader",
+      "--ls-role",
+      "--ls-stat",
+      "--ls-tag",
+      "--ls-tert",
+      "--ls-titre",
+      "--lueur-dot",
+      "--lueur-douce",
+      "--lueur-initiale",
+      "--lueur-initiale-claire",
+      "--lueur-point",
+      "--marge-page",
+      "--marge-page-large",
+      "--metal-noir",
+      "--noir",
+      "--noir-chaud-bas",
+      "--noir-chaud-haut",
+      "--noir-sec",
+      "--ombre",
+      "--or",
+      "--or-a16",
+      "--or-a40",
+      "--or-a55",
+      "--poids-corps",
+      "--poids-italique",
+      "--poids-tag",
+      "--poids-tert",
+      "--poids-titre",
+      "--rayon-2",
+      "--rayon-4",
+      "--rayon-6",
+      "--rayon-8",
+      "--rayon-bouton",
+      "--rayon-cadre",
+      "--section-head-bas",
+      "--section-y",
+      "--section-y-large",
+      "--spine-blanc",
+      "--surface",
+      "--surface-claire",
+      "--surface-sombre",
+      "--tert",
+      "--tert-annee",
+      "--tert-eyebrow",
+      "--tert-leader",
+      "--tert-prix",
+      "--tert-role",
+      "--tert-tag",
+      "--text-1",
+      "--text-2",
+      "--text-3",
+      "--text-clair-1",
+      "--text-clair-2",
+      "--text-clair-3",
+      "--text-sombre-1",
+      "--text-sombre-2",
+      "--text-sombre-3",
+      "--texture-enduit",
+      "--texture-lin",
+      "--texture-metal",
+      "--texture-taille",
+      "--titre-4",
+      "--titre-cover",
+      "--titre-hero",
+      "--titre-section",
+      "--transition",
+      "--transition-texte",
+      "--voile-lumiere",
+      "--voile-lumiere-faible",
+      "--voile-noir",
+      "--voile-ombre"
+    ],
+    "tokenKinds": {
+      "--blanc": "color",
+      "--noir": "color",
+      "--noir-sec": "color",
+      "--blanc-sec": "color",
+      "--gris": "color",
+      "--gris-fonce": "color",
+      "--or": "color",
+      "--gris-clair": "color",
+      "--filet-blanc": "color",
+      "--spine-blanc": "color",
+      "--voile-noir": "color",
+      "--or-a55": "color",
+      "--or-a40": "color",
+      "--or-a16": "color",
+      "--gris-a40": "color",
+      "--alerte-clair": "color",
+      "--alerte-sombre": "color",
+      "--noir-chaud-haut": "color",
+      "--noir-chaud-bas": "color",
+      "--voile-lumiere": "color",
+      "--voile-lumiere-faible": "color",
+      "--voile-ombre": "color",
+      "--fond-sombre": "color",
+      "--surface-sombre": "color",
+      "--text-sombre-1": "font",
+      "--text-sombre-2": "font",
+      "--text-sombre-3": "font",
+      "--border-sombre": "color",
+      "--surface-claire": "color",
+      "--text-clair-1": "font",
+      "--text-clair-2": "font",
+      "--text-clair-3": "font",
+      "--border-clair": "color",
+      "--accent": "color",
+      "--surface": "color",
+      "--text-1": "font",
+      "--text-2": "font",
+      "--text-3": "font",
+      "--border": "color",
+      "--font-titre": "font",
+      "--font-corps": "font",
+      "--font-tertiaire": "font",
+      "--font-chinois": "font",
+      "--font-chinois-exception": "font",
+      "--titre-cover": "font",
+      "--titre-hero": "font",
+      "--titre-section": "font",
+      "--titre-4": "spacing",
+      "--corps": "spacing",
+      "--corps-sm": "spacing",
+      "--corps-note": "spacing",
+      "--corps-legende": "spacing",
+      "--citation": "font",
+      "--tert-prix": "spacing",
+      "--tert-annee": "spacing",
+      "--tert": "spacing",
+      "--tert-eyebrow": "spacing",
+      "--tert-tag": "spacing",
+      "--tert-role": "spacing",
+      "--tert-leader": "spacing",
+      "--lh-cover": "other",
+      "--lh-titre": "other",
+      "--lh-corps": "other",
+      "--lh-lede": "other",
+      "--lh-long": "other",
+      "--lh-lettrine": "other",
+      "--lh-citation": "other",
+      "--ls-titre": "spacing",
+      "--ls-tert": "spacing",
+      "--ls-stat": "spacing",
+      "--ls-leader": "spacing",
+      "--ls-btn": "spacing",
+      "--ls-role": "spacing",
+      "--ls-lang": "spacing",
+      "--ls-tag": "spacing",
+      "--ls-eyebrow": "spacing",
+      "--poids-titre": "font",
+      "--poids-corps": "font",
+      "--poids-italique": "font",
+      "--poids-tert": "font",
+      "--poids-tag": "font",
+      "--esp-1": "spacing",
+      "--esp-2": "spacing",
+      "--esp-3": "spacing",
+      "--esp-4": "spacing",
+      "--esp-5": "spacing",
+      "--esp-6": "spacing",
+      "--esp-7": "spacing",
+      "--esp-8": "spacing",
+      "--esp-9": "spacing",
+      "--esp-10": "spacing",
+      "--section-y": "spacing",
+      "--section-y-large": "spacing",
+      "--cover-y-haut": "spacing",
+      "--cover-y-haut-large": "spacing",
+      "--cover-y-bas": "spacing",
+      "--cover-y-bas-large": "spacing",
+      "--section-head-bas": "spacing",
+      "--hauteur-header": "spacing",
+      "--largeur-page": "spacing",
+      "--largeur-texte": "spacing",
+      "--largeur-lede": "spacing",
+      "--largeur-corps-court": "spacing",
+      "--marge-page": "spacing",
+      "--marge-page-large": "spacing",
+      "--filet": "spacing",
+      "--filet-motif": "spacing",
+      "--rayon-2": "spacing",
+      "--rayon-4": "spacing",
+      "--rayon-6": "spacing",
+      "--rayon-8": "spacing",
+      "--rayon-cadre": "spacing",
+      "--rayon-bouton": "spacing",
+      "--coupe-bouton": "spacing",
+      "--ombre": "shadow",
+      "--lueur-point": "color",
+      "--lueur-dot": "shadow",
+      "--lueur-douce": "color",
+      "--lueur-initiale": "color",
+      "--lueur-initiale-claire": "shadow",
+      "--transition": "other",
+      "--transition-texte": "other",
+      "--balayage-or": "other",
+      "--balayage-entree": "other",
+      "--balayage-pause": "other",
+      "--balayage-boucle": "other",
+      "--grain": "other",
+      "--grain-opacite-sombre": "other",
+      "--grain-opacite-clair": "other",
+      "--texture-lin": "other",
+      "--lin": "color",
+      "--texture-enduit": "other",
+      "--enduit-noir": "color",
+      "--texture-metal": "other",
+      "--metal-noir": "color",
+      "--texture-taille": "other",
+      "--ld-encre": "color",
+      "--ld-secondaire": "color",
+      "--ld-filet": "color"
+    },
+    "fontFamilies": [
+      "Cinzel",
+      "Cormorant",
+      "Cormorant SC",
+      "Long Cang",
+      "Ma Shan Zheng"
+    ]
+  }
+}

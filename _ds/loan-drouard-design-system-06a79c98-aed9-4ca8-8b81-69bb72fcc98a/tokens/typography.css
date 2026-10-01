@@ -1,0 +1,57 @@
+/* 02 — TYPOGRAPHIE. Tailles, graisses et interlettrages relevés dans le fichier source. */
+:root {
+  --font-titre: "Cormorant SC", Georgia, serif;
+  --font-corps: "Cormorant", Georgia, serif;
+  --font-tertiaire: "Cinzel", Georgia, serif;
+  --font-chinois: "Long Cang", cursive;
+  --font-chinois-exception: "Ma Shan Zheng", cursive;
+
+  /* Titres — Cormorant SC 600 */
+  --titre-cover: clamp(36px, 7.4vw, 68px); /* @kind font */
+  --titre-hero: clamp(28px, 5.4vw, 50px); /* @kind font */
+  --titre-section: clamp(27px, 4vw, 40px); /* @kind font */
+  --titre-4: 19px;
+
+  /* Corps — Cormorant */
+  --corps: 19px;
+  --corps-sm: 15px;
+  --corps-note: 14.5px;
+  --corps-legende: 14px;
+  --citation: clamp(20px, 2.8vw, 27px); /* @kind font */
+
+  /* Tertiaire — Cinzel */
+  --tert-prix: 19px;
+  --tert-annee: 14px;
+  --tert: 13px;
+  --tert-eyebrow: 12.5px;
+  --tert-tag: 12px;
+  --tert-role: 11px;
+  --tert-leader: 10.5px;
+
+  /* Interlignes */
+  --lh-cover: 1.08; /* @kind other */
+  --lh-titre: 1.14; /* @kind other */
+  --lh-corps: 1.65; /* @kind other */
+  --lh-lede: 1.75; /* @kind other */
+  --lh-long: 1.8; /* @kind other */
+  --lh-lettrine: 1.85; /* @kind other */
+  --lh-citation: 1.5; /* @kind other */
+
+  /* Interlettrages */
+  --ls-titre: 0.01em;
+  --ls-tert: 0.03em;
+  --ls-stat: 0.04em;
+  --ls-leader: 0.05em;
+  --ls-btn: 0.08em;
+  --ls-role: 0.1em;
+  --ls-lang: 0.12em;
+  --ls-tag: 0.14em;
+  --ls-eyebrow: 0.16em;
+
+  /* Graisses */
+  --poids-titre: 600; /* @kind font */
+  --poids-corps: 400; /* @kind font */
+  --poids-italique: 500; /* @kind font */
+  --poids-tert: 500; /* @kind font */
+  --poids-tag: 600; /* @kind font */
+}
