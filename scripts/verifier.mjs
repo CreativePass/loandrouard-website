@@ -80,7 +80,10 @@ async function ouvrir(ctx, url, journal) {
   });
   // Ressources externes (Google Fonts, CDN…) : téléchargées une fois, puis servies à l'identique
   // aux deux côtés, pour que la comparaison ne dépende pas des aléas du réseau.
-  await page.route((u) => !u.href.startsWith(REF) && !u.href.startsWith(CIBLE), async (route) => {
+  // Derrière un proxy (HTTPS_PROXY), Chromium perd des requêtes (ERR_TOO_MANY_RETRIES) : le site distant
+  // est alors lui aussi téléchargé par Node, octet pour octet, comme les ressources externes.
+  const distant = !!process.env.HTTPS_PROXY && CIBLE.startsWith("https://");
+  await page.route((u) => !u.href.startsWith(REF) && (distant || !u.href.startsWith(CIBLE)), async (route) => {
     const url = route.request().url();
     if (!cdnJoignable && CDN_LOCAL[url]) return route.fulfill({ path: path.join(RACINE, "node_modules", CDN_LOCAL[url]),
       contentType: "text/javascript", headers: { "access-control-allow-origin": "*" } });
@@ -137,7 +140,7 @@ for (const largeur of LARGEURS) {
   const dossier = path.join(SORTIE, String(largeur));
   fs.mkdirSync(dossier, { recursive: true });
   const ctx = await navigateur.newContext({ viewport: { width: largeur, height: largeur > 500 ? 900 : 844 },
-    deviceScaleFactor: 1, reducedMotion: "no-preference", ignoreHTTPSErrors: !cdnJoignable });
+    deviceScaleFactor: 1, reducedMotion: "no-preference", ignoreHTTPSErrors: !cdnJoignable || !!process.env.HTTPS_PROXY });
   for (const [nom, chemin] of PAGES) {
     const journal = [];
     const pr = await ouvrir(ctx, REF + chemin);

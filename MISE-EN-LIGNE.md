@@ -56,9 +56,13 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 
 - [x] Script de construction, configuration Cloudflare, script de vérification
 - [x] Accès Cloudflare (jeton d'API) et réseau de l'environnement
-- [ ] Déploiement de prévisualisation (`loandrouard-site.loandrouard-website.workers.dev`), puis vérifications du § 8
-- [ ] Worker `loan-api` : déployer le code de référence (+ option A) avec `SITE_ORIGIN` = domaine + adresse de prévisualisation
-- [ ] Stripe : URL des CGV et de Privacy, portail client, domaine de paiement, e-mail de confirmation (option A)
+- [x] Déploiement de prévisualisation (`loandrouard-site.loandrouard-website.workers.dev`) — 01/10
+- [ ] Vérifications du § 8 sur la prévisualisation
+- [x] Worker `loan-api` : code de référence (+ option A) déployé, `SITE_ORIGIN` = domaine + adresse de prévisualisation — 01/10
+- [ ] `loan-api` : `/places` renvoie `{"error":"stripe"}` (502). La clé du Worker lit bien les sessions ; droit « Abonnements : lecture » probablement absent (clé restreinte). Indispensable aussi pour débloquer la carte du programme.
+- [x] Stripe (API, accord du 01/10) : liens de repli Single et Pack → facture avec mémo WhatsApp (option A). Lien HYNEOS laissé tel quel. Pas de redirection après paiement (§ 6.5) : la page de confirmation actuelle est gardée.
+- [ ] Stripe (tableau de bord, Loan) : site web, URL des CGV et de Privacy, libellé bancaire, e-mails « Paiements réussis », mémo de facture par défaut (programme)
+- [ ] Stripe (API, accordé) : domaine de paiement `loandrouard.com` (Apple Pay / Google Pay), juste après la bascule
 - [ ] Bascule du domaine : loandrouard.com → `loandrouard-site` ; www et .fr → `loandrouard-redirection` ; « Always Use HTTPS »
 - [ ] Achat test réel Single 49 € puis remboursement ; abonnement puis résiliation et remboursement
 - [ ] Convention MED CONSO DEV (https://www.medconsodev.eu/demande-adhesion-pro.php)
