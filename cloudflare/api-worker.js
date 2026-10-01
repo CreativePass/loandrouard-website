@@ -26,6 +26,16 @@ const ABO_ACTIF = ["active", "trialing", "past_due"];
 // Places simultanées. Pack : achats des 180 derniers jours. Programme : abonnements en cours.
 const PLACES = { pack: { total: 6, jours: 180 }, prog: { total: 2 } };
 
+// E-mail de confirmation (option A) : Stripe joint une facture dont le mémo contient le lien WhatsApp
+// et le lien de retour vers le site. Mêmes noms et même message que la carte débloquée de la page.
+const NOMS = { single: "Single feedback", pack: "3× feedback pack", prog: "Quarterly program" };
+const RETOUR = "https://loandrouard.com/Video%20Feedback.dc.html#formules";
+const memo = (formule, numero) =>
+  "Send your video to Loan on WhatsApp / Envoyez votre vidéo à Loan sur WhatsApp :\n" +
+  "https://wa.me/" + numero + "?text=" +
+  encodeURIComponent("Hi Loan, I just purchased the " + NOMS[formule] + ". Here’s my video for the analysis.") +
+  "\n\nBack to the site / Retour au site :\n" + RETOUR;
+
 // Formule d'une session : métadonnée (paiement intégré), sinon déduite du montant (liens de paiement).
 const formuleDe = (s) => {
   const m = s.metadata && s.metadata.formule;
@@ -109,6 +119,11 @@ export default {
       if (f.mode === "subscription") {
         corps.set("subscription_data[metadata][formule]", formule);
         corps.set("custom_text[submit][message]", "Vous serez prélevé de 499 € aujourd'hui, puis tous les 3 mois jusqu'à résiliation.");
+        // Abonnement : Stripe crée lui-même la facture ; son mémo est le mémo par défaut du compte (tableau de bord).
+      } else if (env.WHATSAPP_NUMBER) {
+        corps.set("invoice_creation[enabled]", "true");
+        corps.set("invoice_creation[invoice_data][description]", memo(formule, env.WHATSAPP_NUMBER));
+        corps.set("invoice_creation[invoice_data][metadata][formule]", formule);
       }
       const r = await stripe("checkout/sessions", { method: "POST", body: corps });
       const s = await r.json();

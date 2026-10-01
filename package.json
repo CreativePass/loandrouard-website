@@ -6,7 +6,9 @@
     "construire": "node scripts/construire.mjs",
     "apercu": "node scripts/construire.mjs && wrangler dev --port 8788",
     "verifier": "node scripts/verifier.mjs",
-    "publier": "node scripts/construire.mjs && wrangler deploy"
+    "publier": "node scripts/construire.mjs && wrangler deploy",
+    "publier:api": "wrangler deploy --config cloudflare/wrangler.toml",
+    "publier:redirection": "wrangler deploy --config wrangler.redirection.jsonc"
   },
   "devDependencies": {
     "pixelmatch": "^7.1.0",

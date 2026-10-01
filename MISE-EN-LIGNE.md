@@ -33,19 +33,32 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 - Worker `loandrouard-site` (`wrangler.jsonc`, `worker/site.js`). Il sert `public/` tel quel, avec `html_handling = "none"` : pas de « pretty URLs », `?lang=` et `?session_id=` sont conservés.
 - `/` affiche `index.html`. Toute adresse inconnue (`Home.dc.html`, `Press.dc.html`…) renvoie 404.
 - Cache : HTML, CSS, `support.js` et `_ds_bundle.js` sont revalidés à chaque visite (réglage par défaut de Cloudflare). Les scripts versionnés par `?v=` ont un cache d'1 an. Images et polices : 1 jour.
-- L'ancien site (Worker `loandrouard-website-web`, routes loandrouard.com + 4 autres) reste intact jusqu'à la bascule validée par Loan.
+- L'ancien site (Worker `loandrouard-website-web`, 4 Custom Domains : apex + www, .com et .fr) reste intact jusqu'à la bascule validée par Loan. Retour arrière possible à tout moment en lui rendant ses domaines.
+
+## Redirections (www et .fr)
+
+Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirection.js`) : `www.loandrouard.com`, `loandrouard.fr` et `www.loandrouard.fr` renvoient une redirection 301 vers `https://loandrouard.com`, en gardant le chemin et les paramètres. Déploiement : `npm run publier:redirection`. Les domaines ne lui sont rattachés qu'à la bascule.
 
 ## Worker API `loan-api`
 
-`cloudflare/wrangler.toml` contient `keep_vars = true` : un déploiement ne touche ni `SITE_ORIGIN` ni les secrets. Avant tout déploiement, comparer avec la version en ligne (code et date de compatibilité). Rien n'est déployé sans l'accord de Loan.
+- Code de référence : `cloudflare/api-worker.js`. Déploiement : `npm run publier:api` (après accord de Loan uniquement).
+- `cloudflare/wrangler.toml` : même date de compatibilité et mêmes journaux que la version créée dans le tableau de bord ; `SITE_ORIGIN` y est écrit en clair (`[vars]`) ; `keep_vars = true` ; les secrets ne sont jamais touchés.
+- E-mail de confirmation, option A : pour Single et Pack, la session crée une facture dont le mémo contient le lien WhatsApp (même message que la page) et le lien de retour `Video%20Feedback.dc.html#formules`. Pour l'abonnement, c'est le mémo par défaut des factures du compte Stripe (réglage du tableau de bord).
+
+## Constats du 01/10/2026 (lecture seule)
+
+- Cloudflare : zones `loandrouard.com` et `loandrouard.fr` actives (achetées chez OVH, DNS chez Cloudflare). Les 4 adresses (apex + www, .com et .fr) sont des « Custom Domains » du Worker `loandrouard-website-web` (ancien site). E-mail : MX OVH, inchangés. « Always Use HTTPS » désactivé sur les deux zones.
+- `loan-api` en ligne = ancienne version du 24/09 : pas de `/places`, prix écrits dans le code, programme en paiement unique, ni case CGV ni téléphone. Le fichier du dépôt est la référence ; il faut le déployer.
+- Stripe : prix et liens de paiement conformes au § 4 ; portail client actif (résiliation en fin de période, lien de connexion correct) ; domaine de paiement : seul `buy.stripe.com` est enregistré.
+- Stripe, à corriger dans le tableau de bord : site web = soundcloud.com/hyneos ; description d'activité = « Vente de musiques » ; libellé bancaire = « CIRCADIAN RHYTHM » (préfixe « HYNEOS ») ; e-mail et téléphone support corrects.
 
 ## État au 01/10/2026
 
 - [x] Script de construction, configuration Cloudflare, script de vérification
-- [ ] Accès Cloudflare (jeton d'API) et réseau de l'environnement
+- [x] Accès Cloudflare (jeton d'API) et réseau de l'environnement
 - [ ] Déploiement de prévisualisation (`loandrouard-site.loandrouard-website.workers.dev`), puis vérifications du § 8
-- [ ] `SITE_ORIGIN` du Worker `loan-api` : ajouter l'adresse de prévisualisation, puis le domaine
+- [ ] Worker `loan-api` : déployer le code de référence (+ option A) avec `SITE_ORIGIN` = domaine + adresse de prévisualisation
 - [ ] Stripe : URL des CGV et de Privacy, portail client, domaine de paiement, e-mail de confirmation (option A)
-- [ ] Bascule du domaine (apex + www, et loandrouard.fr → loandrouard.com)
+- [ ] Bascule du domaine : loandrouard.com → `loandrouard-site` ; www et .fr → `loandrouard-redirection` ; « Always Use HTTPS »
 - [ ] Achat test réel Single 49 € puis remboursement ; abonnement puis résiliation et remboursement
 - [ ] Convention MED CONSO DEV (https://www.medconsodev.eu/demande-adhesion-pro.php)
