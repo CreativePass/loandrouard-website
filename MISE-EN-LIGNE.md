@@ -44,7 +44,9 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 
 - Code de référence : `cloudflare/api-worker.js`. Déploiement : `npm run publier:api` (après accord de Loan uniquement).
 - `cloudflare/wrangler.toml` : même date de compatibilité et mêmes journaux que la version créée dans le tableau de bord ; `SITE_ORIGIN` y est écrit en clair (`[vars]`) ; `keep_vars = true` ; les secrets ne sont jamais touchés.
-- E-mail de confirmation, option A : pour Single et Pack, la session crée une facture dont le mémo contient le lien WhatsApp (même message que la page) et le lien de retour `Video%20Feedback.dc.html#formules`. Pour l'abonnement, c'est le mémo par défaut des factures du compte Stripe (réglage du tableau de bord).
+- Langue du paiement : textes de la case CGV et du bouton d'abonnement en français si le navigateur du client est en français (`Accept-Language`), en anglais sinon. Liens de secours : anglais + français.
+- E-mail de confirmation, option A : pour Single et Pack, la session crée une facture dont le mémo (dans la langue du client) contient un lien personnel `https://loandrouard.com/acces/<jeton>` : le site (`worker/site.js`, liaison de service `API`) demande à `loan-api` (`GET /acces?jeton=`) la session qui porte ce jeton, puis redirige vers `/?session_id=…`, qui rouvre la carte payée (bouton WhatsApp + QR code) sur n'importe quel appareil. Liens de secours : mémo bilingue court avec `https://wa.me/33772041266`. Abonnement : mémo par défaut des factures du compte Stripe (tableau de bord).
+- Remboursement total d'un achat unique : `/whatsapp` renvoie 402, la carte se referme (nécessite le droit « PaymentIntents : lecture » de la clé ; sans lui, le contrôle est ignoré).
 
 ## Constats du 01/10/2026 (lecture seule)
 
@@ -68,8 +70,11 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] Stripe (API, accord du 01/10) : liens de repli Single et Pack → facture avec mémo WhatsApp (option A). Lien HYNEOS laissé tel quel. Pas de redirection après paiement (§ 6.5) : la page de confirmation actuelle est gardée.
 - [x] Stripe (tableau de bord, Loan, 01/10) : site web `https://loandrouard.com`, description d'activité, URL des CGV et de Privacy renseignées, e-mails « Paiements réussis » activés.
 - [x] Stripe (tableau de bord, Loan, 01/10) : mémo par défaut des factures (programme) saisi dans Facturation → Factures ; libellé bancaire « LOAN DROUARD », version courte « LOAN » (vérifié par l'API).
-- [ ] Stripe : vérifier les adresses exactes des CGV et de Privacy dans les informations publiques (non lisibles par l'API).
+- [x] Stripe : adresses des CGV et de Privacy vérifiées par Loan (01/10).
 - [x] Stripe (API, accordé) : domaine de paiement `loandrouard.com` enregistré, Apple Pay / Google Pay actifs — 01/10
 - [x] Bascule du domaine (accord du 01/10) : loandrouard.com → `loandrouard-site` (118 fichiers servis identiques à `public/`) ; www et .fr → `loandrouard-redirection` (301, chemin et paramètres conservés) ; « Always Use HTTPS » ; MX OVH inchangés
-- [ ] Achat test réel Single 49 € puis remboursement ; abonnement puis résiliation et remboursement
-- [ ] Convention MED CONSO DEV (https://www.medconsodev.eu/demande-adhesion-pro.php)
+- [x] Achat test réel Single 49 € (01/10, paiement intégré) : payé, facture avec mémo, libellé « LOAN DROUARD », `/whatsapp` → accès débloqué
+- [ ] Remboursement de l'achat test, puis vérifier que la carte se referme
+- [ ] Achat test de l'abonnement, puis résiliation et remboursement
+- [x] Demande d'adhésion MED CONSO DEV envoyée (01/10) — convention à signer à réception
+- [ ] Convention MED CONSO DEV signée (https://www.medconsodev.eu/demande-adhesion-pro.php)
