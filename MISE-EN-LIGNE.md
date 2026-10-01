@@ -67,7 +67,8 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] `loan-api` : `/places` en erreur (clé restreinte sans « Abonnements : lecture ») — droit ajouté par Loan le 01/10, `/places` = `{"pack":6,"prog":2}`.
 - [x] Stripe (API, accord du 01/10) : liens de repli Single et Pack → facture avec mémo WhatsApp (option A). Lien HYNEOS laissé tel quel. Pas de redirection après paiement (§ 6.5) : la page de confirmation actuelle est gardée.
 - [x] Stripe (tableau de bord, Loan, 01/10) : site web `https://loandrouard.com`, description d'activité, URL des CGV et de Privacy renseignées, e-mails « Paiements réussis » activés.
-- [ ] Stripe (tableau de bord, Loan) : mémo par défaut à saisir dans **Facturation → Factures** (il a été saisi par erreur dans « Devis ») ; vérifier les adresses exactes des CGV et de Privacy ; libellé bancaire encore « CIRCADIAN RHYTHM » (conseillé : « LOAN DROUARD »).
+- [x] Stripe (tableau de bord, Loan, 01/10) : mémo par défaut des factures (programme) saisi dans Facturation → Factures ; libellé bancaire « LOAN DROUARD », version courte « LOAN » (vérifié par l'API).
+- [ ] Stripe : vérifier les adresses exactes des CGV et de Privacy dans les informations publiques (non lisibles par l'API).
 - [x] Stripe (API, accordé) : domaine de paiement `loandrouard.com` enregistré, Apple Pay / Google Pay actifs — 01/10
 - [x] Bascule du domaine (accord du 01/10) : loandrouard.com → `loandrouard-site` (118 fichiers servis identiques à `public/`) ; www et .fr → `loandrouard-redirection` (301, chemin et paramètres conservés) ; « Always Use HTTPS » ; MX OVH inchangés
 - [ ] Achat test réel Single 49 € puis remboursement ; abonnement puis résiliation et remboursement
