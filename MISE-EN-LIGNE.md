@@ -33,11 +33,12 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 - Worker `loandrouard-site` (`wrangler.jsonc`, `worker/site.js`). Il sert `public/` tel quel, avec `html_handling = "none"` : pas de « pretty URLs », `?lang=` et `?session_id=` sont conservés.
 - `/` affiche `index.html`. Toute adresse inconnue (`Home.dc.html`, `Press.dc.html`…) renvoie 404.
 - Cache : HTML, CSS, `support.js` et `_ds_bundle.js` sont revalidés à chaque visite (réglage par défaut de Cloudflare). Les scripts versionnés par `?v=` ont un cache d'1 an. Images et polices : 1 jour.
-- L'ancien site (Worker `loandrouard-website-web`, 4 Custom Domains : apex + www, .com et .fr) reste intact jusqu'à la bascule validée par Loan. Retour arrière possible à tout moment en lui rendant ses domaines.
+- Domaine : `loandrouard.com` (Custom Domain, déclaré dans `wrangler.jsonc`). « Always Use HTTPS » activé sur les zones .com et .fr.
+- L'ancien site (Worker `loandrouard-website-web`) est conservé, sans domaine. **Retour arrière** : Cloudflare → Workers → `loandrouard-website-web` → Settings → Domains & Routes → ajouter `loandrouard.com`, `www.loandrouard.com`, `loandrouard.fr`, `www.loandrouard.fr` (accepter de les reprendre aux autres Workers).
 
 ## Redirections (www et .fr)
 
-Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirection.js`) : `www.loandrouard.com`, `loandrouard.fr` et `www.loandrouard.fr` renvoient une redirection 301 vers `https://loandrouard.com`, en gardant le chemin et les paramètres. Déploiement : `npm run publier:redirection`. Les domaines ne lui sont rattachés qu'à la bascule.
+Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirection.js`) : `www.loandrouard.com`, `loandrouard.fr` et `www.loandrouard.fr` renvoient une redirection 301 vers `https://loandrouard.com`, en gardant le chemin et les paramètres. Déploiement : `npm run publier:redirection`.
 
 ## Worker API `loan-api`
 
@@ -63,10 +64,11 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
   - captures 1440 / 1280 / 390 px : écarts uniquement sur l'e-mail et les crédits (et le texte qu'ils décalent sur mobile), plus quelques pixels d'animations saisies à un instant différent sur Video Feedback ;
   - en-têtes Home / The Journey / Press grisés et hors tabulation, bloc « Powered by » présent, aucune erreur JS ni 404 (hors `/places`, voir plus bas).
 - [x] Worker `loan-api` : code de référence (+ option A) déployé, `SITE_ORIGIN` = domaine + adresse de prévisualisation — 01/10
-- [ ] `loan-api` : `/places` renvoie `{"error":"stripe"}` (502). La clé du Worker lit bien les sessions ; droit « Abonnements : lecture » probablement absent (clé restreinte). Indispensable aussi pour débloquer la carte du programme.
+- [x] `loan-api` : `/places` en erreur (clé restreinte sans « Abonnements : lecture ») — droit ajouté par Loan le 01/10, `/places` = `{"pack":6,"prog":2}`.
 - [x] Stripe (API, accord du 01/10) : liens de repli Single et Pack → facture avec mémo WhatsApp (option A). Lien HYNEOS laissé tel quel. Pas de redirection après paiement (§ 6.5) : la page de confirmation actuelle est gardée.
-- [ ] Stripe (tableau de bord, Loan) : site web, URL des CGV et de Privacy, libellé bancaire, e-mails « Paiements réussis », mémo de facture par défaut (programme)
-- [ ] Stripe (API, accordé) : domaine de paiement `loandrouard.com` (Apple Pay / Google Pay), juste après la bascule
-- [ ] Bascule du domaine : loandrouard.com → `loandrouard-site` ; www et .fr → `loandrouard-redirection` ; « Always Use HTTPS »
+- [x] Stripe (tableau de bord, Loan, 01/10) : site web `https://loandrouard.com`, description d'activité, URL des CGV et de Privacy renseignées, e-mails « Paiements réussis » activés.
+- [ ] Stripe (tableau de bord, Loan) : mémo par défaut à saisir dans **Facturation → Factures** (il a été saisi par erreur dans « Devis ») ; vérifier les adresses exactes des CGV et de Privacy ; libellé bancaire encore « CIRCADIAN RHYTHM » (conseillé : « LOAN DROUARD »).
+- [x] Stripe (API, accordé) : domaine de paiement `loandrouard.com` enregistré, Apple Pay / Google Pay actifs — 01/10
+- [x] Bascule du domaine (accord du 01/10) : loandrouard.com → `loandrouard-site` (118 fichiers servis identiques à `public/`) ; www et .fr → `loandrouard-redirection` (301, chemin et paramètres conservés) ; « Always Use HTTPS » ; MX OVH inchangés
 - [ ] Achat test réel Single 49 € puis remboursement ; abonnement puis résiliation et remboursement
 - [ ] Convention MED CONSO DEV (https://www.medconsodev.eu/demande-adhesion-pro.php)
