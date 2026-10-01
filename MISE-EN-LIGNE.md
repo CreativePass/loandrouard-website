@@ -74,7 +74,7 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] Stripe (API, accordé) : domaine de paiement `loandrouard.com` enregistré, Apple Pay / Google Pay actifs — 01/10
 - [x] Bascule du domaine (accord du 01/10) : loandrouard.com → `loandrouard-site` (118 fichiers servis identiques à `public/`) ; www et .fr → `loandrouard-redirection` (301, chemin et paramètres conservés) ; « Always Use HTTPS » ; MX OVH inchangés
 - [x] Achat test réel Single 49 € (01/10, paiement intégré) : payé, facture avec mémo, libellé « LOAN DROUARD », `/whatsapp` → accès débloqué
-- [ ] Remboursement de l'achat test, puis vérifier que la carte se referme
+- [x] Remboursement de l'achat test (01/10) : `/whatsapp` → 402 « remboursée », la carte se referme (droit « PaymentIntents : lecture » présent)
 - [ ] Achat test de l'abonnement, puis résiliation et remboursement
 - [x] Demande d'adhésion MED CONSO DEV envoyée (01/10) — convention à signer à réception
 - [ ] Convention MED CONSO DEV signée (https://www.medconsodev.eu/demande-adhesion-pro.php)
