@@ -1,0 +1,7 @@
+node_modules/
+public/
+.wrangler/
+verification/
+.dev.vars
+verification-site/
+verification-temoin/
