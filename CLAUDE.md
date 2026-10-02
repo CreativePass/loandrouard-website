@@ -5,13 +5,14 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 ## Règles
 - **Demander l'accord de Loan avant toute action sur Stripe, Cloudflare ou les DNS**, y compris chaque mise en ligne (`npm run publier`, `publier:api`, `publier:redirection`). Les lectures sont libres.
 - Ne jamais demander la clé secrète Stripe dans la conversation.
-- Les pages `*.dc.html` viennent de l'outil de design : ne rien réécrire, reformater ni convertir. Seules les corrections listées dans `scripts/construire.mjs` sont appliquées, sur la copie `public/`.
+- Les pages `*.dc.html` viennent de l'outil de design : ne rien réécrire, reformater ni convertir. Seules les corrections listées dans `scripts/construire.mjs` (contenu) et `scripts/optimisations.mjs` (performance) sont appliquées, sur la copie `public/`.
 - Pas d'analytics, cookies, traceurs, bannière ni CSP sans demande de Loan.
 - **Terminer chaque réponse par un résumé** : réponses aux questions posées, puis liste de ce que Loan doit faire.
 
 ## Où trouver quoi
 - `PASSATION-CLAUDE-CODE.md` : cahier des charges d'origine (liste blanche, paiement, vérifications § 8, plus tard § 9).
 - `MISE-EN-LIGNE.md` : fonctionnement actuel (hébergement, redirections, Worker API, e-mails Stripe), commandes, état et retour arrière.
+- `PERFORMANCE.md` : optimisations de performance (mesures avant/après, ce qui reste possible) et comment re-mesurer (`scripts/mesurer.mjs`).
 
 ## Republier
 1. Remplacer les fichiers de l'export à la racine.

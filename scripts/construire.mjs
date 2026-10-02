@@ -3,6 +3,8 @@
 // Usage : npm run construire
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
+import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
@@ -91,6 +93,9 @@ const HEADERS = `# Généré par scripts/construire.mjs — ne pas modifier à l
   Cache-Control: public, max-age=31536000, immutable
 /blueprint.js
   Cache-Control: public, max-age=31536000, immutable
+# Bibliothèques servies par le site, versionnées dans leur chemin (vendor/react-18.3.1/…) : cache long.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
 # Images et polices non versionnées : cache modéré (1 jour).
 /assets/*
   Cache-Control: public, max-age=86400
@@ -133,7 +138,8 @@ if (fs.existsSync(indexExport) &&
   avert.push("index.html de l'export différait de Video Feedback.dc.html : remplacé par la copie exacte.");
 }
 
-for (const c of CORRECTIONS) {
+// Corrections de contenu, puis optimisations de performance (scripts/optimisations.mjs).
+for (const c of [...CORRECTIONS, ...OPTIMISATIONS]) {
   for (const f of c.fichiers) {
     const p = path.join(PUBLIC, f);
     if (!fs.existsSync(p)) continue;
@@ -145,6 +151,31 @@ for (const c of CORRECTIONS) {
     else if (n === c.n) { fs.writeFileSync(p, t.split(c.avant).join(c.apres)); console.log(`Correction « ${c.quoi} » : ${n} remplacement(s)`); }
     else erreurs.push(`Correction « ${c.quoi} » : ${n} occurrence(s) dans ${f} au lieu de ${c.n} — l'export a changé, à revoir`);
   }
+}
+
+// Fichiers ajoutés ou remplacés par les optimisations (scripts/optimisations.mjs), après contrôle.
+const empreinte = (algo, f, enc = "hex") => crypto.createHash(algo).update(fs.readFileSync(f)).digest(enc);
+for (const f of FICHIERS) {
+  const de = path.join(RACINE, f.de), vers = path.join(PUBLIC, f.vers);
+  if (!fs.existsSync(de)) { erreurs.push(`Optimisation « ${f.quoi} » : ${f.de} introuvable (npm install ?)`); continue; }
+  if (f.exige) {
+    const t = fs.readFileSync(path.join(PUBLIC, f.exige.fichier), "utf8"), manque = f.exige.textes.filter((x) => !t.includes(x));
+    if (manque.length) { erreurs.push(`Optimisation « ${f.quoi} » : ${f.exige.fichier} ne contient plus ${manque.join(", ")} — le moteur a changé, à revoir`); continue; }
+  }
+  if (f.sri) {
+    const m = fs.readFileSync(path.join(PUBLIC, f.sri.fichier), "utf8").match(f.sri.motif);
+    if (!m) { erreurs.push(`Optimisation « ${f.quoi} » : empreinte introuvable dans ${f.sri.fichier} — le moteur a changé, à revoir`); continue; }
+    if ("sha384-" + empreinte("sha384", de, "base64") !== m[1]) { erreurs.push(`Optimisation « ${f.quoi} » : ${f.de} diffère du fichier attendu par ${f.sri.fichier}`); continue; }
+  }
+  if (f.original) {
+    if (!fs.existsSync(vers) || empreinte("sha256", vers) !== f.original) {
+      avert.push(`Optimisation « ${f.quoi} » ignorée : ${f.vers} a changé dans l'export (version optimisée à refaire)`);
+      continue;
+    }
+  }
+  fs.mkdirSync(path.dirname(vers), { recursive: true });
+  fs.copyFileSync(de, vers);
+  console.log(`Optimisation « ${f.quoi} » : ${f.vers}`);
 }
 
 // index.html = copie octet pour octet de Video Feedback corrigée : https://loandrouard.com/ affiche la même page.
@@ -176,11 +207,18 @@ for (const f of textes) {
 }
 
 // Les corrections ne doivent pas déséquilibrer la structure de la page (balises ouvertes / fermées).
-for (const f of new Set(CORRECTIONS.flatMap((c) => c.fichiers))) {
+for (const f of new Set([...CORRECTIONS, ...OPTIMISATIONS].flatMap((c) => c.fichiers))) {
   const solde = (t) => ["div", "sc-if", "article", "section"].map((b) =>
     (t.match(new RegExp("<" + b + "\\b", "g")) || []).length - t.split("</" + b + ">").length + 1).join(",");
   const avantC = solde(fs.readFileSync(path.join(RACINE, f), "utf8")), apresC = solde(fs.readFileSync(path.join(PUBLIC, f), "utf8"));
   if (avantC !== apresC) erreurs.push(`${f} : les corrections déséquilibrent les balises (${avantC} → ${apresC})`);
+}
+
+// Une page sans blueprint.js (retiré par une optimisation) ne doit pas utiliser ses effets.
+for (const f of PAGES) {
+  const t = fs.readFileSync(path.join(PUBLIC, f), "utf8");
+  if (!t.includes("blueprint.js") && /data-blueprint|data-parallax|class="[^"]*\bbp-img\b/.test(t))
+    erreurs.push(`${f} utilise blueprint.js (data-blueprint, data-parallax ou bp-img) mais ne le charge plus : retirer l'optimisation « blueprint »`);
 }
 
 // apercuPaye doit valoir "none" par défaut (sinon un faux numéro s'affiche).
