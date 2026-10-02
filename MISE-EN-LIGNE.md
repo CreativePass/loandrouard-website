@@ -15,8 +15,7 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 
 - Copie uniquement la liste blanche du § 1. Les originaux ne sont jamais modifiés.
 - `index.html` est une copie exacte de `Video Feedback.dc.html`.
-- Corrections appliquées sur la copie, validées par Loan le 01/10/2026 :
-  - `contact@loandrouard.com` → `loandrouard@gmail.com` (CGV, Privacy, Legal), adresse provisoire ;
+- Correction appliquée sur la copie, validée par Loan le 01/10/2026 (l'e-mail provisoire Gmail a été retiré le 02/10 : `contact@loandrouard.com` est redirigé vers Gmail chez OVH) :
   - crédits photo de `Legal.dc.html` → « David GROUARD ».
 
   À reporter aussi dans l'outil de design. Si un futur export contient déjà ces textes, la correction ne fait rien.
@@ -78,3 +77,6 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [ ] Achat test de l'abonnement, puis résiliation et remboursement
 - [x] Demande d'adhésion MED CONSO DEV envoyée (01/10) — convention à signer à réception
 - [ ] Convention MED CONSO DEV signée (https://www.medconsodev.eu/demande-adhesion-pro.php)
+- [x] `contact@loandrouard.com` : redirection OVH vers `loandrouard@gmail.com` (offre « redirect », sans boîte) ; adresse remise sur CGV, Privacy et Legal et republiée le 02/10
+- [x] Produits Stripe renommés en anglais (02/10) : « Loan Drouard — Single feedback / 3× feedback pack / Quarterly program », descriptions en anglais (affichées au paiement et sur les factures)
+- [ ] Corrections de design à faire dans Claude Design (lien « Terms of sale » non cliquable, retournement des cartes, délai sous les cartes, textes des prix, sections en or, bande en haut de page, crédits photo) puis nouvel export
