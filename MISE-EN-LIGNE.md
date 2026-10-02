@@ -17,7 +17,7 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 - `index.html` est une copie exacte de `Video Feedback.dc.html`.
 - Corrections appliquées sur la copie (liste complète : `CORRECTIONS` dans `scripts/construire.mjs`), validées par Loan :
   - 01/10 : crédits photo de `Legal.dc.html` → « David GROUARD » (l'e-mail provisoire Gmail a été retiré le 02/10 : `contact@loandrouard.com` est redirigé vers Gmail chez OVH) ;
-  - 02/10, cartes des formules de Video Feedback : prix « one full analysis / 3 full analyses / 3-month plan », puce « Written or voice feedback », délai de réponse sorti de la liste et affiché sous chaque carte, « Valid 6 months from your first video » dans le pack, « Also included » (blanc) et « In the program » (or) dans le programme, lien « Terms of sale » cliquable, page maintenue sur la planche jusqu'à la fin du retournement des cartes, fond noir au-dessus de la page (rebond du trackpad).
+  - 02/10, cartes des formules de Video Feedback : prix « one full analysis / 3 full analyses / weekly coaching », puce « Written or voice feedback », délai de réponse sorti de la liste et affiché sous chaque carte, « Valid 6 months from your first video » dans le pack, « Also included » (blanc) et « In the program » (or) dans le programme, lien « Terms of sale » cliquable, page maintenue sur la planche jusqu'à la fin du retournement des cartes, fond noir au-dessus de la page (rebond du trackpad).
 
   À reporter aussi dans Claude Design. Chaque correction attend un nombre précis d'occurrences : si l'export contient déjà le texte corrigé, elle ne fait rien ; si le passage d'origine a changé, la construction s'arrête (à revoir). La construction vérifie aussi que les balises restent équilibrées.
 - Écrit `public/_headers` (cache).
@@ -80,4 +80,5 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [ ] Convention MED CONSO DEV signée (https://www.medconsodev.eu/demande-adhesion-pro.php)
 - [x] `contact@loandrouard.com` : redirection OVH vers `loandrouard@gmail.com` (offre « redirect », sans boîte) ; adresse remise sur CGV, Privacy et Legal et republiée le 02/10
 - [x] Produits Stripe renommés en anglais (02/10) : « Loan Drouard — Single feedback / 3× feedback pack / Quarterly program », descriptions en anglais (affichées au paiement et sur les factures)
-- [ ] Corrections des cartes du 02/10 : appliquées par `construire.mjs`, vérifiées en local (captures 1440 / 390 px, clic sur « Terms of sale », maintien du défilement) — mise en ligne à valider par Loan ; à reporter ensuite dans Claude Design
+- [x] Corrections des cartes du 02/10 : appliquées par `construire.mjs`, vérifiées en local (captures 1440 / 390 px, clic sur « Terms of sale », maintien du défilement) et publiées le 02/10 avec l’accord de Loan ; pages en ligne identiques à `public/`
+- [ ] Reporter les corrections du 02/10 dans Claude Design
