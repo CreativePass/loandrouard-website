@@ -20,3 +20,6 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 
 Le jeton Cloudflare est dans l'environnement (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
 Une seule conversation à la fois doit mettre le site en ligne : la dernière publication remplace la précédente.
+
+## Branches
+Chaque conversation part de `main` (la version en ligne). Après une mise en ligne, fusionner le travail dans `main` (demande de fusion GitHub, avec l'accord de Loan), pour que la conversation suivante reparte de la bonne version.
