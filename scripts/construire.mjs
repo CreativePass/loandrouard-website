@@ -21,15 +21,61 @@ const DOSSIERS = ["_ds", "assets"];
 const EXCLUS = ["assets/photos/press-hd"]; // photos HD de Press, pas encore publique
 const IGNORES = [".DS_Store", "Thumbs.db"];
 
-// --- Corrections validées par Loan (§ 7), appliquées sur la COPIE ------------
-// Si un futur export contient déjà la bonne valeur, la correction ne fait rien.
+// --- Corrections validées par Loan, appliquées sur la COPIE ------------------
+// n = nombre d'occurrences attendues dans l'export. Si l'export contient déjà le texte corrigé,
+// la correction ne fait rien ; si le passage d'origine a changé, la construction s'arrête.
+// À reporter aussi dans l'outil de design (Claude Design).
+const VF = ["Video Feedback.dc.html"];
+const DELAI = (cond, txt) => `<sc-if value="{{ ${cond} }}" hint-placeholder-val="{{ true }}"><p class="vfk-delai">${txt}</p></sc-if>`;
 const CORRECTIONS = [
   {
-    quoi: "Crédits photo des mentions légales (§ 7.3)",
-    fichiers: ["Legal.dc.html"],
+    quoi: "Crédits photo des mentions légales (01/10)",
+    fichiers: ["Legal.dc.html"], n: 2,
     avant: '<mark class="lg-todo">[À COMPLÉTER : photographes]</mark>',
     apres: "David GROUARD",
   },
+  // Cartes des formules (02/10).
+  { quoi: "Prix Single : one full analysis", fichiers: VF, n: 2,
+    avant: "49&nbsp;€ · one routine", apres: "49&nbsp;€ · one full analysis" },
+  { quoi: "Prix Pack : 3 full analyses", fichiers: VF, n: 2,
+    avant: "129&nbsp;€ · six months", apres: "129&nbsp;€ · 3 full analyses" },
+  { quoi: "Prix Programme : weekly coaching", fichiers: VF, n: 2,
+    avant: "499&nbsp;€ · every 3 months", apres: "499&nbsp;€ · weekly coaching" },
+  { quoi: "Puce « Written or voice feedback » (cartes des formules)", fichiers: VF, n: 3,
+    avant: "<span>One full analysis, written or voice</span>", apres: "<span>Written or voice feedback</span>" },
+  { quoi: "Puce « Written or voice feedback » (cartes du projecteur)", fichiers: VF, n: 1,
+    avant: "<span>One full analysis</span>", apres: "<span>Written or voice feedback</span>" },
+  ...[["4 to 6"], ["3 to 5"], ["2 to 3"]].map(([d]) => ({ quoi: `Délai ${d} days retiré de la liste`, fichiers: VF, n: 1,
+    avant: `<div class="vf-pt"><i></i><span>Reply in ${d} days</span></div>\n`, apres: "" })),
+  { quoi: "Délai Single sous la carte", fichiers: VF, n: 1,
+    avant: '</article>\n</div>\n</div>\n\n<div class="vfk-c" data-k="1">',
+    apres: '</article>\n</div>\n' + DELAI("libreSingle", "Reply in 4 to 6 days") + '\n</div>\n\n<div class="vfk-c" data-k="1">' },
+  { quoi: "Pack : validité 6 mois + délai sous la carte", fichiers: VF, n: 1,
+    avant: '<div class="vf-pt"><i></i><span>Grade B suggestions on top</span></div>\n</div>\n</sc-if>\n</article>\n</div>\n</div>\n\n<div class="vfk-c" data-k="2">',
+    apres: '<div class="vf-pt"><i></i><span>Grade B suggestions on top</span></div>\n<div class="vf-pt"><i></i><span>Valid 6 months from your first video</span></div>\n</div>\n</sc-if>\n</article>\n</div>\n' +
+      DELAI("librePack", "Reply in 3 to 5 days") + '\n</div>\n\n<div class="vfk-c" data-k="2">' },
+  { quoi: "Délai Programme sous la carte", fichiers: VF, n: 1,
+    avant: '</article>\n</div>\n</div>\n</div>\n<p class="vfk-note">',
+    apres: '</article>\n</div>\n' + DELAI("libreProg", "Reply in 2 to 3 days") + '\n</div>\n</div>\n<p class="vfk-note">' },
+  { quoi: "Programme : « Also included » au lieu de « In the pack »", fichiers: VF, n: 1,
+    avant: '<div class="vf-tier vf-tier--pack">\n<b>In the pack</b>\n<div class="vf-pt"><i></i><span>Targeted exercises after each video</span></div>',
+    apres: '<div class="vf-tier">\n<b>Also included</b>\n<div class="vf-pt"><i></i><span>Targeted exercises after each video</span></div>' },
+  { quoi: "Programme : « In the program » en or", fichiers: VF, n: 1,
+    avant: ".vf-tier--prog { color: #E3D5B8; }", apres: ".vf-tier--prog { color: #C6A05E; }" },
+  { quoi: "Styles : lien Terms of sale cliquable, délai sous les cartes, fond noir en haut de page", fichiers: VF, n: 1,
+    avant: ".vfk-note[data-on] { opacity: 1; }",
+    apres: ".vfk-note[data-on] { opacity: 1; }\n" +
+      "/* Corrections du 02/10 (scripts/construire.mjs). */\n" +
+      ".vfk-note[data-on] a { pointer-events: auto; }\n" +
+      ".vfk-delai { position: absolute; left: 0; right: 0; top: 100%; margin: 16px 0 0; text-align: center; font-family: 'Cinzel', Georgia, serif; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(246,245,241,.55); opacity: 0; transition: opacity 1s ease; pointer-events: none; }\n" +
+      ".vfk-c[data-vu] .vfk-delai { opacity: 1; }\n" +
+      "@media (max-width: 999px) { .vfk-delai { position: static; } }\n" +
+      "html { background: #000; }" },
+  { quoi: "Note sous les cartes : plus d'espace pour le délai", fichiers: VF, n: 1,
+    avant: ".vfk-note { margin: 30px 0 0;", apres: ".vfk-note { margin: 52px 0 0;" },
+  { quoi: "Retournement des cartes : la page reste sur la planche jusqu'à la fin", fichiers: VF, n: 1,
+    avant: "const onScroll = () => { if (!rafS) rafS = requestAnimationFrame(maj); };",
+    apres: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) window.scrollTo({ top: yVerrou, behavior: \"instant\" }); if (!rafS) rafS = requestAnimationFrame(maj); };" },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
@@ -81,26 +127,28 @@ for (const f of [...PAGES, ...SCRIPTS, ...DOSSIERS]) {
   else copier(src, path.join(PUBLIC, f));
 }
 
-// index.html = copie octet pour octet de Video Feedback (avant corrections, qui ne la touchent pas).
-fs.copyFileSync(path.join(RACINE, "Video Feedback.dc.html"), path.join(PUBLIC, "index.html"));
 const indexExport = path.join(RACINE, "index.html");
 if (fs.existsSync(indexExport) &&
-    !fs.readFileSync(indexExport).equals(fs.readFileSync(path.join(PUBLIC, "index.html")))) {
+    !fs.readFileSync(indexExport).equals(fs.readFileSync(path.join(RACINE, "Video Feedback.dc.html")))) {
   avert.push("index.html de l'export différait de Video Feedback.dc.html : remplacé par la copie exacte.");
 }
 
 for (const c of CORRECTIONS) {
-  let total = 0;
   for (const f of c.fichiers) {
     const p = path.join(PUBLIC, f);
     if (!fs.existsSync(p)) continue;
     const t = fs.readFileSync(p, "utf8");
     const n = t.split(c.avant).length - 1;
-    if (n) fs.writeFileSync(p, t.split(c.avant).join(c.apres));
-    total += n;
+    // Ajout (le texte corrigé contient l'original) déjà présent, ou original disparu au profit du texte corrigé.
+    const deja = c.apres && t.includes(c.apres) && (c.apres.includes(c.avant) || n === 0);
+    if (deja) console.log(`Correction « ${c.quoi} » : déjà dans l'export`);
+    else if (n === c.n) { fs.writeFileSync(p, t.split(c.avant).join(c.apres)); console.log(`Correction « ${c.quoi} » : ${n} remplacement(s)`); }
+    else erreurs.push(`Correction « ${c.quoi} » : ${n} occurrence(s) dans ${f} au lieu de ${c.n} — l'export a changé, à revoir`);
   }
-  console.log(`Correction « ${c.quoi} » : ${total} remplacement(s)`);
 }
+
+// index.html = copie octet pour octet de Video Feedback corrigée : https://loandrouard.com/ affiche la même page.
+fs.copyFileSync(path.join(PUBLIC, "Video Feedback.dc.html"), path.join(PUBLIC, "index.html"));
 
 fs.writeFileSync(path.join(PUBLIC, "_headers"), HEADERS);
 
@@ -125,6 +173,14 @@ for (const f of textes) {
     for (const m of t.matchAll(/<a\b[^>]*>\s*(Home|The Journey|Press[^<]*)\s*<\/a>/g))
       erreurs.push(`${nom} : « ${m[1]} » est un lien actif`);
   }
+}
+
+// Les corrections ne doivent pas déséquilibrer la structure de la page (balises ouvertes / fermées).
+for (const f of new Set(CORRECTIONS.flatMap((c) => c.fichiers))) {
+  const solde = (t) => ["div", "sc-if", "article", "section"].map((b) =>
+    (t.match(new RegExp("<" + b + "\\b", "g")) || []).length - t.split("</" + b + ">").length + 1).join(",");
+  const avantC = solde(fs.readFileSync(path.join(RACINE, f), "utf8")), apresC = solde(fs.readFileSync(path.join(PUBLIC, f), "utf8"));
+  if (avantC !== apresC) erreurs.push(`${f} : les corrections déséquilibrent les balises (${avantC} → ${apresC})`);
 }
 
 // apercuPaye doit valoir "none" par défaut (sinon un faux numéro s'affiche).
@@ -156,3 +212,5 @@ for (const a of [...new Set(avert)]) console.log("ATTENTION : " + a);
 for (const e of erreurs) console.error("ERREUR : " + e);
 if (erreurs.length) process.exit(1);
 console.log("Construction OK.");
+// Pour les essais : import { CORRECTIONS } from "./scripts/construire.mjs".
+export { CORRECTIONS };
