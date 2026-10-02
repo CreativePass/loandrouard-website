@@ -25,12 +25,6 @@ const IGNORES = [".DS_Store", "Thumbs.db"];
 // Si un futur export contient déjà la bonne valeur, la correction ne fait rien.
 const CORRECTIONS = [
   {
-    quoi: "E-mail de contact provisoire (§ 7.1)",
-    fichiers: ["CGV.dc.html", "Privacy.dc.html", "Legal.dc.html"],
-    avant: "contact@loandrouard.com",
-    apres: "loandrouard@gmail.com",
-  },
-  {
     quoi: "Crédits photo des mentions légales (§ 7.3)",
     fichiers: ["Legal.dc.html"],
     avant: '<mark class="lg-todo">[À COMPLÉTER : photographes]</mark>',
@@ -125,7 +119,7 @@ for (const f of textes) {
   if (/press-hd|image-slot\.js|zip-photos\.js|uploads\//.test(t) && !nom.endsWith("support.js"))
     avert.push(`${nom} référence un fichier non publié (press-hd, image-slot, zip-photos ou uploads)`);
   if (/\.html$/.test(f)) {
-    if (t.includes("contact@loandrouard.com")) erreurs.push(`${nom} contient encore contact@loandrouard.com`);
+    if (t.includes("loandrouard@gmail.com")) erreurs.push(`${nom} contient l'adresse provisoire loandrouard@gmail.com`);
     if (t.includes("À COMPLÉTER")) erreurs.push(`${nom} contient encore « À COMPLÉTER »`);
     // Les liens d'en-tête Home / The Journey / Press doivent rester des <span> désactivés.
     for (const m of t.matchAll(/<a\b[^>]*>\s*(Home|The Journey|Press[^<]*)\s*<\/a>/g))
