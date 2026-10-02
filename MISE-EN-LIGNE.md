@@ -78,3 +78,5 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] Demande d'adhésion MED CONSO DEV envoyée (01/10) — convention à signer à réception
 - [ ] Convention MED CONSO DEV signée (https://www.medconsodev.eu/demande-adhesion-pro.php)
 - [x] `contact@loandrouard.com` : redirection OVH vers `loandrouard@gmail.com` (offre « redirect », sans boîte) ; adresse remise sur CGV, Privacy et Legal et republiée le 02/10
+- [x] Produits Stripe renommés en anglais (02/10) : « Loan Drouard — Single feedback / 3× feedback pack / Quarterly program », descriptions en anglais (affichées au paiement et sur les factures)
+- [ ] Corrections de design à faire dans Claude Design (lien « Terms of sale » non cliquable, retournement des cartes, délai sous les cartes, textes des prix, sections en or, bande en haut de page, crédits photo) puis nouvel export
