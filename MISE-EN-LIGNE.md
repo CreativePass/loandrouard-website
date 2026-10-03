@@ -85,3 +85,10 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] Produits Stripe renommés en anglais (02/10) : « Loan Drouard — Single feedback / 3× feedback pack / Quarterly program », descriptions en anglais (affichées au paiement et sur les factures)
 - [x] Corrections des cartes du 02/10 : appliquées par `construire.mjs`, vérifiées en local (captures 1440 / 390 px, clic sur « Terms of sale », maintien du défilement) et publiées le 02/10 avec l’accord de Loan ; pages en ligne identiques à `public/`
 - [ ] Reporter les corrections du 02/10 dans Claude Design
+- [x] Optimisations de performance (`PERFORMANCE.md`) : publiées le 03/10 avec l'accord de Loan (version Cloudflare `204d0c93`, la précédente `19d3f7be-0a56-4401-aec6-f68df406c1fd` reste disponible pour un retour arrière). Vérifiées en production :
+  - 120 fichiers servis identiques à `public/` ;
+  - `npm run verifier -- https://loandrouard.com` : mêmes écarts que l'aperçu local (66 captures, corrections de contenu et animations) ;
+  - parcours ordinateur et mobile identiques à la version précédente (vitrine, paiement jusqu'au formulaire Stripe sans créer de session, sommaire, retournement des cartes, langues, navigation, retour `?session_id=`) ;
+  - molette libre au cran du projecteur, poussière arrêtée hors écran.
+- [ ] Reporter dans Claude Design : aimantation au cran du projecteur retirée (03/10)
+- [ ] Cloudflare Web Analytics est actif sur loandrouard.com et .fr depuis le 06/09 (installation automatique : Cloudflare ajoute sa balise aux pages). À confirmer ou désactiver par Loan ; la page Privacy n'en parle pas.
