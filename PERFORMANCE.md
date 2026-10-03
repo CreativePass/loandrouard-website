@@ -56,12 +56,12 @@ Scénarios : chargement (1re visite et avec cache, 5 essais, 4 pages), défileme
 
 | Identifiant | Ce qui change | Gain mesuré (seule) |
 |---|---|---|
-| `aimantation` | aimantation au cran retirée, ouverture au même endroit (**validé par Loan le 02/10, à reporter dans Claude Design**) | molette lente : 20 crans → +2 000 px (avant : bloquée) |
+| `aimantation` | aimantation au cran retirée (**validé par Loan le 02/10, à reporter dans Claude Design**) ; la page s'ouvre en haut, comme le prévoit le code d'origine | molette lente : 20 crans → +2 000 px (avant : bloquée) |
 | `defilement` | molette et glissé bloquants seulement pendant le verrou du retournement | réaction molette −26 %, glissé −16 % |
 | `sable` | `--flux` posé sur le nom seul | style au pied de page −82 %, fil principal −23 % |
 | `poussiere` | poussière du projecteur arrêtée hors écran | mobile, étude : fil principal 29 % → 2,5 % |
 | `parallaxe` | parallaxe ignorée hors écran | souris dans l'étude : −37 % |
-| `chargement` | feuille de l'écran de chargement laissée en place (inerte) | gel à l'apparition supprimé (0,1 s / 0,5 s) |
+| `chargement` | feuille de l'écran de chargement laissée en place (inerte) ; une ressource en échec ne le retient plus | gel à l'apparition supprimé (0,1 s / 0,5 s) ; plus d'attente de 20 s à 96 % quand Safari bloque la balise Cloudflare |
 | `doublons` | design system et en-tête exécutés une seule fois ; `header-flottant.js` placé avant le design system pour garder le même ordre de décision du ton de l'en-tête qu'en ligne | plus de recréation ; prête −8 % / −11 % |
 | `css` | lien redondant vers `styles.css` retiré | −9 requêtes par visite ; démarrage mobile −13 à −24 % |
 | `react` | React servi par le site (accord de Loan), préchargé ; `support.js` le charge toujours avec son empreinte (SRI) | prête −11 % (Video Feedback, ordinateur), −2 à −5 % ailleurs ; un serveur tiers de moins |
@@ -172,6 +172,19 @@ Lighthouse ne connaît pas l'écran de chargement. Deux effets en découlent, pr
 - un décalage de mise en page (CLS ~0,12 à 0,25), survenu sous l'écran de chargement donc invisible, apparaît au hasard d'un essai (AVANT : Legal ordinateur 0,114, Privacy mobile 0,247 ; APRÈS : Privacy ordinateur 0,117).
 
 Le LCP mesuré par l'outil sur Video Feedback (ordinateur) n'est pas fiable : l'élément le plus grand est la texture de grain plein écran, que le navigateur ne signale pas à chaque essai. Quand il le signale, il arrive plus tôt APRÈS (476 à 676 ms, au premier affichage) qu'AVANT (772 à 1 188 ms, photo du projecteur).
+
+## Retour de Loan après publication (03/10)
+
+La version publiée le 03/10 a été retirée le jour même (retour à la version Cloudflare `19d3f7be`, accord de Loan) après son test sur iPhone et ordinateur. Diagnostic sur la branche, version stable comparée à la version corrigée :
+
+| Point | Cause | Correction |
+|---|---|---|
+| 1. Chargement bloqué à 96 % | Cloudflare insère sa balise Web Analytics (active depuis le 06/09) ; quand Safari ou un bloqueur la refuse, aucune trace n'en reste et l'écran attend sa limite de 20 s. Déjà présent avant les optimisations. | `chargement.js` : une ressource en échec compte comme terminée (22 s → 3 s, simulé). |
+| 2. Arrivée au projecteur | Le code d'origine remonte en haut (`enHaut`), mais l'aimantation pouvait l'emmener au cran pendant le chargement (course, selon la vitesse de chargement) ; l'optimisation l'y forçait. | Seule l'aimantation est retirée : arrivée en haut, 8 tailles, avec et sans cache. |
+| 4. En-tête mobile sur le titre | Conséquence du point 2 : au cran, le titre passe sous l'en-tête transparent (identique dans la version stable à cette position). | Corrigé par le point 2. |
+| 5. « Your routine… » brutal | Conséquence du point 2 : arrivée en cours de page = mode `vfp-vite` (séquence d'ouverture ramenée à 0,5 s) et titre affiché sans son entrée. L'entrée au défilement est identique à la version stable (mesurée image par image). | Corrigé par le point 2. |
+| 3. Retour de la lumière saccadé | Identique dans la version stable : à chaque image, composition des trois faisceaux masqués et agrandis (les masquer double la cadence) et redessin du halo plein écran. | Non corrigé : demande de changer la façon de dessiner la lumière (décision de Loan). |
+| 6, 7. Ligne rose, fonds manquants, plantage sur iPhone | Non reproduits (pas de Safari ici). Surface des calques identique dans les trois versions à chaque position (171 Mpx en haut, 349 Mpx dans l'éblouissement, mobile). | À retester sur iPhone. |
 
 ## Vérifications
 
