@@ -20,19 +20,22 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
   - 02/10, cartes des formules de Video Feedback : prix « one full analysis / 3 full analyses / weekly coaching », puce « Written or voice feedback », délai de réponse sorti de la liste et affiché sous chaque carte, « Valid 6 months from your first video » dans le pack, « Also included » (blanc) et « In the program » (or) dans le programme, lien « Terms of sale » cliquable, page maintenue sur la planche jusqu'à la fin du retournement des cartes, fond noir au-dessus de la page (rebond du trackpad).
 
   À reporter aussi dans Claude Design. Chaque correction attend un nombre précis d'occurrences : si l'export contient déjà le texte corrigé, elle ne fait rien ; si le passage d'origine a changé, la construction s'arrête (à revoir). La construction vérifie aussi que les balises restent équilibrées.
+- Applique ensuite les **optimisations de performance** (`scripts/optimisations.mjs`, détail et mesures dans `PERFORMANCE.md`), sur la copie aussi et avec les mêmes garde-fous. Elles ne changent ni le contenu ni le rendu, sauf l'**aimantation au cran du projecteur, retirée** (validé par Loan le 02/10, à reporter dans Claude Design) : la page s'ouvre toujours au même endroit, mais la molette n'y est plus ramenée.
+- Ajoute ou remplace quelques fichiers, après contrôle : React (`vendor/react-18.3.1/`, copié de `node_modules`, empreinte identique à celle qu'exige `support.js`, qui le charge désormais depuis le site au lieu d'unpkg.com) et le logo sponsor allégé (`optimise/`, utilisé seulement si l'image de l'export n'a pas changé).
 - Écrit `public/_headers` (cache).
 - Contrôles :
   - aucune mention de `Home.dc.html` ni de `Press.dc.html` ;
   - en-têtes Home, The Journey et Press non cliquables ;
   - `apercuPaye` vaut `"none"` ;
   - plus de « À COMPLÉTER » ;
-  - aucun fichier référencé n'est absent.
+  - aucun fichier référencé n'est absent ;
+  - une page qui ne charge plus `blueprint.js` ne s'en sert pas.
 
 ## Hébergement : Cloudflare Workers Static Assets
 
 - Worker `loandrouard-site` (`wrangler.jsonc`, `worker/site.js`). Il sert `public/` tel quel, avec `html_handling = "none"` : pas de « pretty URLs », `?lang=` et `?session_id=` sont conservés.
 - `/` affiche `index.html`. Toute adresse inconnue (`Home.dc.html`, `Press.dc.html`…) renvoie 404.
-- Cache : HTML, CSS, `support.js` et `_ds_bundle.js` sont revalidés à chaque visite (réglage par défaut de Cloudflare). Les scripts versionnés par `?v=` ont un cache d'1 an. Images et polices : 1 jour.
+- Cache : HTML, CSS, `support.js` et `_ds_bundle.js` sont revalidés à chaque visite (réglage par défaut de Cloudflare). Les scripts versionnés par `?v=` et React (`/vendor/`) ont un cache d'1 an : un script modifié par une optimisation reçoit un nouveau `?v=` (ex. `chargement.js?v=7o`). Images et polices : 1 jour.
 - Domaine : `loandrouard.com` (Custom Domain, déclaré dans `wrangler.jsonc`). « Always Use HTTPS » activé sur les zones .com et .fr.
 - L'ancien site (Worker `loandrouard-website-web`) est conservé, sans domaine. **Retour arrière** : Cloudflare → Workers → `loandrouard-website-web` → Settings → Domains & Routes → ajouter `loandrouard.com`, `www.loandrouard.com`, `loandrouard.fr`, `www.loandrouard.fr` (accepter de les reprendre aux autres Workers).
 
@@ -82,3 +85,10 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] Produits Stripe renommés en anglais (02/10) : « Loan Drouard — Single feedback / 3× feedback pack / Quarterly program », descriptions en anglais (affichées au paiement et sur les factures)
 - [x] Corrections des cartes du 02/10 : appliquées par `construire.mjs`, vérifiées en local (captures 1440 / 390 px, clic sur « Terms of sale », maintien du défilement) et publiées le 02/10 avec l’accord de Loan ; pages en ligne identiques à `public/`
 - [ ] Reporter les corrections du 02/10 dans Claude Design
+- [x] Optimisations de performance (`PERFORMANCE.md`) : publiées le 03/10 avec l'accord de Loan (version Cloudflare `204d0c93`, la précédente `19d3f7be-0a56-4401-aec6-f68df406c1fd` reste disponible pour un retour arrière). Vérifiées en production :
+  - 120 fichiers servis identiques à `public/` ;
+  - `npm run verifier -- https://loandrouard.com` : mêmes écarts que l'aperçu local (66 captures, corrections de contenu et animations) ;
+  - parcours ordinateur et mobile identiques à la version précédente (vitrine, paiement jusqu'au formulaire Stripe sans créer de session, sommaire, retournement des cartes, langues, navigation, retour `?session_id=`) ;
+  - molette libre au cran du projecteur, poussière arrêtée hors écran.
+- [ ] Reporter dans Claude Design : aimantation au cran du projecteur retirée (03/10)
+- [ ] Cloudflare Web Analytics est actif sur loandrouard.com et .fr depuis le 06/09 (installation automatique : Cloudflare ajoute sa balise aux pages). À confirmer ou désactiver par Loan ; la page Privacy n'en parle pas.

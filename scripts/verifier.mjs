@@ -3,6 +3,7 @@
 //   npm run verifier                         → compare http://localhost:8788 (npm run apercu) à l'export brut
 //   npm run verifier -- https://loandrouard.com   → compare le site en ligne à l'export brut
 //   npm run verifier -- temoin               → export brut contre lui-même (bruit des animations)
+//   VERIF_REF=<dossier> npm run verifier     → référence = ce dossier (ex. une construction précédente de public/)
 // Résultats : verification/<largeur>/<page>-<hauteur>-{ref,site,diff}.png + rapport.txt
 import fs from "node:fs";
 import http from "node:http";
@@ -28,15 +29,17 @@ const TOUTES = [
 ];
 const PAGES = process.env.VERIF_PAGES ? TOUTES.filter(([n]) => process.env.VERIF_PAGES.split(",").includes(n)) : TOUTES;
 
-// Référence : l'export brut servi tel quel (équivalent de « python3 -m http.server » à la racine).
+// Référence : l'export brut servi tel quel (équivalent de « python3 -m http.server » à la racine),
+// ou le dossier indiqué par VERIF_REF.
+const DOSSIER_REF = process.env.VERIF_REF ? path.resolve(process.env.VERIF_REF) : RACINE;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp",
   ".woff2": "font/woff2", ".json": "application/json", ".mp4": "video/mp4" };
 const ref = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
   if (p === "/") p = "/index.html";
-  const f = path.join(RACINE, p);
-  if (!f.startsWith(RACINE) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
+  const f = path.join(DOSSIER_REF, p);
+  if (!f.startsWith(DOSSIER_REF) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { "content-type": TYPES[path.extname(f)] || "application/octet-stream" });
   fs.createReadStream(f).pipe(res);
 }).listen(0);
@@ -67,7 +70,9 @@ const T0 = new Date("2026-10-01T10:00:00Z").getTime();
 // Laisse le réseau et le décodage d'images finir (temps réel), puis fait avancer l'horloge figée.
 async function avancer(page, ms) {
   await page.waitForLoadState("networkidle").catch(() => {});
-  await page.evaluate(() => Promise.all([...document.images].map((i) => i.decode().catch(() => {}))));
+  // Images en chargement différé (loading="lazy") encore loin de l'écran : elles ne se chargent pas, on ne les attend pas.
+  await page.evaluate(() => Promise.all([...document.images].filter((i) => i.complete || i.loading !== "lazy")
+    .map((i) => i.decode().catch(() => {}))));
   await page.clock.runFor(ms);
   await page.waitForTimeout(200);
 }
@@ -98,6 +103,9 @@ async function ouvrir(ctx, url, journal) {
       return null;
     })());
     const r = await EXTERNES.get(url);
+    // Réponse en erreur rejouée sans corps (ex. API /places, qui refuse l'origine localhost) : la page ne lit pas
+    // ce corps, la requête resterait « en cours » et le réseau ne se calmerait jamais (30 s perdues à chaque attente).
+    if (r && r.status >= 400) return route.fulfill({ status: r.status, headers: { ...r.headers, "content-length": "0" }, body: "" });
     return r ? route.fulfill(r) : route.abort();
   });
   if (journal) {
