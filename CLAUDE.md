@@ -19,6 +19,8 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 2. `npm install` (une fois), `npm run construire` (contrôles), puis, avec l'accord de Loan, `npm run publier`.
 3. Vérifier : `npm run verifier -- https://loandrouard.com` et comparer les fichiers servis à `public/`.
 
+Adresse de test (jamais loandrouard.com) : `npm run publier:essai`, avec l'accord de Loan (voir MISE-EN-LIGNE.md).
+
 Le jeton Cloudflare est dans l'environnement (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
 Une seule conversation à la fois doit mettre le site en ligne : la dernière publication remplace la précédente.
 

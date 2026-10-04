@@ -39,6 +39,13 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 - Domaine : `loandrouard.com` (Custom Domain, déclaré dans `wrangler.jsonc`). « Always Use HTTPS » activé sur les zones .com et .fr.
 - L'ancien site (Worker `loandrouard-website-web`) est conservé, sans domaine. **Retour arrière** : Cloudflare → Workers → `loandrouard-website-web` → Settings → Domains & Routes → ajouter `loandrouard.com`, `www.loandrouard.com`, `loandrouard.fr`, `www.loandrouard.fr` (accepter de les reprendre aux autres Workers).
 
+## Adresse de test (essais sur appareil)
+
+- `https://loandrouard-essai.loandrouard-website.workers.dev`, Worker `loandrouard-essai` (`wrangler.essai.jsonc`, `worker/essai.js`). Il n'a **aucun domaine** : loandrouard.com n'est jamais touché.
+- `npm run publier:essai` (avec l'accord de Loan) construit avec `ESSAI=1` : diagnostic temporaire `diag.js` et pages de comparaison `actuel.html` et `textures.html`. Voir « Safari / iPhone » dans `PERFORMANCE.md`.
+- `npm run publier` construit toujours sans `ESSAI` ; la construction échoue si le diagnostic s'y trouve.
+- Journal du diagnostic, pendant un test : `npx wrangler tail --config wrangler.essai.jsonc`.
+
 ## Redirections (www et .fr)
 
 Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirection.js`) : `www.loandrouard.com`, `loandrouard.fr` et `www.loandrouard.fr` renvoient une redirection 301 vers `https://loandrouard.com`, en gardant le chemin et les paramètres. Déploiement : `npm run publier:redirection`.
@@ -91,4 +98,5 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
   - parcours ordinateur et mobile identiques à la version précédente (vitrine, paiement jusqu'au formulaire Stripe sans créer de session, sommaire, retournement des cartes, langues, navigation, retour `?session_id=`) ;
   - molette libre au cran du projecteur, poussière arrêtée hors écran.
 - [ ] Reporter dans Claude Design : aimantation au cran du projecteur retirée (03/10)
+- [ ] Safari / iPhone (04/10) : corrections `entete` (retenue) et `textures` (provisoire) sur la branche, publiées sur l'adresse de test seulement. En attente du banc sur l'iPhone et le Mac de Loan (`PERFORMANCE.md`, « Safari / iPhone »). À reporter dans Claude Design une fois validées : hauteur réelle de l'en-tête.
 - [ ] Cloudflare Web Analytics est actif sur loandrouard.com et .fr depuis le 06/09 (installation automatique : Cloudflare ajoute sa balise aux pages). À confirmer ou désactiver par Loan ; la page Privacy n'en parle pas.

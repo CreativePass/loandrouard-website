@@ -184,7 +184,71 @@ La version publiée le 03/10 a été retirée le jour même (retour à la versio
 | 4. En-tête mobile sur le titre | Conséquence du point 2 : au cran, le titre passe sous l'en-tête transparent (identique dans la version stable à cette position). | Corrigé par le point 2. |
 | 5. « Your routine… » brutal | Conséquence du point 2 : arrivée en cours de page = mode `vfp-vite` (séquence d'ouverture ramenée à 0,5 s) et titre affiché sans son entrée. L'entrée au défilement est identique à la version stable (mesurée image par image). | Corrigé par le point 2. |
 | 3. Retour de la lumière saccadé | Identique dans la version stable : à chaque image, composition des trois faisceaux masqués et agrandis (les masquer double la cadence) et redessin du halo plein écran. | Non corrigé : demande de changer la façon de dessiner la lumière (décision de Loan). |
-| 6, 7. Ligne rose, fonds manquants, plantage sur iPhone | Non reproduits (pas de Safari ici). Surface des calques identique dans les trois versions à chaque position (171 Mpx en haut, 349 Mpx dans l'éblouissement, mobile). | À retester sur iPhone. |
+| 6, 7. Ligne rose, fonds manquants, plantage sur iPhone | Non reproduits (pas de Safari ici). Surface des calques identique dans les trois versions à chaque position (171 Mpx en haut, 349 Mpx dans l'éblouissement, mobile). | Repris le 04/10 : voir « Safari / iPhone ». |
+
+## Safari / iPhone (04/10)
+
+Les captures de Loan, prises sur un vrai iPhone (Safari) et sur Mac (Safari, capture 5), font foi. Chromium simulé n'est qu'un repère.
+- Corrections : `scripts/safari.mjs`, mêmes garde-fous que les optimisations.
+- Banc local : `scripts/banc.mjs`. Vérification de l'en-tête : `scripts/verif-entete.mjs`.
+- Diagnostic temporaire : `optimise/diag.js`, présent **uniquement sur l'adresse de test**.
+
+### Constats sur les captures
+
+| Capture | Défaut | Cause | Statut |
+|---|---|---|---|
+| 1, 5 | Bande grise en haut ; en-tête sur 3 lignes (iPhone) | `--hauteur-header` vaut 68 px fixes (design system), alors que l'en-tête mesure 134 px sur iPhone et ~96 px dans Safari sur Mac. Son `margin-bottom: -68px` laisse alors un vide au-dessus de la scène, où l'on voit `.vf-nuit`. Reproduit dans Chromium : la scène commence à 66 px | Démontré, corrigé (`entete`) |
+| 2 | « VIDEO FEEDBACK » sur la navigation | Même cause : le titre est à 68 + 5svh = 111 px, sous un en-tête de 134 px. « Your routine… » et les cartes de la vitrine passent aussi dessous | Démontré, corrigé (`entete`) |
+| 2 | État blanc | État voulu (éblouissement : papier, Loan en contre-jour), sauf le chevauchement ci-dessus | — |
+| 2 | Bande sombre en bas | La scène fait 100svh et s'arrête là où commence la barre Safari déployée. Barre repliée, l'écart montre le fond de la page | Hypothèse, à mesurer sur l'iPhone (diagnostic : svh, lvh, dvh, écart) |
+| 1 | Ligne magenta rgb(251,3,247), ~6 px physiques | Largeur exacte du bouton « See pricing », 24 px au-dessus = marge du `filter: blur(8px)` de son animation d'entrée. Le site ne contient aucun magenta (tout est gris). Même signature que le bug WebKit 27 des flous logiciels ([vitepress#5462](https://github.com/vuejs/vitepress/pull/5462)) | Fortement étayé ; contournement `will-change: filter` testé en variante (`filtre`) seulement |
+| 3 | Page blanche | Blanc pur #FFFFFF, que le site ne peint jamais. Champ d'adresse remis à zéro, barre de progression : Safari recharge une page dont le processus s'est arrêté | Probable, à confirmer par le fil d'Ariane du diagnostic |
+| 4 | « A problem repeatedly occurred » (aussi en production) | Arrêt répété du processus. Hypothèse prioritaire, **non démontrée** : mémoire graphique (jetsam) | À établir sur l'iPhone : phase et calques actifs au moment de l'arrêt, comparaison des versions |
+
+### Corrections et candidats (`scripts/safari.mjs`)
+
+| Identifiant | Statut | Effet mesuré (Chromium local) |
+|---|---|---|
+| `entete` | Retenue (choix de Loan : corriger le calcul, design inchangé) | Bande en haut 66 px → 0 à 375–402 px (31 → 0 à 430). Texte, titre et cartes juste sous l'en-tête au lieu de 40–46 px dessous. « See pricing » entièrement à l'écran. Ordinateur inchangé dans Chromium (en-tête de 68 px) |
+| `textures` | **Retenue provisoirement**, à confirmer sur Safari réel | Rendu : écart de pixels au niveau du témoin (actuel contre actuel), écart moyen < 1 niveau sur 255 (ordinateur et mobile, P de 0 à 0,8). Dessin pendant la traversée du projecteur : 10,9–11,2 s → 3,8 s (ordinateur), 9,5 → 3,1 s (mobile). Script par image −30 à −50 %. Surface des calques ±10 % |
+| `filtre` (`will-change: filter`) | Variante de test seulement (`?v=filtre`) | Peut ajouter des calques : gardée seulement si la ligne magenta disparaît sur iPhone sans coût mesuré |
+| `lvh`, `dvh` | Variantes de test seulement | Choix après les valeurs mesurées sur l'iPhone |
+| `nuit` (fond fixe caché sous une scène opaque) | Variante de test seulement | Sans effet sur le dessin dans Chromium (fond animé par le compositeur) ; effet mémoire à mesurer sur l'iPhone |
+
+**Lumière en textures** (`scripts/textures.mjs`) : faisceaux, stries, cœur, rayons, halo, brume, éclat, sol, flaque et ombre sont calculés une fois en PNG (370 Ko au total), à partir des règles CSS de l'export relues telles quelles (interpolation prémultipliée, suréchantillonnage 3×3). La page déplace ces images par `transform` et `opacity`.
+- **Avant** : le halo plein écran est redessiné à chaque image (353 fois sur la traversée, 428 en mobile) ; le calque des rayons, de 3 232 px de côté, est redessiné 116 fois (218 en mobile) ; la scène l'est 100 fois (194).
+- **Après** : aucun redessin de ces calques. Il reste Loan (photos dont l'opacité change), redessiné ~60 fois.
+- Les masques coniques des faisceaux et des rayons disparaissent.
+- `construire.mjs` refuse les textures si les règles CSS de l'export ont changé depuis leur calcul.
+
+**Vitrine (« See pricing »)**, ordinateur : le coût vient des cartes, dont les reflets sont redessinés à chaque image pendant que le faisceau pivote (dessin 9,5 → 8,9 s avec les textures). C'est inhérent à l'effet. À reprendre seulement si le banc sur Safari réel le montre lent.
+
+**Écarté (mesuré)** : `fig`, une couche par photo de Loan pour éviter son redessin. Le redessin disparaît, mais le dessin reste à 3,9 s et les images lentes passent de 14 à 29 % (Chromium).
+
+### Adresse de test et banc sur appareil
+
+`npm run publier:essai` construit avec `ESSAI=1` et publie sur `loandrouard-essai`. Une construction normale échoue si le diagnostic ou les pages de comparaison s'y trouvent.
+- Pages :
+  - `/` : proposition (corrections retenues) ;
+  - `actuel.html` : version `c9bb055` ;
+  - `textures.html` : actuel + textures seulement.
+- Paramètres :
+  - `?diag=1` : panneau ;
+  - `?auto=1` : parcours 1 (lent, rapide, descente complète, remontée) et parcours 2 (See pricing, cartes, Back to Loan, reprise), deux fois chacun ;
+  - `?banc=1` : enchaîne actuel → textures → proposition → proposition+filtre → proposition+nuit, puis affiche un tableau (durée d'images p95 et % > 25 ms par phase, plantage et phase, arrivée en haut, écart en bas) ;
+  - `?v=` : variantes ;
+  - `?sans=` : retire un groupe de calques, pour isoler une cause.
+- Fil d'Ariane (`localStorage`) : après un arrêt brutal du processus, la page suivante affiche la version, la phase, les derniers états et les calques visibles juste avant l'arrêt. Testé dans Chromium par un plantage provoqué (`Page.crash`).
+
+```
+ESSAI=1 node scripts/construire.mjs
+node scripts/banc.mjs captures bureau|mobile actuel,textures      # équivalence au pixel (témoin actuel/actuel)
+node scripts/banc.mjs trace bureau|mobile actuel,textures 2       # dessin, script, redessins par calque (BANC_PEINTS=1)
+BANC_GESTE=vitrine node scripts/banc.mjs trace bureau actuel,textures
+node scripts/banc.mjs parcours bureau|mobile actuel,textures,proposition
+node scripts/banc.mjs calques mobile actuel,textures
+node scripts/verif-entete.mjs                                      # en-tête à 375–1440 px
+```
 
 ## Vérifications
 

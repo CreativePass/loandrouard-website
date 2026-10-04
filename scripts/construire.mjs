@@ -5,9 +5,12 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
+import { SAFARI, SAFARI_IDS, SAFARI_TOUTES, VARIANTES_ESSAI, fichiersSafari, controleTextures } from "./safari.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
+// ESSAI=1 : adresse de test seulement (npm run publier:essai) — diagnostic temporaire et pages de comparaison.
+const ESSAI = process.env.ESSAI === "1";
 const DS = "_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a";
 
 // --- Liste blanche (§ 1) ---------------------------------------------------
@@ -138,19 +141,50 @@ if (fs.existsSync(indexExport) &&
   avert.push("index.html de l'export différait de Video Feedback.dc.html : remplacé par la copie exacte.");
 }
 
-// Corrections de contenu, puis optimisations de performance (scripts/optimisations.mjs).
-for (const c of [...CORRECTIONS, ...OPTIMISATIONS]) {
+// Applique une correction à un texte ; renvoie le texte corrigé (inchangé en cas d'erreur, signalée).
+function corriger(t, c, f, bavard = true) {
+  const n = t.split(c.avant).length - 1;
+  // Ajout (le texte corrigé contient l'original) déjà présent, ou original disparu au profit du texte corrigé.
+  const deja = c.apres && t.includes(c.apres) && (c.apres.includes(c.avant) || n === 0);
+  if (deja) { if (bavard) console.log(`Correction « ${c.quoi} » : déjà dans l'export`); return t; }
+  if (n === c.n) { if (bavard) console.log(`Correction « ${c.quoi} » : ${n} remplacement(s)`); return t.split(c.avant).join(c.apres); }
+  erreurs.push(`Correction « ${c.quoi} » : ${n} occurrence(s) dans ${f} au lieu de ${c.n} — l'export a changé, à revoir`);
+  return t;
+}
+
+// Corrections de contenu, optimisations de performance (scripts/optimisations.mjs), puis corrections Safari retenues
+// (scripts/safari.mjs).
+for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI]) {
   for (const f of c.fichiers) {
     const p = path.join(PUBLIC, f);
     if (!fs.existsSync(p)) continue;
-    const t = fs.readFileSync(p, "utf8");
-    const n = t.split(c.avant).length - 1;
-    // Ajout (le texte corrigé contient l'original) déjà présent, ou original disparu au profit du texte corrigé.
-    const deja = c.apres && t.includes(c.apres) && (c.apres.includes(c.avant) || n === 0);
-    if (deja) console.log(`Correction « ${c.quoi} » : déjà dans l'export`);
-    else if (n === c.n) { fs.writeFileSync(p, t.split(c.avant).join(c.apres)); console.log(`Correction « ${c.quoi} » : ${n} remplacement(s)`); }
-    else erreurs.push(`Correction « ${c.quoi} » : ${n} occurrence(s) dans ${f} au lieu de ${c.n} — l'export a changé, à revoir`);
+    const t = fs.readFileSync(p, "utf8"), u = corriger(t, c, f);
+    if (u !== t) fs.writeFileSync(p, u);
   }
+}
+
+// Adresse de test : pages de comparaison, construites depuis l'export avec les mêmes corrections de contenu et
+// optimisations que la page publiée, plus seulement les corrections Safari indiquées (scripts/safari.mjs).
+const VF_EXPORT = "Video Feedback.dc.html";
+const idsUtilises = [...SAFARI_IDS, ...(ESSAI ? Object.values(VARIANTES_ESSAI).flat() : [])];
+if (ESSAI) {
+  for (const [nom, ids] of Object.entries(VARIANTES_ESSAI)) {
+    let t = fs.readFileSync(path.join(RACINE, VF_EXPORT), "utf8");
+    for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI_TOUTES.filter((x) => ids.includes(x.id))])
+      if (c.fichiers.includes(VF_EXPORT)) t = corriger(t, c, nom, false);
+    fs.writeFileSync(path.join(PUBLIC, nom), t);
+    console.log(`Essai : ${nom} (corrections Safari : ${ids.join(", ") || "aucune"})`);
+  }
+}
+if (idsUtilises.includes("textures")) {
+  const perimees = controleTextures(RACINE);
+  if (perimees.length) erreurs.push(`Textures calculées sur d'anciennes règles CSS (${perimees.join(", ")}) : relancer node scripts/textures.mjs`);
+}
+for (const f of fichiersSafari(idsUtilises)) {
+  const de = path.join(RACINE, f.de);
+  if (!fs.existsSync(de)) { erreurs.push(`Correction Safari : ${f.de} introuvable (node scripts/textures.mjs)`); continue; }
+  fs.mkdirSync(path.dirname(path.join(PUBLIC, f.vers)), { recursive: true });
+  fs.copyFileSync(de, path.join(PUBLIC, f.vers));
 }
 
 // Fichiers ajoutés ou remplacés par les optimisations (scripts/optimisations.mjs), après contrôle.
@@ -181,6 +215,19 @@ for (const f of FICHIERS) {
 // index.html = copie octet pour octet de Video Feedback corrigée : https://loandrouard.com/ affiche la même page.
 fs.copyFileSync(path.join(PUBLIC, "Video Feedback.dc.html"), path.join(PUBLIC, "index.html"));
 
+// Diagnostic TEMPORAIRE de l'adresse de test (optimise/diag.js) : inséré juste après l'écran de chargement.
+if (ESSAI) {
+  const diag = fs.readFileSync(path.join(RACINE, "optimise/diag.js"));
+  const v = crypto.createHash("sha256").update(diag).digest("hex").slice(0, 8);
+  fs.writeFileSync(path.join(PUBLIC, "diag.js"), diag);
+  for (const f of ["index.html", "Video Feedback.dc.html", ...Object.keys(VARIANTES_ESSAI)]) {
+    const p = path.join(PUBLIC, f), t = fs.readFileSync(p, "utf8"), m = t.match(/<script src="chargement\.js\?v=[^"]*"><\/script>\n/);
+    if (!m) { erreurs.push(`Essai : écran de chargement introuvable dans ${f}`); continue; }
+    fs.writeFileSync(p, t.replace(m[0], m[0] + `<script src="diag.js?v=${v}"></script>\n`));
+  }
+  console.log(`Essai : diagnostic diag.js?v=${v} (adresse de test uniquement)`);
+}
+
 fs.writeFileSync(path.join(PUBLIC, "_headers"), HEADERS);
 
 // --- Contrôles ---------------------------------------------------------------
@@ -207,11 +254,24 @@ for (const f of textes) {
 }
 
 // Les corrections ne doivent pas déséquilibrer la structure de la page (balises ouvertes / fermées).
-for (const f of new Set([...CORRECTIONS, ...OPTIMISATIONS].flatMap((c) => c.fichiers))) {
-  const solde = (t) => ["div", "sc-if", "article", "section"].map((b) =>
-    (t.match(new RegExp("<" + b + "\\b", "g")) || []).length - t.split("</" + b + ">").length + 1).join(",");
+const solde = (t) => ["div", "sc-if", "article", "section"].map((b) =>
+  (t.match(new RegExp("<" + b + "\\b", "g")) || []).length - t.split("</" + b + ">").length + 1).join(",");
+for (const f of new Set([...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI].flatMap((c) => c.fichiers))) {
   const avantC = solde(fs.readFileSync(path.join(RACINE, f), "utf8")), apresC = solde(fs.readFileSync(path.join(PUBLIC, f), "utf8"));
   if (avantC !== apresC) erreurs.push(`${f} : les corrections déséquilibrent les balises (${avantC} → ${apresC})`);
+}
+if (ESSAI) for (const f of Object.keys(VARIANTES_ESSAI)) {
+  const avantC = solde(fs.readFileSync(path.join(RACINE, VF_EXPORT), "utf8")), apresC = solde(fs.readFileSync(path.join(PUBLIC, f), "utf8"));
+  if (avantC !== apresC) erreurs.push(`${f} : les corrections déséquilibrent les balises (${avantC} → ${apresC})`);
+}
+
+// Le diagnostic et les pages de comparaison ne doivent JAMAIS partir en production (construction sans ESSAI=1).
+if (!ESSAI) {
+  for (const f of fichiers) {
+    const nom = path.relative(PUBLIC, f);
+    if (nom === "diag.js" || Object.keys(VARIANTES_ESSAI).includes(nom)) erreurs.push(`${nom} : fichier de l'adresse de test dans une construction normale`);
+    if (/\.html$/.test(f) && fs.readFileSync(f, "utf8").includes("diag.js")) erreurs.push(`${nom} : référence au diagnostic de test (diag.js)`);
+  }
 }
 
 // Une page sans blueprint.js (retiré par une optimisation) ne doit pas utiliser ses effets.
@@ -222,7 +282,7 @@ for (const f of PAGES) {
 }
 
 // apercuPaye doit valoir "none" par défaut (sinon un faux numéro s'affiche).
-for (const f of ["Video Feedback.dc.html", "index.html"]) {
+for (const f of ["Video Feedback.dc.html", "index.html", ...(ESSAI ? Object.keys(VARIANTES_ESSAI) : [])]) {
   const t = fs.readFileSync(path.join(PUBLIC, f), "utf8");
   const m = t.match(/apercuPaye&quot;:\{[^}]*?&quot;default&quot;:&quot;([^&]*)&quot;/);
   if (!m) erreurs.push(`${f} : prop apercuPaye introuvable`);
@@ -249,6 +309,6 @@ console.log(`public/ : ${fichiers.length} fichiers, ${(taille / 1e6).toFixed(1)}
 for (const a of [...new Set(avert)]) console.log("ATTENTION : " + a);
 for (const e of erreurs) console.error("ERREUR : " + e);
 if (erreurs.length) process.exit(1);
-console.log("Construction OK.");
+console.log(ESSAI ? "Construction OK (ADRESSE DE TEST : diagnostic et pages de comparaison inclus, ne pas publier sur loandrouard.com)." : "Construction OK.");
 // Pour les essais : import { CORRECTIONS } from "./scripts/construire.mjs".
 export { CORRECTIONS };
