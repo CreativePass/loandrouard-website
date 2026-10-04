@@ -25,10 +25,16 @@ const TOUTES = [
   { id: "entete", quoi: "En-tête : --hauteur-header = hauteur réelle", fichiers: VF, n: 1,
     avant: "  componentDidMount() {\n",
     apres: "  componentDidMount() {\n" +
-      "    " + SAF + "--hauteur-header suit la hauteur réelle de l'en-tête (3 lignes sur iPhone, plus haut dans Safari). */\n" +
-      "    { const vf = document.querySelector(\".vf\"), hd = vf && vf.querySelector(\".ld-header\");\n" +
-      "      if (hd) { let n = 0; const poser = () => { const hh = Math.round(hd.offsetHeight); if (hh > 0 && hh !== vf.__hh) { vf.__hh = hh; vf.style.setProperty(\"--hauteur-header\", hh + \"px\"); if (n++) window.dispatchEvent(new Event(\"resize\")); } };\n" +
-      "        poser(); if (window.ResizeObserver) { const ro = new ResizeObserver(poser); ro.observe(hd); this._offHh = () => ro.disconnect(); } } }\n" },
+      "    " + SAF + "--hauteur-header suit la hauteur réelle de l'en-tête (3 lignes sur iPhone, plus haut dans Safari).\n" +
+      "       Posée sur <html> : le moteur remplace .vf au démarrage. L'en-tête est relu à chaque fois (il peut être remplacé aussi). */\n" +
+      "    { const racine = document.documentElement; let obs = null, vu = null, n = 0;\n" +
+      "      const poser = () => { const hd = document.querySelector(\".vf > .ld-header\"); if (!hd) return;\n" +
+      "        if (hd !== vu && window.ResizeObserver) { if (obs) obs.disconnect(); obs = new ResizeObserver(poser); obs.observe(hd); vu = hd; }\n" +
+      "        const hh = Math.round(hd.offsetHeight); if (hh > 0 && hh !== racine.__hh) { racine.__hh = hh; racine.style.setProperty(\"--hauteur-header\", hh + \"px\"); if (n++) window.dispatchEvent(new Event(\"resize\")); } };\n" +
+      "      poser(); window.addEventListener(\"load\", poser); window.addEventListener(\"resize\", poser); if (document.fonts && document.fonts.ready) document.fonts.ready.then(poser);\n" +
+      "      this._offHh = () => { if (obs) obs.disconnect(); window.removeEventListener(\"resize\", poser); window.removeEventListener(\"load\", poser); }; }\n" },
+  { id: "entete", quoi: "En-tête : arrêt de la mesure au démontage", fichiers: VF, n: 1,
+    avant: "    if (this._offF) this._offF();\n", apres: "    if (this._offF) this._offF();\n    if (this._offHh) this._offHh();\n" },
 
   // PROTOTYPE « lumière en textures » (candidat) : faisceaux, rayons, halo, brume, éclat, sol, flaque et ombre deviennent
   // des images calculées une fois (scripts/textures.mjs, mêmes dégradés que le CSS) que le navigateur se contente de
