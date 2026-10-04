@@ -23,8 +23,8 @@ const PROFILS = {
 const P = PROFILS[profilNom];
 const LISTE = (listeArg || (scenario === "parcours" ? "actuel,textures,proposition" : "actuel,textures")).split(",");
 const REP = +(repArg || 1);
-// Nom : page[+variante…][-calque retiré…], ex. « proposition+filtre », « textures-poussiere-flous ».
-const chemin = (nom) => { const [avant, ...sans] = nom.split("-"), [p, ...v] = avant.split("+"), q = [];
+// Nom : page[+variante…][-calque retiré…][@param=valeur…], ex. « proposition@nodiag=1 » (page sans diagnostic).
+const chemin = (nom) => { const [corps, ...extra] = nom.split("@"), [avant, ...sans] = corps.split("-"), [p, ...v] = avant.split("+"), q = [...extra];
   if (v.length) q.push("v=" + v.join(",")); if (sans.length) q.push("sans=" + sans.join(","));
   return "/" + ({ actuel: "actuel.html", textures: "textures.html" }[p] || "") + (q.length ? "?" + q.join("&") : ""); };
 

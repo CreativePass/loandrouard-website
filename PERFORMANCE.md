@@ -250,6 +250,53 @@ node scripts/banc.mjs calques mobile actuel,textures
 node scripts/verif-entete.mjs                                      # en-tête à 375–1440 px
 ```
 
+### 1er tour sur l'iPhone de Loan (04/10, iOS Safari 27.0, 393×852, DPR 3)
+
+Sources : banc automatique sur 5 versions, captures en manuel, vidéo de 115 s (2 arrêts) examinée image par image. Classement : **démontré**, **fortement étayé**, **plausible**, **non démontré**.
+
+| Constat | Classement |
+|---|---|
+| Correction `entete` efficace sur l'iPhone : en-tête 134 = jeton 134, plus de bande en haut, titre et texte sous la navigation | Démontré |
+| Arrivée en haut à chaque ouverture (arrivée 0) | Démontré |
+| Bande sombre du bas = écart de 40 px : hauteur visible 695 (barre déployée) ou 735 (repliée), svh 695, lvh 735, dvh suit la hauteur visible | Démontré |
+| Page blanche = rechargement après l'arrêt du processus de la page (blanc pur, « Interruption détectée » au rechargement) | Démontré |
+| Arrêts toujours pendant un défilement rapide, 6 sur 7 pendant ou juste après la traversée du projecteur blanc ou de l'étude, souvent à leur jonction | Démontré (constat) |
+| Ligne rose : bug de Safari 27 sur le flou de repos de « See pricing » (dessin logiciel). Présente au repos, absente pendant l'animation d'entrée, revient après la vitrine, texte du bouton plus flou à ces moments | Fortement étayé |
+| Cause de l'arrêt : mémoire graphique | Plausible (non démontré) |
+| Cause de l'arrêt : défaut de Safari 27 | Plausible (non démontré) |
+| Textures, `nuit`, `filtre` : effet sur la stabilité | Non démontré (1 passe chacune ; 4 arrêts sur 5) |
+| Gain de fluidité des textures sur l'appareil | Non démontré (statistiques perdues à chaque arrêt dans la v1 du diagnostic) |
+
+Autres observations :
+- Version `nuit` (seule terminée) :
+  - durées d'images : projecteur à 17 ms au p95 (0–4 % d'images au-delà de 25 ms) ;
+  - étude 70 ms / 67 %, planche 89 ms / 36 %.
+- « ResizeObserver loop » : 9 à 15 fois par session sur l'iPhone, jamais dans Chromium.
+- Page sans styles (environ 15 s) après « A problem repeatedly occurred » puis rechargement : à n'examiner que si elle réapparaît ou si des ressources sont en échec.
+- Rectification : l'écart de 24 px entre la ligne rose et le bouton ne vient pas du flou de 8 px de l'animation, puisque la ligne apparaît au repos.
+
+### Diagnostic v2 et test d'endurance (phase 2)
+
+**Diagnostic v2** (`optimise/diag.js`). Principe : ne pas fausser la mesure.
+- Durées d'images en histogrammes, en mémoire.
+- Relevé d'état toutes les 200 ms en mémoire, écrit dans `localStorage` une fois par seconde seulement. Le relevé contient : position, phase, P, parties de la page réellement à l'écran (`H` projecteur, `E` étude, `N` étude noire, `K` planche, `F` pied, `M` paiement), caméras de l'étude en couche séparée (`w`), vitesse, calques actifs du projecteur quand il est à l'écran.
+- Statistiques recopiées à chaque écriture, donc conservées après un arrêt.
+- « ResizeObserver loop » compté à part ; liste des ressources en échec ; fin de l'écran de chargement (instant, feuilles non appliquées).
+- Panneau rafraîchi une fois par seconde.
+- `?nodiag=1` désactive tout, pour mesurer le surcoût.
+- **Surcoût mesuré** (Chromium, traversée du projecteur en 14 s, sans diagnostic / avec diagnostic / avec diagnostic et panneau) :
+  - ordinateur (2 passes alternées) : script 914–1 021 / 943–1 024 / 976–1 136 ms ; images > 25 ms 16–17 / 15–21 / 17 % ; le panneau ajoute 20 à 60 ms de mise en page en 14 s ;
+  - mobile (×4 plus lent, 1 passe) : script 4 894 / 4 718 / 4 441 ms ; dessin 3 090 / 2 949 / 3 149 ms ; images > 25 ms 21 / 18 / 14 %.
+
+  Les écarts restent dans le bruit d'une passe à l'autre, sans surcoût systématique. Sur l'iPhone, la passe « sans panneau » du test d'endurance sert de contrôle indicatif.
+
+**Endurance** (`/?stress=1`) :
+- 60 s d'allers-retours rapides (3,5 hauteurs d'écran par seconde) entre l'éblouissement (P 0,7) et l'étude.
+- Versions : actuel, proposition, proposition+nuit, 3 passes chacune en ordre alterné (carré latin).
+- Chaque passe sur une page neuve, partie du haut, après 3 s de pause.
+- Une passe « sans panneau », hors comparaison, contrôle l'effet du panneau.
+- Les versions aux résultats proches passeront à 5 passes. Les retraits `?sans=` seront choisis d'après les données du diagnostic et de l'iPhone.
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).
