@@ -44,7 +44,8 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 - `https://loandrouard-essai.loandrouard-website.workers.dev`, Worker `loandrouard-essai` (`wrangler.essai.jsonc`, `worker/essai.js`). Il n'a **aucun domaine** : loandrouard.com n'est jamais touché.
 - `npm run publier:essai` (avec l'accord de Loan) construit avec `ESSAI=1` : diagnostic temporaire `diag.js` et pages de comparaison `actuel.html` et `textures.html`. Voir « Safari / iPhone » dans `PERFORMANCE.md`.
 - `npm run publier` construit toujours sans `ESSAI` ; la construction échoue si le diagnostic s'y trouve.
-- Journal du diagnostic, pendant un test : `npx wrangler tail --config wrangler.essai.jsonc`.
+- Journal du diagnostic, pendant un test seulement (rien n'est conservé ensuite) : `npx wrangler tail --config wrangler.essai.jsonc`.
+- Résultats gardés dans le navigateur du téléphone : `https://loandrouard-essai.loandrouard-website.workers.dev/resultats.html`. Page en lecture seule, sans le site ni le diagnostic, avec un bouton « Copier tout ». Construite seulement avec `ESSAI=1`, refusée dans une construction normale.
 
 ## Redirections (www et .fr)
 

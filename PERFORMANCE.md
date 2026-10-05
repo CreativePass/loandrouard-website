@@ -248,6 +248,7 @@ BANC_GESTE=vitrine node scripts/banc.mjs trace bureau actuel,textures
 node scripts/banc.mjs parcours bureau|mobile actuel,textures,proposition
 node scripts/banc.mjs calques mobile actuel,textures
 node scripts/verif-entete.mjs                                      # en-tête à 375–1440 px
+node scripts/verif-serie.mjs                                       # séries bornées et resultats.html (arrêts provoqués)
 ```
 
 ### 1er tour sur l'iPhone de Loan (04/10, iOS Safari 27.0, 393×852, DPR 3)
@@ -296,6 +297,53 @@ Autres observations :
 - Chaque passe sur une page neuve, partie du haut, après 3 s de pause.
 - Une passe « sans panneau », hors comparaison, contrôle l'effet du panneau.
 - Les versions aux résultats proches passeront à 5 passes. Les retraits `?sans=` seront choisis d'après les données du diagnostic et de l'iPhone.
+
+### Phase 3 : test de 2 h, protocole borné, lecture des résultats (05/10)
+
+**Ce qui s'est passé sur l'iPhone (démontré, en relisant le code).** Le test d'endurance a tourné environ 2 h sans jamais afficher le tableau final. Ce n'était pas la faute de Loan : `serie()` contenait un bug.
+- Quand la **dernière** page de la série (le témoin, sans panneau) s'arrêtait, l'arrêt était compté en mémoire, mais l'élément courant n'était pas recalculé et l'état n'était pas enregistré.
+- La même page relançait donc la passe, sans limite de tentatives ni de durée.
+- Un seul essai réussi du témoin aurait affiché le tableau final : il n'y en a eu aucun.
+- Autre défaut : un rechargement plus de 180 s après un arrêt relançait la passe en silence, sans compter l'arrêt.
+
+Les résultats des 9 premières passes (`ld-diag-serie`) et les 10 derniers arrêts (`ld-diag-incidents`) sont restés dans le navigateur de l'iPhone. Côté Worker, rien n'est conservé : pas de journalisation.
+
+**Protocole borné** (`optimise/diag.js`, séries au format `v: 2`) :
+- avant chaque passe, un marqueur « en cours » (indice, heure, identifiant de la page) est enregistré ;
+- au chargement suivant, une passe restée « en cours » est comptée **une fois** comme arrêt, **quel que soit le délai**, puis la série passe à la suivante. Elle n'est jamais relancée ;
+- le type d'arrêt est tiré du dernier état de cette passe :
+  - `brutal` : la page était en cours, donc arrêt du processus ;
+  - `arrière-plan` : la page était cachée ;
+  - `fermée` : rechargement ou fermeture ordinaire ;
+- le délai de rechargement est noté ;
+- l'état est enregistré dès le chargement, avant toute autre action ;
+- fin garantie :
+  - liste épuisée ;
+  - 25 min ;
+  - plus de 2 chargements par page de la liste ;
+  - bouton « Arrêter le test » (en bas à gauche, sur chaque page de série) : il interrompt la passe et affiche le tableau partiel ;
+- une série de l'ancien format, comme celle du test de 2 h, n'est ni relancée ni modifiée ;
+- `duree=` (en secondes) raccourcit les allers-retours, pour les vérifications locales seulement ;
+- inchangé : mesures, variantes, panneau, ordre des passes.
+
+**`resultats.html`** (adresse de test seulement, `optimise/resultats.html`) :
+- page autonome, sans le site ni le diagnostic, en **lecture seule** ;
+- elle affiche les clés `ld-diag…` **seulement**, jamais les autres clés du site comme celle du paiement : la série, les derniers arrêts et le dernier état ;
+- le texte brut se copie d'un toucher (« Copier tout »).
+
+**Vérification locale** (Chromium, `node scripts/verif-serie.mjs`, après `ESSAI=1 node scripts/construire.mjs`). Arrêts brutaux provoqués par `Page.crash`, sur une série courte de 2 pages (`duree=4`). Les 9 cas passent :
+
+| Cas | Résultat |
+|---|---|
+| a. Sans arrêt | Terminée, 2 passes ok, 2 chargements |
+| b. Arrêt sur la **dernière** page (le cas du test de 2 h) | Terminée, arrêt « brutal » compté une fois, passe non relancée, 3 chargements |
+| c. Arrêt pendant chaque passe | Terminée, 2 arrêts, 4 chargements (= 2 × N) |
+| c2. Arrêt de chaque page 0,7 s après son ouverture | Terminée par la limite de chargements (5) |
+| d. Rechargement 4 min après l'arrêt | Arrêt compté (délai 242 s), série poursuivie et terminée |
+| e. Bouton « Arrêter le test » | Tableau partiel, plus aucune navigation |
+| f. Plus de 25 min | Fin « durée », résultats partiels |
+| g. Ancienne série (format du 05/10) | Rien de lancé, série et arrêts intacts |
+| h. `resultats.html` | Résumé correct, copie complète, stockage identique avant et après, clé de paiement ni lue ni copiée |
 
 ## Vérifications
 

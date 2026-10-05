@@ -7,6 +7,8 @@
    ?nodiag=1 diagnostic entièrement inactif (mesure de son surcoût)      ?diag=1 panneau      ?panneau=0 sans panneau
    ?auto=1   parcours automatiques (P1 défilement, P2 « See pricing »)    ?banc=1 enchaîne les versions (parcours)
    ?stress=1 endurance : allers-retours rapides projecteur blanc ↔ étude, 60 s, 3 passes par version, ordre alterné
+   Séries BORNÉES (05/10) : une seule tentative par passe, au plus 2 chargements par page de la liste et 25 min,
+   bouton « Arrêter le test ». Lecture des résultats gardés dans le navigateur : resultats.html (lecture seule).
    ?v=filtre,lvh,dvh,nuit  variantes à l'essai       ?sans=faisceaux,rayons,halo,nuit,poussiere,flous  calques retirés */
 (() => {
   if (window.__ldDiag) return; window.__ldDiag = 1;
@@ -44,7 +46,8 @@
 #ld-diag-p b { color: #ffd479; font-weight: 600; }
 #ld-diag-t { position: fixed; inset: 8px; z-index: 2147483601; overflow: auto; padding: 10px; border-radius: 8px; background: rgba(8,8,8,.94); color: #f2f2f2; font: clamp(8.5px, 2.45vw, 12px)/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; -webkit-text-size-adjust: none; }
 #ld-diag-t b { color: #ffd479; } #ld-diag-t .ko { color: #ff8080; } #ld-diag-t .ok { color: #9be58f; }
-#ld-diag-go { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2147483602; padding: 18px 26px; border: 0; border-radius: 12px; background: #ffd479; color: #111; font: 600 17px/1.3 -apple-system, system-ui, sans-serif; text-align: center; }`;
+#ld-diag-go { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2147483602; padding: 18px 26px; border: 0; border-radius: 12px; background: #ffd479; color: #111; font: 600 17px/1.3 -apple-system, system-ui, sans-serif; text-align: center; }
+#ld-diag-stop { position: fixed; left: 6px; bottom: 6px; z-index: 2147483602; padding: 9px 13px; border: 0; border-radius: 9px; background: rgba(0,0,0,.78); color: #ffd479; font: 600 13px/1.2 -apple-system, system-ui, sans-serif; }`;
   (document.head || h).appendChild(st);
 
   /* --- Mesures (en mémoire) ----------------------------------------------------------------------- */
@@ -172,6 +175,7 @@
   }
 
   /* --- Défilement automatique ------------------------------------------------------------------- */
+  let ARRET = false; // bouton « Arrêter le test » (séries)
   const dormir = (ms) => new Promise((ok) => setTimeout(ok, ms));
   const attendreVisible = async () => { while (document.hidden) await dormir(300); };
   const defiler = (cible, vitesse, maxMs) => new Promise((ok) => { // vitesse en hauteurs d'écran par seconde
@@ -179,7 +183,7 @@
     const pas = (t) => {
       const dt = tp ? Math.min(0.05, (t - tp) / 1000) : 1 / 60; tp = t; dernierMvt = performance.now();
       const y = scrollY, dir = Math.sign(cible - y), v = vitesse * innerHeight * dt;
-      if (Math.abs(cible - y) < 2 || t - t0 > maxMs) return ok();
+      if (ARRET || Math.abs(cible - y) < 2 || t - t0 > maxMs) return ok();
       if (Math.abs(y - yP) > 0.5) { tBloque = t; yP = y; } else if (t - tBloque > 4000) return ok(); // verrou du retournement : on attend, puis on renonce
       window.scrollTo(0, dir > 0 ? Math.min(cible, y + v) : Math.max(cible, y - v));
       requestAnimationFrame(pas);
@@ -212,14 +216,15 @@
   async function lancerAuto() {
     await pret(); await dormir(1500); arrivee = Math.round(scrollY);
     h.style.scrollBehavior = "auto"; await garderEveil();
-    for (let k = 1; k <= 2; k++) { await attendreVisible(); await parcours1(); }
-    for (let k = 1; k <= 2; k++) { await attendreVisible(); await parcours2(); }
+    for (let k = 1; k <= 2 && !ARRET; k++) { await attendreVisible(); await parcours1(); }
+    for (let k = 1; k <= 2 && !ARRET; k++) { await attendreVisible(); await parcours2(); }
     h.style.scrollBehavior = ""; etape = "terminé";
     return resultat();
   }
   // Endurance : depuis le haut (page neuve, pause de 3 s), allers-retours rapides entre le projecteur en
   // éblouissement (P 0,7) et l'étude (son début + 1,2 écran), 60 s, à 3,5 hauteurs d'écran par seconde.
-  async function lancerStress() {
+  // duree : durée des allers-retours en secondes (60 ; plus court seulement pour les vérifications locales).
+  async function lancerStress(duree) {
     await pret(); await dormir(3000); arrivee = Math.round(scrollY);
     h.style.scrollBehavior = "auto"; await garderEveil();
     const p = projecteur(), etu = $("#analysis");
@@ -228,7 +233,7 @@
     if (!p || !etu) return resultat({ erreurStress: "sections introuvables" });
     etape = "S descente"; await defiler(yA(), 3.5, 20000);
     const t0 = performance.now(); let n = 0;
-    while (performance.now() - t0 < 60000) { await attendreVisible(); etape = "S aller " + (++n); await defiler(yB(), 3.5, 15000); etape = "S retour " + n; await defiler(yA(), 3.5, 15000); }
+    while (!ARRET && performance.now() - t0 < 1000 * (duree || 60)) { await attendreVisible(); etape = "S aller " + (++n); await defiler(yB(), 3.5, 15000); etape = "S retour " + n; await defiler(yA(), 3.5, 15000); }
     etape = "S fin"; await defiler(0, 3.5, 20000); h.style.scrollBehavior = ""; etape = "terminé";
     return resultat({ allersRetours: n });
   }
@@ -242,35 +247,67 @@
   const planStress = () => { const l = []; for (let k = 0; k < PASSES; k++) for (let j = 0; j < VERSIONS.length; j++) l.push({ nom: VERSIONS[(j + k) % VERSIONS.length], passe: "p" + (k + 1), mode: "stress" });
     if (!Q.has("versions")) l.push({ nom: "proposition#sanspanneau", passe: "témoin", mode: "stress" }); return l; };
   const planBanc = () => (Q.get("liste") || "actuel,textures,proposition,proposition+filtre,proposition+nuit").split(",").map((n) => ({ nom: n, passe: "", mode: "auto" }));
+  // Série BORNÉE (format v: 2) : l'état est enregistré avant chaque passe (enCours) et aussitôt après chaque
+  // chargement. Une passe qui ne va pas au bout (arrêt brutal, page en arrière-plan supprimée, rechargement), quel
+  // que soit le délai avant le rechargement, est comptée UNE fois comme arrêt et jamais relancée. Fin garantie :
+  // liste épuisée, 25 min, plus de 2 chargements par page de la liste, ou bouton « Arrêter le test ».
+  const LIMITE_MS = 25 * 60000;
   const suivant = (s) => { ecrire(CLE_SERIE, s); etatPage = "fermee"; enregistrer(); location.replace(adresse(s.liste[s.i])); };
+  const terminer = (s, cause) => { s.fini = true; s.arret = cause; s.enCours = null; s.fin = Date.now(); ecrire(CLE_SERIE, s); envoyer({ type: s.type + "-fini", serie: s }); tableau(s); };
+  const avis = (txt) => { const t = document.createElement("div"); t.id = "ld-diag-t"; t.innerHTML = txt + "\n\n(toucher pour fermer)"; t.addEventListener("click", () => t.remove()); h.appendChild(t); };
+  // Passe interrompue : dernier état enregistré par CETTE passe (même sid) — en cours = arrêt brutal du processus,
+  // cachée = page en arrière-plan supprimée par le système, fermée = rechargement ou fermeture ordinaire.
+  const interruption = (s) => {
+    const it = s.liste[s.enCours.i], d = prec && prec.sid === s.enCours.sid ? prec : null, fin = d ? d.dernier : s.enCours.t;
+    const pl = { type: !d ? "inconnu" : d.etat === "en-cours" ? "brutal" : d.etat === "cachee" ? "arrière-plan" : "fermée",
+      quand: new Date(fin).toISOString().slice(11, 19), apres: d ? Math.round((d.dernier - d.debut) / 1000) : null, delai: Math.round((Date.now() - fin) / 1000),
+      etape: d ? d.etape : "", ph: d ? d.ph : "?", j: d ? (d.j || []).slice(-8) : [], st: d ? d.st || {} : {}, ro: d ? d.ro : null, res: d ? d.res : null, err: d ? d.err : null };
+    return { nom: it.nom, passe: it.passe, plantage: pl, phases: pl.st, ro: pl.ro, res: pl.res, info: info() };
+  };
+  const boutonArret = () => {
+    const bt = document.createElement("button"); bt.id = "ld-diag-stop"; bt.type = "button"; bt.textContent = "Arrêter le test";
+    bt.onclick = () => { if (ARRET) return; ARRET = true; bt.remove(); h.style.scrollBehavior = "";
+      const s = lire(CLE_SERIE); if (!s || s.fini) return;
+      if (s.enCours) { s.res.push(resultat({ interrompu: "manuel" })); s.i = s.enCours.i + 1; }
+      terminer(s, "manuel"); };
+    h.appendChild(bt);
+  };
   async function serie() {
     let s = lire(CLE_SERIE);
     if (!SERIE) { // page de départ (?stress=1 ou ?banc=1) : un toucher pour démarrer (garde l'écran allumé)
       const stress = Q.has("stress"), liste = stress ? planStress() : planBanc();
       const bt = document.createElement("button"); bt.id = "ld-diag-go";
-      bt.innerHTML = (stress ? "Démarrer le test d'endurance" : "Démarrer le banc") + `<br><small>${liste.length} pages · environ ${Math.round(liste.length * (stress ? 1.25 : 2))} min</small>`;
-      bt.onclick = async () => { await garderEveil(); ecrire(CLE, null); suivant({ type: stress ? "stress" : "banc", liste, i: 0, res: [], debut: Date.now() }); };
+      bt.innerHTML = (stress ? "Démarrer le test d'endurance" : "Démarrer le banc") + `<br><small>${liste.length} pages · environ ${Math.round(liste.length * (stress ? 1.25 : 2))} min · 25 min au plus</small>` +
+        (s && !s.fini ? "<br><small>(remplace la série précédente, non terminée : la lire d'abord avec resultats.html)</small>" : "");
+      bt.onclick = async () => { await garderEveil(); ecrire(CLE, null);
+        suivant({ v: 2, type: stress ? "stress" : "banc", liste, i: 0, res: [], debut: Date.now(), chargements: 0, enCours: null, duree: +Q.get("duree") || 60 }); };
       h.appendChild(bt); return;
     }
-    if (!s) return;
+    if (!s || s.fini) return;
+    if (s.v !== 2) { avis("<b>Ancienne série</b> (avant le protocole borné) : rien n'est lancé ni modifié.\nRésultats : resultats.html"); return; }
+    s.chargements = (s.chargements || 0) + 1;
+    if (s.enCours) { s.res.push(interruption(s)); s.i = s.enCours.i + 1; s.enCours = null; } // une seule tentative par passe
+    if (s.i >= s.liste.length) return terminer(s, "complet");
+    if (Date.now() - s.debut > LIMITE_MS) return terminer(s, "durée");
+    if (s.chargements > 2 * s.liste.length) return terminer(s, "chargements");
+    ecrire(CLE_SERIE, s); // enregistré tout de suite, avant toute autre action
     const it = s.liste[s.i];
-    if (incident && it && incident.page === it.nom && (incident.passe || "") === (it.passe || "")) { // la page précédente s'est arrêtée : on note et on continue
-      s.res.push({ nom: it.nom, passe: it.passe, plantage: incident, phases: incident.st || {}, ro: incident.ro, res: incident.res, info: info() }); s.i++;
-      if (s.i < s.liste.length) { await dormir(1500); suivant(s); return; }
-    }
-    if (it && it.nom === NOM && (it.passe || "") === (Q.get("passe") || "")) {
-      passe = it.passe;
-      const r = STRESS ? await lancerStress() : await lancerAuto();
-      s = lire(CLE_SERIE) || s; s.res.push(r); s.i++; envoyer({ type: s.type, resultat: r });
-      if (s.i < s.liste.length) { suivant(s); return; }
-    }
-    s.fini = true; ecrire(CLE_SERIE, s); envoyer({ type: s.type + "-fini", serie: s }); tableau(s);
+    if (it.nom !== NOM || (it.passe || "") !== (Q.get("passe") || "")) { await dormir(1000); suivant(s); return; } // pas la bonne page : on y va
+    passe = it.passe;
+    s.enCours = { i: s.i, t: Date.now(), sid }; ecrire(CLE_SERIE, s); enregistrer(); // dernier état au nom de cette passe dès le départ
+    boutonArret();
+    const r = STRESS ? await lancerStress(s.duree) : await lancerAuto();
+    if (ARRET) return; // arrêt manuel : déjà enregistré par le bouton
+    s = lire(CLE_SERIE) || s; s.res.push(r); s.i++; s.enCours = null; envoyer({ type: s.type, resultat: r });
+    if (s.i < s.liste.length) suivant(s); else terminer(s, "complet");
   }
   const COURT = (n) => n.replace("proposition", "prop").replace("#sanspanneau", " (sans panneau)");
   function tableau(s) {
     const t = document.createElement("div"); t.id = "ld-diag-t";
     const i0 = info();
-    let txt = `<b>${s.type === "stress" ? "Endurance" : "Banc"} terminé</b> — ${new Date().toLocaleString()}\n${ua} · dpr ${devicePixelRatio} · écran ${screen.width}×${screen.height}\nih ${i0.ih} vv ${i0.vv} · svh ${i0.svh} lvh ${i0.lvh} dvh ${i0.dvh} · en-tête ${i0.entete}\n`;
+    const CAUSE = { complet: "terminé", manuel: "arrêté avec le bouton (résultats partiels)", "durée": "arrêté : limite de 25 min atteinte (résultats partiels)", chargements: "arrêté : trop de rechargements (résultats partiels)" };
+    let txt = `<b>${s.type === "stress" ? "Endurance" : "Banc"} ${CAUSE[s.arret] || "terminé"}</b> — ${new Date().toLocaleString()}\n${ua} · dpr ${devicePixelRatio} · écran ${screen.width}×${screen.height}\nih ${i0.ih} vv ${i0.vv} · svh ${i0.svh} lvh ${i0.lvh} dvh ${i0.dvh} · en-tête ${i0.entete}\n`;
+    if (s.liste) txt += `pages ${Math.min(s.i, s.liste.length)}/${s.liste.length} · chargements ${s.chargements || "?"} · durée ${s.debut ? Math.round(((s.fin || Date.now()) - s.debut) / 6000) / 10 + " min" : "?"}\n`;
     const noms = [...new Set(s.res.map((r) => r.nom))];
     const f = (st) => (st ? st.p95 + "ms/" + st.pc25 + "%" : "—");
     for (const n of noms) {
@@ -278,7 +315,8 @@
       txt += `\n<b>${COURT(n)}</b> : arrêts ${ko.length}/${rs.length}\n`;
       for (const r of rs) {
         const ph = r.phases || {}, base = `  ${r.passe || "·"} `;
-        if (r.plantage) { const pl = r.plantage, d = (pl.j || []).slice(-1)[0] || []; txt += `<span class="ko">${base}ARRÊT après ${pl.apres} s, ${pl.etape || ""}, phase ${pl.ph}, écran ${d[4] || "?"}${d[5] ? " cam:w" : ""}, ${d[6] || 0} px/s</span>\n`; }
+        if (r.plantage) { const pl = r.plantage, d = (pl.j || []).slice(-1)[0] || []; txt += `<span class="ko">${base}ARRÊT${pl.type ? " " + pl.type : ""} après ${pl.apres == null ? "?" : pl.apres} s, ${pl.etape || ""}, phase ${pl.ph}, écran ${d[4] || "?"}${d[5] ? " cam:w" : ""}, ${d[6] || 0} px/s${pl.delai != null ? ", rechargée " + pl.delai + " s plus tard" : ""}</span>\n`; }
+        else if (r.interrompu) txt += `${base}interrompue (bouton)${r.allersRetours ? " · " + r.allersRetours + " allers-retours" : ""}\n`;
         else txt += `<span class="ok">${base}ok</span>${r.allersRetours ? " · " + r.allersRetours + " allers-retours" : ""}\n`;
         txt += `     images : éblouiss. ${f(ph.eblouissement)} · blanc ${f(ph.blanc)} · étude ${f(ph.etude)}${s.type === "banc" ? " · planche " + f(ph.planche) : ""} · RO ${r.ro == null ? "—" : r.ro}${r.res && r.res.length ? " · ressources en échec " + r.res.length : ""}\n`;
       }

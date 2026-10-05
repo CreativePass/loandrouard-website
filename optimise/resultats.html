@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Résultats du diagnostic</title>
+<!-- ADRESSE DE TEST UNIQUEMENT (copiée par scripts/construire.mjs avec ESSAI=1 ; refusée dans une construction normale).
+     Affiche ce que le diagnostic (optimise/diag.js) a gardé dans ce navigateur : clés « ld-diag… » SEULEMENT
+     (jamais les autres clés du site, comme celle du paiement). LECTURE SEULE : rien n'est écrit, effacé ni envoyé. -->
+<style>
+:root { color-scheme: dark; }
+body { margin: 0; padding: 16px; background: #111; color: #eee; font: 15px/1.45 -apple-system, system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+h1 { font-size: 19px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 22px 0 6px; color: #ffd479; }
+p { margin: 0 0 10px; }
+pre { white-space: pre-wrap; word-break: break-word; font: 12px/1.4 ui-monospace, Menlo, monospace; background: #1c1c1c; padding: 10px; border-radius: 8px; margin: 0; }
+.ko { color: #ff8a8a; } .ok { color: #9be58f; } .gris { color: #9a9a9a; }
+button { display: block; width: 100%; padding: 15px 20px; border: 0; border-radius: 12px; background: #ffd479; color: #111; font: 600 17px/1.2 -apple-system, system-ui, sans-serif; }
+textarea { display: block; width: 100%; height: 160px; box-sizing: border-box; padding: 8px; border: 1px solid #333; border-radius: 8px; background: #1c1c1c; color: #ddd; font: 11px/1.3 ui-monospace, Menlo, monospace; }
+#etat { margin: 8px 0 0; min-height: 1.4em; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>Résultats du diagnostic</h1>
+<p class="gris">Adresse de test. Lecture seule : cette page n'efface et ne modifie rien.</p>
+<button id="copier" type="button">Copier tout</button>
+<p id="etat"></p>
+<div id="resume"></div>
+<h2>Texte brut</h2>
+<textarea id="brut" readonly></textarea>
+<script>
+(() => {
+  // Lecture seule des clés du diagnostic.
+  const lu = {};
+  try {
+    const cles = [];
+    for (let k = 0; k < localStorage.length; k++) { const c = localStorage.key(k); if (c && c.indexOf("ld-diag") === 0) cles.push(c); }
+    cles.sort();
+    for (const c of cles) { const v = localStorage.getItem(c); try { lu[c] = JSON.parse(v); } catch (e) { lu[c] = v; } }
+  } catch (e) { lu.erreurLecture = String(e && e.message || e); }
+  const paquet = { lu: new Date().toISOString(), ecran: screen.width + "×" + screen.height, dpr: window.devicePixelRatio, cles: lu };
+  const brut = JSON.stringify(paquet);
+  const $ = (id) => document.getElementById(id);
+  $("brut").value = brut;
+
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const heure = (ms) => (ms ? new Date(ms).toLocaleString("fr-FR") : "?");
+  const f = (st) => (st ? st.p95 + " ms / " + st.pc25 + " %" : "—");
+  const court = (n) => String(n || "?").replace("proposition", "prop").replace("#sanspanneau", " (sans panneau)");
+  const releves = (j) => (j || []).slice(-4).map((x) => "    " + esc(Array.isArray(x) ? x.join(" ") : JSON.stringify(x))).join("\n");
+  let html = "";
+
+  const s = lu["ld-diag-serie"];
+  if (s && typeof s === "object") {
+    const n = s.liste ? s.liste.length : 0, it = s.liste && s.liste[s.i];
+    html += "<h2>Série (" + esc(s.type === "stress" ? "endurance" : s.type) + ")</h2><pre>";
+    html += "Début : " + esc(heure(s.debut)) + (s.v === 2 ? " · protocole borné" : " · ancien protocole") + "\n";
+    html += "Avancement : " + (s.fini ? "terminée" + (s.arret ? " (" + esc(s.arret) + ")" : "") : "non terminée, page " + (Math.min(s.i, n) + 1) + " sur " + n + (it ? " en cours : " + esc(court(it.nom)) + " " + esc(it.passe || "") : "")) + "\n";
+    html += "Résultats enregistrés : " + (s.res ? s.res.length : 0) + (s.chargements ? " · chargements " + s.chargements : "") + "\n";
+    for (const r of s.res || []) {
+      const ph = r.phases || {}, pl = r.plantage;
+      html += "\n" + esc(court(r.nom)) + " " + esc(r.passe || "") + " : ";
+      if (pl) {
+        const d = (pl.j || []).slice(-1)[0] || [];
+        html += '<span class="ko">ARRÊT' + (pl.type ? " " + esc(pl.type) : "") + " après " + esc(pl.apres == null ? "?" : pl.apres) + " s, " + esc(pl.etape || "") + ", phase " + esc(pl.ph) + ", écran " + esc(d[4] || "?") + (d[5] ? " cam:w" : "") + ", " + esc(d[6] || 0) + " px/s</span>";
+      } else html += r.interrompu ? "interrompue (bouton)" : '<span class="ok">ok</span>' + (r.allersRetours ? " · " + esc(r.allersRetours) + " allers-retours" : "");
+      html += "\n  images : éblouiss. " + f(ph.eblouissement) + " · blanc " + f(ph.blanc) + " · étude " + f(ph.etude) + (ph.planche ? " · planche " + f(ph.planche) : "");
+      if (pl && pl.j && pl.j.length) html += "\n  derniers relevés (t s, y, phase, P, écran, cam, px/s, calques) :\n" + releves(pl.j);
+    }
+    html += "</pre>";
+  }
+
+  const inc = lu["ld-diag-incidents"];
+  if (Array.isArray(inc) && inc.length) {
+    html += "<h2>Derniers arrêts détectés (" + inc.length + ")</h2><pre>";
+    for (const x of inc) {
+      html += '<span class="ko">' + esc(x.quand) + " UTC · " + esc(court(x.page)) + " " + esc(x.passe || "") + "</span> · après " + esc(x.apres) + " s · " + esc(x.etape || "-") + " · phase " + esc(x.ph) + "\n";
+      if (x.j && x.j.length) html += releves(x.j) + "\n";
+    }
+    html += "</pre>";
+  }
+
+  const d = lu["ld-diag"];
+  if (d && typeof d === "object") {
+    html += "<h2>Dernier état enregistré</h2><pre>";
+    html += esc(court(d.page)) + " " + esc(d.passe || "") + " · état " + esc(d.etat) + " · " + esc(heure(d.dernier)) + "\n";
+    html += "étape " + esc(d.etape || "-") + " · phase " + esc(d.ph) + " · RO " + esc(d.ro) + "\n";
+    if (d.j && d.j.length) html += releves(d.j) + "\n";
+    html += "</pre>";
+  }
+
+  if (!html) html = '<p class="ko">Aucun résultat trouvé. Ouvrir cette page dans Safari, en onglet normal (pas en navigation privée), sur l\'iPhone qui a fait le test.</p>';
+  $("resume").innerHTML = html;
+
+  const ko = (Math.round(brut.length / 100) / 10) + " Ko";
+  $("copier").addEventListener("click", async () => {
+    let fait = false;
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(brut); fait = true; } } catch (e) {}
+    if (!fait) { const t = $("brut"); t.focus(); t.select(); t.setSelectionRange(0, brut.length); try { fait = document.execCommand("copy"); } catch (e) {} }
+    $("etat").textContent = fait ? "Copié (" + ko + "). Collez-le maintenant dans la conversation." : "La copie automatique n'a pas marché : touchez longuement le texte brut ci-dessous, « Tout sélectionner », puis « Copier ».";
+  });
+})();
+</script>
+</body>
+</html>

@@ -226,6 +226,9 @@ if (ESSAI) {
     fs.writeFileSync(p, t.replace(m[0], m[0] + `<script src="diag.js?v=${v}"></script>\n`));
   }
   console.log(`Essai : diagnostic diag.js?v=${v} (adresse de test uniquement)`);
+  // Lecture seule des résultats gardés dans le navigateur par le diagnostic (sans le site ni le diagnostic).
+  fs.copyFileSync(path.join(RACINE, "optimise/resultats.html"), path.join(PUBLIC, "resultats.html"));
+  console.log("Essai : resultats.html (lecture des résultats du diagnostic)");
 }
 
 fs.writeFileSync(path.join(PUBLIC, "_headers"), HEADERS);
@@ -269,7 +272,7 @@ if (ESSAI) for (const f of Object.keys(VARIANTES_ESSAI)) {
 if (!ESSAI) {
   for (const f of fichiers) {
     const nom = path.relative(PUBLIC, f);
-    if (nom === "diag.js" || Object.keys(VARIANTES_ESSAI).includes(nom)) erreurs.push(`${nom} : fichier de l'adresse de test dans une construction normale`);
+    if (nom === "diag.js" || nom === "resultats.html" || Object.keys(VARIANTES_ESSAI).includes(nom)) erreurs.push(`${nom} : fichier de l'adresse de test dans une construction normale`);
     if (/\.html$/.test(f) && fs.readFileSync(f, "utf8").includes("diag.js")) erreurs.push(`${nom} : référence au diagnostic de test (diag.js)`);
   }
 }
