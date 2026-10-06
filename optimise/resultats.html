@@ -65,7 +65,8 @@ textarea { display: block; width: 100%; height: 160px; box-sizing: border-box; p
         const d = (pl.j || []).slice(-1)[0] || [];
         html += '<span class="ko">ARRÊT' + (pl.type ? " " + esc(pl.type) : "") + " après " + esc(pl.apres == null ? "?" : pl.apres) + " s, " + esc(pl.etape || "") + ", phase " + esc(pl.ph) + ", écran " + esc(d[4] || "?") + (d[5] ? " cam:w" : "") + ", " + esc(d[6] || 0) + " px/s</span>";
       } else html += r.interrompu ? "interrompue (bouton)" : '<span class="ok">ok</span>' + (r.allersRetours ? " · " + esc(r.allersRetours) + " allers-retours" : "");
-      html += "\n  images : éblouiss. " + f(ph.eblouissement) + " · blanc " + f(ph.blanc) + " · étude " + f(ph.etude) + (ph.planche ? " · planche " + f(ph.planche) : "");
+      const PH = [["ouverture", "ouverture"], ["texte", "texte"], ["vitrine", "vitrine"], ["eblouissement", "éblouiss."], ["blanc", "blanc"], ["etude", "étude"], ["planche", "planche"]].filter(([k]) => ph[k]);
+      html += "\n  images : " + (PH.length ? PH.map(([k, l]) => l + " " + f(ph[k])).join(" · ") : "—");
       if (pl && pl.j && pl.j.length) html += "\n  derniers relevés (t s, y, phase, P, écran, cam, px/s, calques) :\n" + releves(pl.j);
     }
     html += "</pre>";

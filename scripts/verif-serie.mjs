@@ -1,10 +1,11 @@
 // Vérification LOCALE (Chromium) du protocole borné des séries (optimise/diag.js) et de resultats.html, avec des
 // arrêts brutaux provoqués (CDP Page.crash) : la série doit toujours se terminer, chaque arrêt compté une fois.
-// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i]
+// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j]
 //   a sans arrêt · b arrêt sur la dernière page · c arrêt à chaque passe · c2 arrêt à chaque chargement
 //   d rechargement tardif (4 min) · e bouton « Arrêter le test » · f limite de 25 min · g ancienne série intacte
 //   h resultats.html (résumé, copie, lecture seule, clés du diagnostic seulement)
 //   i tri ?stress=sans : chaque page ouverte porte la variante et les retraits attendus, série terminée
+//   j contrôle du bouton ?banc=bouton : proposition / +affiche en ordre ABBA, images comptées au repos, série terminée
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -164,6 +165,18 @@ const TESTS = {
     verifier("(i) tri ?stress=sans : 8 pages (4 versions × 2), ordre alterné, sans témoin", bonsNoms && noms[0] !== noms[4], noms.join(", "));
     verifier("(i) chaque page ouverte = l'élément attendu, série terminée sans renvoi", s && s.fini && s.arret === "complet" && s.res.length === 8 && s.res.every((r, k) => r.nom === noms[k] && !r.plantage) && s.chargements === 8,
       resume(s) + ` · adresses ${vus.join(" ")} · chargements vus ${n()}`);
+    await ctx.close();
+  },
+  async j() { // contrôle du bouton ?banc=bouton : ABBA, sans défilement rapide
+    const { ctx, n } = await contexte(); const vus = [];
+    ctx.on("request", (r) => { if (r.resourceType() === "document" && /serie=/.test(r.url())) { const q = new URL(r.url()).searchParams; vus.push(q.get("serie") + ":" + (q.get("v") || "-") + "/" + q.get("passe")); } });
+    await demarrer(ctx, "/?banc=bouton");
+    const s = await attendreFin(ctx, 600000);
+    const attendu = ["proposition p1", "proposition+affiche p1", "proposition+affiche p2", "proposition p2"];
+    verifier("(j) contrôle du bouton : 4 pages en ordre ABBA, série terminée sans renvoi", s && s.type === "bouton" && s.fini && s.arret === "complet" && s.chargements === 4 && s.res.length === 4 && s.res.every((r, k) => r.nom + " " + r.passe === attendu[k] && !r.plantage),
+      resume(s) + ` · adresses ${vus.join(" ")} · chargements vus ${n()}`);
+    const ph = s ? s.res.map((r) => Object.keys(r.phases || {}).join("/")) : [];
+    verifier("(j) images comptées au repos (ouverture) et dans la vitrine pour chaque page", s && s.res.every((r) => r.phases && r.phases.ouverture && r.phases.ouverture.n > 100 && r.phases.vitrine), ph.join(" | "));
     await ctx.close();
   },
 };

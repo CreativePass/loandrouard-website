@@ -12,7 +12,8 @@
    ?v=filtre,lvh,dvh,nuit,affiche  variantes à l'essai (affiche : will-change: filter sur le seul bouton See pricing)
    ?sans=faisceaux,rayons,halo,nuit,poussiere,flous,etude,lumiere  calques retirés (affichage seulement, géométrie inchangée :
      etude = les deux caméras de l'étude ; lumiere = tous les calques de lumière du projecteur, figure et textes gardés)
-   ?stress=sans  tri : proposition, -etude, -lumiere, -etude-lumiere, 2 passes chacune, ordre alterné, sans témoin */
+   ?stress=sans  tri : proposition, -etude, -lumiere, -etude-lumiere, 2 passes chacune, ordre alterné, sans témoin
+   ?banc=bouton  contrôle de la variante affiche, sans défilement rapide : proposition / +affiche en ordre ABBA */
 (() => {
   if (window.__ldDiag) return; window.__ldDiag = 1;
   const Q = new URLSearchParams(location.search);
@@ -26,8 +27,8 @@
   const V = (Q.get("v") || "").split(",").filter(Boolean), SANS = (Q.get("sans") || "").split(",").filter(Boolean);
   const NOM = PAGE + (V.length ? "+" + V.join("+") : "") + (SANS.length ? "-" + SANS.join("-") : "") + (Q.get("panneau") === "0" ? "#sanspanneau" : "");
   V.forEach((v) => h.classList.add("ldv-" + v)); SANS.forEach((s) => h.classList.add("lds-" + s));
-  const SERIE = Q.get("serie"), AUTO = Q.has("auto") || SERIE === "auto", STRESS = SERIE === "stress";
-  const PANNEAU = Q.get("panneau") !== "0" && (AUTO || STRESS || Q.has("diag") || Q.has("banc") || Q.has("stress"));
+  const SERIE = Q.get("serie"), AUTO = Q.has("auto") || SERIE === "auto", STRESS = SERIE === "stress", BOUTON = SERIE === "bouton";
+  const PANNEAU = Q.get("panneau") !== "0" && (AUTO || STRESS || BOUTON || Q.has("diag") || Q.has("banc") || Q.has("stress"));
 
   /* Variantes A/B (candidats, voir PERFORMANCE.md) et retraits de calques (isolement d'une cause). */
   const st = document.createElement("style"); st.id = "ld-diag-css";
@@ -226,6 +227,19 @@
     h.style.scrollBehavior = ""; etape = "terminé";
     return resultat();
   }
+  // Contrôle du bouton See pricing (variante affiche) : aucun défilement rapide, pour que des arrêts sans lien avec
+  // le bouton ne brouillent pas la comparaison. Repos en haut (images comptées aussi au repos, bouton à l'écran),
+  // See pricing × 2, puis descente et remontée lentes dans le projecteur.
+  async function lancerBouton() {
+    await pret(); arrivee = Math.round(scrollY);
+    h.style.scrollBehavior = "auto"; await garderEveil();
+    etape = "B repos"; const garder = setInterval(() => { dernierMvt = performance.now(); }, 200);
+    await dormir(9000); clearInterval(garder);
+    for (let k = 1; k <= 2 && !ARRET; k++) { await attendreVisible(); await parcours2(); }
+    if (!ARRET) { etape = "B descente lente"; await defiler(finHero(), 0.5, 60000); etape = "B remontée lente"; await defiler(0, 0.5, 60000); }
+    h.style.scrollBehavior = ""; etape = "terminé";
+    return resultat();
+  }
   // Endurance : depuis le haut (page neuve, pause de 3 s), allers-retours rapides entre le projecteur en
   // éblouissement (P 0,7) et l'étude (son début + 1,2 écran), 60 s, à 3,5 hauteurs d'écran par seconde.
   // duree : durée des allers-retours en secondes (60 ; plus court seulement pour les vérifications locales).
@@ -254,6 +268,7 @@
   const VERSIONS = (Q.get("versions") || PRESET || "actuel,proposition,proposition+nuit").split(","), PASSES = +(Q.get("passes") || (PRESET ? 2 : 3));
   const planStress = () => { const l = []; for (let k = 0; k < PASSES; k++) for (let j = 0; j < VERSIONS.length; j++) l.push({ nom: VERSIONS[(j + k) % VERSIONS.length], passe: "p" + (k + 1), mode: "stress" });
     if (!Q.has("versions") && !PRESET) l.push({ nom: "proposition#sanspanneau", passe: "témoin", mode: "stress" }); return l; };
+  const planBouton = () => [["proposition", "p1"], ["proposition+affiche", "p1"], ["proposition+affiche", "p2"], ["proposition", "p2"]].map(([nom, passe]) => ({ nom, passe, mode: "bouton" }));
   const planBanc = () => (Q.get("liste") || "actuel,textures,proposition,proposition+filtre,proposition+nuit").split(",").map((n) => ({ nom: n, passe: "", mode: "auto" }));
   // Série BORNÉE (format v: 2) : l'état est enregistré avant chaque passe (enCours) et aussitôt après chaque
   // chargement. Une passe qui ne va pas au bout (arrêt brutal, page en arrière-plan supprimée, rechargement), quel
@@ -283,12 +298,12 @@
   async function serie() {
     let s = lire(CLE_SERIE);
     if (!SERIE) { // page de départ (?stress=1 ou ?banc=1) : un toucher pour démarrer (garde l'écran allumé)
-      const stress = Q.has("stress"), liste = stress ? planStress() : planBanc();
+      const stress = Q.has("stress"), bouton = !stress && Q.get("banc") === "bouton", liste = stress ? planStress() : bouton ? planBouton() : planBanc();
       const bt = document.createElement("button"); bt.id = "ld-diag-go";
-      bt.innerHTML = (stress ? "Démarrer le test d'endurance" : "Démarrer le banc") + `<br><small>${liste.length} pages · environ ${Math.round(liste.length * (stress ? 1.25 : 2))} min · 25 min au plus</small>` +
+      bt.innerHTML = (stress ? "Démarrer le test d'endurance" : bouton ? "Démarrer le contrôle du bouton" : "Démarrer le banc") + `<br><small>${liste.length} pages · environ ${Math.round(liste.length * (stress ? 1.25 : bouton ? 1.2 : 2))} min · 25 min au plus</small>` +
         (s && !s.fini ? "<br><small>(remplace la série précédente, non terminée : la lire d'abord avec resultats.html)</small>" : "");
       bt.onclick = async () => { await garderEveil(); ecrire(CLE, null);
-        suivant({ v: 2, type: stress ? "stress" : "banc", liste, i: 0, res: [], debut: Date.now(), chargements: 0, enCours: null, duree: +Q.get("duree") || 60 }); };
+        suivant({ v: 2, type: stress ? "stress" : bouton ? "bouton" : "banc", liste, i: 0, res: [], debut: Date.now(), chargements: 0, enCours: null, duree: +Q.get("duree") || 60 }); };
       h.appendChild(bt); return;
     }
     if (!s || s.fini) return;
@@ -304,7 +319,7 @@
     passe = it.passe;
     s.enCours = { i: s.i, t: Date.now(), sid }; ecrire(CLE_SERIE, s); enregistrer(); // dernier état au nom de cette passe dès le départ
     boutonArret();
-    const r = STRESS ? await lancerStress(s.duree) : await lancerAuto();
+    const r = STRESS ? await lancerStress(s.duree) : BOUTON ? await lancerBouton() : await lancerAuto();
     if (ARRET) return; // arrêt manuel : déjà enregistré par le bouton
     s = lire(CLE_SERIE) || s; s.res.push(r); s.i++; s.enCours = null; envoyer({ type: s.type, resultat: r });
     if (s.i < s.liste.length) suivant(s); else terminer(s, "complet");
@@ -314,7 +329,7 @@
     const t = document.createElement("div"); t.id = "ld-diag-t";
     const i0 = info();
     const CAUSE = { complet: "terminé", manuel: "arrêté avec le bouton (résultats partiels)", "durée": "arrêté : limite de 25 min atteinte (résultats partiels)", chargements: "arrêté : trop de rechargements (résultats partiels)" };
-    let txt = `<b>${s.type === "stress" ? "Endurance" : "Banc"} ${CAUSE[s.arret] || "terminé"}</b> — ${new Date().toLocaleString()}\n${ua} · dpr ${devicePixelRatio} · écran ${screen.width}×${screen.height}\nih ${i0.ih} vv ${i0.vv} · svh ${i0.svh} lvh ${i0.lvh} dvh ${i0.dvh} · en-tête ${i0.entete}\n`;
+    let txt = `<b>${s.type === "stress" ? "Endurance" : s.type === "bouton" ? "Contrôle du bouton" : "Banc"} ${CAUSE[s.arret] || "terminé"}</b> — ${new Date().toLocaleString()}\n${ua} · dpr ${devicePixelRatio} · écran ${screen.width}×${screen.height}\nih ${i0.ih} vv ${i0.vv} · svh ${i0.svh} lvh ${i0.lvh} dvh ${i0.dvh} · en-tête ${i0.entete}\n`;
     if (s.liste) txt += `pages ${Math.min(s.i, s.liste.length)}/${s.liste.length} · chargements ${s.chargements || "?"} · durée ${s.debut ? Math.round(((s.fin || Date.now()) - s.debut) / 6000) / 10 + " min" : "?"}\n`;
     const noms = [...new Set(s.res.map((r) => r.nom))];
     const f = (st) => (st ? st.p95 + "ms/" + st.pc25 + "%" : "—");
@@ -326,7 +341,7 @@
         if (r.plantage) { const pl = r.plantage, d = (pl.j || []).slice(-1)[0] || []; txt += `<span class="ko">${base}ARRÊT${pl.type ? " " + pl.type : ""} après ${pl.apres == null ? "?" : pl.apres} s, ${pl.etape || ""}, phase ${pl.ph}, écran ${d[4] || "?"}${d[5] ? " cam:w" : ""}, ${d[6] || 0} px/s${pl.delai != null ? ", rechargée " + pl.delai + " s plus tard" : ""}</span>\n`; }
         else if (r.interrompu) txt += `${base}interrompue (bouton)${r.allersRetours ? " · " + r.allersRetours + " allers-retours" : ""}\n`;
         else txt += `<span class="ok">${base}ok</span>${r.allersRetours ? " · " + r.allersRetours + " allers-retours" : ""}\n`;
-        txt += `     images : éblouiss. ${f(ph.eblouissement)} · blanc ${f(ph.blanc)} · étude ${f(ph.etude)}${s.type === "banc" ? " · planche " + f(ph.planche) : ""} · RO ${r.ro == null ? "—" : r.ro}${r.res && r.res.length ? " · ressources en échec " + r.res.length : ""}\n`;
+        txt += `     images : ${s.type === "bouton" ? `repos/ouverture ${f(ph.ouverture)} · texte ${f(ph.texte)} · vitrine ${f(ph.vitrine)} · blanc ${f(ph.blanc)}` : `éblouiss. ${f(ph.eblouissement)} · blanc ${f(ph.blanc)} · étude ${f(ph.etude)}${s.type === "banc" ? " · planche " + f(ph.planche) : ""}`} · RO ${r.ro == null ? "—" : r.ro}${r.res && r.res.length ? " · ressources en échec " + r.res.length : ""}\n`;
       }
     }
     const ko = s.res.filter((r) => r.plantage);

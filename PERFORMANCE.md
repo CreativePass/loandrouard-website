@@ -346,6 +346,7 @@ Les résultats des 9 premières passes (`ld-diag-serie`) et les 10 derniers arr�
 | g. Ancienne série (format du 05/10) | Rien de lancé, série et arrêts intacts |
 | h. `resultats.html` | Résumé correct, copie complète, stockage identique avant et après, clé de paiement ni lue ni copiée |
 | i. Tri `?stress=sans` | 8 pages (4 versions × 2, ordre alterné), chaque page ouverte porte la variante et les retraits attendus, 8 chargements |
+| j. Contrôle du bouton `?banc=bouton` | 4 pages en ordre ABBA, images comptées au repos et dans la vitrine, 4 chargements |
 
 ### Résultats du test de 2 h (récupérés le 06/10 avec `resultats.html`)
 
@@ -413,6 +414,30 @@ Ces 2 passes servent de **tri**, pas de démonstration de cause.
 **Confirmation** : si une variante se distingue nettement, on fait 3 passes de plus de la référence et de cette variante seulement, en ordre alterné (`?stress=1&versions=proposition,proposition-etude&passes=3`). Le résultat n'est dit « fortement étayé » qu'après cette confirmation.
 
 **`?v=affiche`** : `will-change: filter` sur le seul bouton « See pricing », vérifié dans Chromium (aucun autre élément touché).
+
+**Validation visuelle (06/10, iPhone de Loan).** Deux captures prises au même moment, sans toucher :
+- `?diag=1` : ligne magenta, bouton beaucoup trop flou ;
+- `?diag=1&v=affiche` : pas de ligne, bouton au flou prévu de 0,35 px.
+
+Cette paire concorde avec la paire `filtre` du 05/10 : la validation visuelle est **démontrée sur cet appareil**. Les captures ont été prises dans le navigateur intégré d'une application (hauteur visible 647), qui utilise le même moteur que Safari.
+
+**Contrôle avant de garder le correctif** : parcours `?banc=bouton`, à la place du banc d'abord prévu.
+- Le banc fait défiler vite. Ces défilements arrêtaient souvent la page, avec ou sans correctif (4 sur 5 au 1er tour), ce qui aurait rendu la comparaison illisible.
+- Le parcours `bouton` ne défile jamais vite. Il alterne `proposition` et `proposition+affiche` en ordre ABBA.
+- Pour chaque page : 9 s de repos en haut de page (images comptées au repos, bouton à l'écran), le parcours « See pricing » 2 fois, puis une descente et une remontée lentes dans le projecteur.
+- Le correctif n'est gardé dans `scripts/safari.mjs` qu'à deux conditions : aucun arrêt de plus, et pas de dégradation nette des durées d'images (repos et ouverture, texte, vitrine).
+
+**Mesures indicatives dans Chromium** (format iPhone, processeur ralenti 4 fois). Ce n'est pas WebKit : elles ne remplacent pas le contrôle sur l'iPhone.
+- **Calques** (`banc.mjs calques`) :
+  - P 0, P 0,75, P 0,8 et vitrine : identiques ;
+  - de P 0,2 à P 0,7 : +3 calques, dont 1 dessiné, et +0,1 Mpx CSS, soit environ +1,1 Mpx à l'écran sur 180 à 309 (+0,4 %).
+- **Traversée du projecteur** (`banc.mjs trace`, 2 passes alternées, sans / avec) :
+  - images p95 : 33 / 33 ms ;
+  - au-delà de 25 ms : 16–17 / 14–18 % ;
+  - composition : 9,7–10,2 / 9,7–10,0 s ;
+  - rastérisation : 3,2–3,6 / 3,3–3,5 s.
+
+  Pas d'écart au-delà du bruit d'une passe à l'autre.
 - Si la ligne disparaît sur l'iPhone, c'est d'abord une **validation visuelle**.
 - Avant de garder le correctif dans `scripts/safari.mjs`, il faut vérifier qu'il n'aggrave ni la stabilité ni la charge de composition, car il crée une couche de plus :
   - banc borné et alterné `?banc=1&liste=proposition,proposition+affiche,proposition,proposition+affiche` ;
