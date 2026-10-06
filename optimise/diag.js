@@ -9,7 +9,10 @@
    ?stress=1 endurance : allers-retours rapides projecteur blanc ↔ étude, 60 s, 3 passes par version, ordre alterné
    Séries BORNÉES (05/10) : une seule tentative par passe, au plus 2 chargements par page de la liste et 25 min,
    bouton « Arrêter le test ». Lecture des résultats gardés dans le navigateur : resultats.html (lecture seule).
-   ?v=filtre,lvh,dvh,nuit  variantes à l'essai       ?sans=faisceaux,rayons,halo,nuit,poussiere,flous  calques retirés */
+   ?v=filtre,lvh,dvh,nuit,affiche  variantes à l'essai (affiche : will-change: filter sur le seul bouton See pricing)
+   ?sans=faisceaux,rayons,halo,nuit,poussiere,flous,etude,lumiere  calques retirés (affichage seulement, géométrie inchangée :
+     etude = les deux caméras de l'étude ; lumiere = tous les calques de lumière du projecteur, figure et textes gardés)
+   ?stress=sans  tri : proposition, -etude, -lumiere, -etude-lumiere, 2 passes chacune, ordre alterné, sans témoin */
 (() => {
   if (window.__ldDiag) return; window.__ldDiag = 1;
   const Q = new URLSearchParams(location.search);
@@ -38,9 +41,11 @@
 @media (max-width: 899px) { .ldv-lvh .vfp-voir { bottom: calc(18px + 3svh + 100lvh - 100svh); } .ldv-lvh .vfa-pied { bottom: calc(12px + 100lvh - 100svh); } .ldv-lvh .vfa-yang { bottom: calc(8svh + 100lvh - 100svh); } .ldv-lvh .vfa-texte { bottom: calc(78px + 100lvh - 100svh); } }
 .ldv-dvh :is(.vfp-scene, .vfa-scene) { height: 100dvh; }
 .ldv-fig .vfp-fig img { will-change: opacity; }
+.ldv-affiche .vfp-affiche { will-change: filter; }
 .ldv-nuit.ld-couvert .vf-nuit { visibility: hidden; }
 .ldv-nuit.ld-couvert .vf-nuit i { animation-play-state: paused; }
 .lds-faisceaux .vfp-faisceau, .lds-rayons .vfp-rayons, .lds-halo :is(.vfp-halo, .vfp-brume, .vfp-eclat), .lds-nuit .vf-nuit, .lds-poussiere .vfp-poussiere { display: none !important; }
+.lds-etude .vfa-cam, .lds-lumiere :is(.vfp-faisceau, .vfp-rayons, .vfp-halo, .vfp-brume, .vfp-eclat, .vfp-expo, .vfp-blanc, .vfp-reman, .vfp-poussiere, .vfp-sol, .vfp-flaque, .vfp-ombre) { display: none !important; }
 .lds-flous :is(.vfp-affiche, .vfp-texte, .vfp-c, .vfp-reman img, .vfa-taiji, [data-vfa-eclat]) { filter: none !important; }
 #ld-diag-p { position: fixed; right: 4px; top: 4px; z-index: 2147483600; max-width: min(380px, 72vw); padding: 4px 6px; border-radius: 6px; background: rgba(0,0,0,.72); color: #e8f5e0; font: 9px/1.3 ui-monospace, Menlo, monospace; white-space: pre-wrap; pointer-events: none; -webkit-text-size-adjust: none; }
 #ld-diag-p b { color: #ffd479; font-weight: 600; }
@@ -84,7 +89,7 @@
   };
   // Calques lourds du projecteur actifs (seulement si le projecteur est à l'écran) : B brume R rayons X expo E éclat W blanc M rémanence.
   const CALQUES = [[".vfp-brume", "B"], [".vfp-rayons", "R"], [".vfp-expo", "X"], [".vfp-eclat", "E"], [".vfp-blanc", "W"], [".vfp-reman", "M"]];
-  const calques = () => CALQUES.filter(([q]) => { const e = $(q); return e && e.style.visibility !== "hidden" && (e.style.opacity === "" || parseFloat(e.style.opacity) > 0.01); }).map((c) => c[1]).join("");
+  const calques = () => CALQUES.filter(([q]) => { const e = $(q); return e && e.offsetParent !== null && e.style.visibility !== "hidden" && (e.style.opacity === "" || parseFloat(e.style.opacity) > 0.01); }).map((c) => c[1]).join("");
   const PH = { chargement: "ch", ouverture: "ou", texte: "tx", lumiere: "lu", eblouissement: "eb", blanc: "bl", vitrine: "vi", etude: "et", planche: "pl", pied: "pi", autre: "--" };
   const calculerPhase = (p) => {
     if ($("#ld-chargement")) return "chargement";
@@ -239,13 +244,16 @@
   }
 
   /* --- Séries : versions enchaînées, résultats gardés d'une page à l'autre (et après un arrêt) ---------- */
-  const adresse = (it) => { const [p, ...v] = it.nom.split("#")[0].split("+"), q = new URLSearchParams();
-    q.set("serie", it.mode); q.set("passe", it.passe || ""); if (v.length) q.set("v", v.join(",")); if (it.nom.includes("#sanspanneau")) q.set("panneau", "0");
+  // Nom d'un élément : page[+variante…][-retrait…][#sanspanneau], ex. « proposition+nuit », « proposition-etude-lumiere ».
+  const adresse = (it) => { const [corps, ...sans] = it.nom.split("#")[0].split("-"), [p, ...v] = corps.split("+"), q = new URLSearchParams();
+    q.set("serie", it.mode); q.set("passe", it.passe || ""); if (v.length) q.set("v", v.join(",")); if (sans.length) q.set("sans", sans.join(",")); if (it.nom.includes("#sanspanneau")) q.set("panneau", "0");
     return ({ actuel: "actuel.html", textures: "textures.html" }[p] || "./") + "?" + q.toString(); };
   // Endurance : 3 passes par version, ordre alterné (carré latin), plus une passe sans panneau hors comparaison.
-  const VERSIONS = (Q.get("versions") || "actuel,proposition,proposition+nuit").split(","), PASSES = +(Q.get("passes") || 3);
+  // ?stress=sans : tri des retraits (2 passes par version suffisent à repérer une variante qui se distingue ; à confirmer ensuite).
+  const PRESETS = { sans: "proposition,proposition-etude,proposition-lumiere,proposition-etude-lumiere" }, PRESET = PRESETS[Q.get("stress")];
+  const VERSIONS = (Q.get("versions") || PRESET || "actuel,proposition,proposition+nuit").split(","), PASSES = +(Q.get("passes") || (PRESET ? 2 : 3));
   const planStress = () => { const l = []; for (let k = 0; k < PASSES; k++) for (let j = 0; j < VERSIONS.length; j++) l.push({ nom: VERSIONS[(j + k) % VERSIONS.length], passe: "p" + (k + 1), mode: "stress" });
-    if (!Q.has("versions")) l.push({ nom: "proposition#sanspanneau", passe: "témoin", mode: "stress" }); return l; };
+    if (!Q.has("versions") && !PRESET) l.push({ nom: "proposition#sanspanneau", passe: "témoin", mode: "stress" }); return l; };
   const planBanc = () => (Q.get("liste") || "actuel,textures,proposition,proposition+filtre,proposition+nuit").split(",").map((n) => ({ nom: n, passe: "", mode: "auto" }));
   // Série BORNÉE (format v: 2) : l'état est enregistré avant chaque passe (enCours) et aussitôt après chaque
   // chargement. Une passe qui ne va pas au bout (arrêt brutal, page en arrière-plan supprimée, rechargement), quel

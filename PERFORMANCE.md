@@ -249,6 +249,7 @@ node scripts/banc.mjs parcours bureau|mobile actuel,textures,proposition
 node scripts/banc.mjs calques mobile actuel,textures
 node scripts/verif-entete.mjs                                      # en-tête à 375–1440 px
 node scripts/verif-serie.mjs                                       # séries bornées et resultats.html (arrêts provoqués)
+node scripts/verif-retraits.mjs                                    # retraits ?sans= : géométrie inchangée, éléments retirés
 ```
 
 ### 1er tour sur l'iPhone de Loan (04/10, iOS Safari 27.0, 393×852, DPR 3)
@@ -344,6 +345,79 @@ Les résultats des 9 premières passes (`ld-diag-serie`) et les 10 derniers arr�
 | f. Plus de 25 min | Fin « durée », résultats partiels |
 | g. Ancienne série (format du 05/10) | Rien de lancé, série et arrêts intacts |
 | h. `resultats.html` | Résumé correct, copie complète, stockage identique avant et après, clé de paiement ni lue ni copiée |
+| i. Tri `?stress=sans` | 8 pages (4 versions × 2, ordre alterné), chaque page ouverte porte la variante et les retraits attendus, 8 chargements |
+
+### Résultats du test de 2 h (récupérés le 06/10 avec `resultats.html`)
+
+Le test a démarré le 05/10 à 11:13 (heure de Paris) sur l'iPhone de Loan (iOS Safari 27.0, hauteur visible 695, lvh 735).
+- Les **9 passes** se sont toutes arrêtées en 3 minutes.
+- Le **témoin** s'est ensuite arrêté en boucle jusqu'à 12:45, soit environ 1 h 30. Il y a eu 10 arrêts rien que dans ses 9 dernières minutes, entre 7 et 45 s chacun.
+
+| Passe | Version | Arrêt après | Étape | Dernier relevé enregistré (y, phase, à l'écran, vitesse) |
+|---|---|---|---|---|
+| p1 | actuel | 7 s | aller 1 | 3279, blanc, H, +2353 px/s |
+| p1 | proposition | 9 s | aller 2 | 3908, blanc, H, +2341 |
+| p1 | proposition+nuit | 11 s | retour 1 | 5425, étude, HE, −1951 |
+| p2 | proposition | 9 s | aller 2 | 4186, blanc, H, +2353 |
+| p2 | proposition+nuit | 16 s | aller 2 | 4385, blanc, H, +2365 |
+| p2 | actuel | 6 s | aller 1 | 3764, blanc, H, +2554 |
+| p3 | proposition+nuit | 10 s | retour 1 | 5685, étude, E, −1088 |
+| p3 | actuel | 4 s | descente | 40, ouverture, H, +197 |
+| p3 | proposition | 6 s | aller 1 | 3466, blanc, H, +2353 |
+
+| Constat | Classement |
+|---|---|
+| Le test d'endurance arrête toutes les versions en quelques secondes : actuel 3 sur 3, proposition 3 sur 3, nuit 3 sur 3, témoin sans un seul essai réussi en 1 h 30 | Démontré |
+| Ni les textures ni « nuit » n'empêchent l'arrêt, dans ce test | Démontré |
+| L'arrêt existe sans aucune correction Safari (actuel), donc avant nos changements | Démontré |
+| Arrêt dès les premiers allers-retours, sur une page neuve chaque fois : pic soudain plutôt qu'usure progressive | Fortement étayé |
+| Position exacte de l'arrêt dans la zone blanc ↔ étude | Non démontrée : le dernier relevé est écrit une fois par seconde, soit jusqu'à environ 2 400 px avant l'arrêt |
+| Dans 2 des 10 derniers arrêts du témoin, plus aucune image pendant 0,4 à 0,6 s à la jonction (y figé à 4 880) juste avant l'arrêt | Démontré pour ces 2 cas (constat) |
+| L'étude est la partie la plus lourde sur l'iPhone : p50 25 à 42 ms, 48 à 88 % d'images au-delà de 25 ms | Démontré |
+| Gain de fluidité des textures sur l'iPhone | Non démontré : les passes s'arrêtent trop tôt |
+| Nature de l'arrêt (mémoire ou défaut de Safari) | Plausible pour les deux |
+
+Au 1er tour (04/10), deux arrêts ont eu lieu ailleurs : sur la planche des formules, et en remontant dans le texte du projecteur. La jonction n'est donc pas le seul endroit possible.
+
+**Ligne rose** : paire de captures de Loan, même appareil et même moment.
+- Version normale : ligne magenta de la largeur exacte du bouton, et « See pricing » beaucoup plus flou que prévu (le flou de repos du design est de 0,35 px).
+- Version `filtre` : pas de ligne, et un flou conforme.
+
+Classement : **fortement étayé**. Les vidéos ont été filmées dans le navigateur intégré d'une application (hauteur visible 647, lvh 768). Les tests suivants se font dans Safari.
+
+### Phase 4 : tri des retraits et correctif ciblé de la ligne rose
+
+**Retraits ajoutés au diagnostic** (adresse de test, affichage seulement) :
+- `?sans=etude` : les deux caméras de l'étude (`.vfa-cam` : photos, tracés, ombres floues) ;
+- `?sans=lumiere` : tous les calques de lumière du projecteur (faisceaux, rayons, halo, brume, éclat, exposition, blanc, rémanence, poussière, sol, flaque, ombre). La figure et les textes restent.
+
+**Même parcours de défilement** (`node scripts/verif-retraits.mjs`, Chromium, formats iPhone 393×852 et ordinateur 1440×900) :
+- mesures comparées : position et hauteur de l'étude, hauteur de la page, hauteur de la scène, bornes du test de stress `yA` et `yB`, à la page chargée puis aux 4 bornes d'un parcours de stress raccourci ;
+- résultat : **identiques à la référence, à 0 px près**, pour `etude`, `lumiere` et `etude,lumiere` ;
+- `.vfa-cam` est en position absolue dans une scène de hauteur fixe, donc hors du flux ; les calques de lumière aussi ;
+- captures : `mesures/retraits/`.
+
+**Tri** `?stress=sans` :
+- 4 versions × 2 passes, ordre alterné, sans témoin : `proposition`, `-etude`, `-lumiere`, `-etude-lumiere` ;
+- protocole borné : 10 min au plus, limite de 25 min.
+
+Ces 2 passes servent de **tri**, pas de démonstration de cause.
+
+| Résultat du tri | Interprétation provisoire |
+|---|---|
+| `-etude` tient, `-lumiere` s'arrête | Piste prioritaire : les caméras de l'étude |
+| `-lumiere` tient, `-etude` s'arrête | Piste prioritaire : les calques de lumière du projecteur |
+| Seule `-etude-lumiere` tient | Piste prioritaire : leur présence simultanée |
+| Tout s'arrête | Rien ne se distingue ; découpage suivant choisi d'après les résultats |
+
+**Confirmation** : si une variante se distingue nettement, on fait 3 passes de plus de la référence et de cette variante seulement, en ordre alterné (`?stress=1&versions=proposition,proposition-etude&passes=3`). Le résultat n'est dit « fortement étayé » qu'après cette confirmation.
+
+**`?v=affiche`** : `will-change: filter` sur le seul bouton « See pricing », vérifié dans Chromium (aucun autre élément touché).
+- Si la ligne disparaît sur l'iPhone, c'est d'abord une **validation visuelle**.
+- Avant de garder le correctif dans `scripts/safari.mjs`, il faut vérifier qu'il n'aggrave ni la stabilité ni la charge de composition, car il crée une couche de plus :
+  - banc borné et alterné `?banc=1&liste=proposition,proposition+affiche,proposition,proposition+affiche` ;
+  - arrêts et durées d'images là où le bouton est à l'écran ;
+  - nombre de calques dans Chromium, à titre indicatif.
 
 ## Vérifications
 

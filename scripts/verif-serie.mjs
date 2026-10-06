@@ -1,9 +1,10 @@
 // Vérification LOCALE (Chromium) du protocole borné des séries (optimise/diag.js) et de resultats.html, avec des
 // arrêts brutaux provoqués (CDP Page.crash) : la série doit toujours se terminer, chaque arrêt compté une fois.
-// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h]
+// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i]
 //   a sans arrêt · b arrêt sur la dernière page · c arrêt à chaque passe · c2 arrêt à chaque chargement
 //   d rechargement tardif (4 min) · e bouton « Arrêter le test » · f limite de 25 min · g ancienne série intacte
 //   h resultats.html (résumé, copie, lecture seule, clés du diagnostic seulement)
+//   i tri ?stress=sans : chaque page ouverte porte la variante et les retraits attendus, série terminée
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -44,9 +45,9 @@ async function modifier(ctx, f) { // modifie le stockage (harnais de test seulem
   const p = await ctx.newPage(); await p.goto(BASE + "/resultats.html");
   await p.evaluate(f); await p.close();
 }
-async function demarrer(ctx) {
+async function demarrer(ctx, depart = DEPART) {
   const page = await ctx.newPage(); page.on("pageerror", (e) => console.log("  erreur page :", e.message.slice(0, 120)));
-  await page.goto(BASE + DEPART); await page.waitForSelector("#ld-diag-go"); await page.click("#ld-diag-go");
+  await page.goto(BASE + depart); await page.waitForSelector("#ld-diag-go"); await page.click("#ld-diag-go");
   return page;
 }
 // Attend qu'une passe donnée soit en cours (enCours.i === i) dans la page affichée.
@@ -150,6 +151,19 @@ const TESTS = {
     verifier("(h) resultats.html : résumé affiché", /non terminée, page 10 sur 10/.test(texte) && (texte.match(/ARRÊT/g) || []).length === 3 && /Derniers arrêts détectés \(10\)/.test(texte), texte.slice(0, 120).replace(/\n/g, " "));
     verifier("(h) copie complète, clés du diagnostic seulement", /^Copié/.test(etat) && o.cles["ld-diag-serie"].res.length === 9 && o.cles["ld-diag-incidents"].length === 10 && !copie.includes("NE_DOIT_PAS_SORTIR") && !("ld-vf-paye" in o.cles), etat);
     verifier("(h) lecture seule : stockage identique", JSON.stringify(avant) === JSON.stringify(apres));
+    await ctx.close();
+  },
+  async i() { // tri ?stress=sans : 4 versions × 2 passes, retraits transmis d'une page à l'autre
+    const { ctx, n } = await contexte(); const vus = [];
+    ctx.on("request", (r) => { if (r.resourceType() === "document" && /serie=/.test(r.url())) { const q = new URL(r.url()).searchParams; vus.push((q.get("sans") || "-") + "/" + q.get("passe")); } });
+    await demarrer(ctx, "/?stress=sans&duree=3");
+    const s = await attendreFin(ctx, 400000);
+    const attendu = ["", "etude", "lumiere", "etude-lumiere"];
+    const noms = s ? s.liste.map((it) => it.nom) : [];
+    const bonsNoms = noms.length === 8 && noms.every((x) => x.startsWith("proposition")) && attendu.every((a) => noms.filter((x) => x === "proposition" + (a ? "-" + a : "")).length === 2);
+    verifier("(i) tri ?stress=sans : 8 pages (4 versions × 2), ordre alterné, sans témoin", bonsNoms && noms[0] !== noms[4], noms.join(", "));
+    verifier("(i) chaque page ouverte = l'élément attendu, série terminée sans renvoi", s && s.fini && s.arret === "complet" && s.res.length === 8 && s.res.every((r, k) => r.nom === noms[k] && !r.plantage) && s.chargements === 8,
+      resume(s) + ` · adresses ${vus.join(" ")} · chargements vus ${n()}`);
     await ctx.close();
   },
 };
