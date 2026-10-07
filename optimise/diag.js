@@ -11,8 +11,10 @@
    bouton « Arrêter le test ». Lecture des résultats gardés dans le navigateur : resultats.html (lecture seule).
    ?v=filtre,lvh,dvh,nuit,affiche  variantes à l'essai (affiche : will-change: filter sur le seul bouton See pricing)
    ?sans=faisceaux,rayons,halo,nuit,poussiere,flous,etude,lumiere  calques retirés (affichage seulement, géométrie inchangée :
-     etude = les deux caméras de l'étude ; lumiere = tous les calques de lumière du projecteur, figure et textes gardés)
+     etude = les deux caméras de l'étude ; lumiere = tous les calques de lumière du projecteur, figure et textes gardés ;
+     lumiere = mobiles + effets : mobiles = lumières qui se déplacent (textures de la proposition), effets = plein écran)
    ?stress=sans  tri : proposition, -etude, -lumiere, -etude-lumiere, 2 passes chacune, ordre alterné, sans témoin
+   ?stress=lumiere  tri : proposition, -mobiles, -effets, 2 passes chacune, ordre alterné
    ?banc=bouton  contrôle de la variante affiche, sans défilement rapide : proposition / +affiche en ordre ABBA */
 (() => {
   if (window.__ldDiag) return; window.__ldDiag = 1;
@@ -47,6 +49,7 @@
 .ldv-nuit.ld-couvert .vf-nuit i { animation-play-state: paused; }
 .lds-faisceaux .vfp-faisceau, .lds-rayons .vfp-rayons, .lds-halo :is(.vfp-halo, .vfp-brume, .vfp-eclat), .lds-nuit .vf-nuit, .lds-poussiere .vfp-poussiere { display: none !important; }
 .lds-etude .vfa-cam, .lds-lumiere :is(.vfp-faisceau, .vfp-rayons, .vfp-halo, .vfp-brume, .vfp-eclat, .vfp-expo, .vfp-blanc, .vfp-reman, .vfp-poussiere, .vfp-sol, .vfp-flaque, .vfp-ombre) { display: none !important; }
+.lds-mobiles :is(.vfp-faisceau, .vfp-rayons, .vfp-halo, .vfp-brume, .vfp-eclat, .vfp-sol, .vfp-flaque, .vfp-ombre), .lds-effets :is(.vfp-expo, .vfp-blanc, .vfp-reman, .vfp-poussiere) { display: none !important; }
 .lds-flous :is(.vfp-affiche, .vfp-texte, .vfp-c, .vfp-reman img, .vfa-taiji, [data-vfa-eclat]) { filter: none !important; }
 #ld-diag-p { position: fixed; right: 4px; top: 4px; z-index: 2147483600; max-width: min(380px, 72vw); padding: 4px 6px; border-radius: 6px; background: rgba(0,0,0,.72); color: #e8f5e0; font: 9px/1.3 ui-monospace, Menlo, monospace; white-space: pre-wrap; pointer-events: none; -webkit-text-size-adjust: none; }
 #ld-diag-p b { color: #ffd479; font-weight: 600; }
@@ -264,7 +267,7 @@
     return ({ actuel: "actuel.html", textures: "textures.html" }[p] || "./") + "?" + q.toString(); };
   // Endurance : 3 passes par version, ordre alterné (carré latin), plus une passe sans panneau hors comparaison.
   // ?stress=sans : tri des retraits (2 passes par version suffisent à repérer une variante qui se distingue ; à confirmer ensuite).
-  const PRESETS = { sans: "proposition,proposition-etude,proposition-lumiere,proposition-etude-lumiere" }, PRESET = PRESETS[Q.get("stress")];
+  const PRESETS = { sans: "proposition,proposition-etude,proposition-lumiere,proposition-etude-lumiere", lumiere: "proposition,proposition-mobiles,proposition-effets" }, PRESET = PRESETS[Q.get("stress")];
   const VERSIONS = (Q.get("versions") || PRESET || "actuel,proposition,proposition+nuit").split(","), PASSES = +(Q.get("passes") || (PRESET ? 2 : 3));
   const planStress = () => { const l = []; for (let k = 0; k < PASSES; k++) for (let j = 0; j < VERSIONS.length; j++) l.push({ nom: VERSIONS[(j + k) % VERSIONS.length], passe: "p" + (k + 1), mode: "stress" });
     if (!Q.has("versions") && !PRESET) l.push({ nom: "proposition#sanspanneau", passe: "témoin", mode: "stress" }); return l; };

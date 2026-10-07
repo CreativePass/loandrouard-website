@@ -473,6 +473,34 @@ Aucun rapport n'a donc été laissé par des dizaines d'arrêts entre le 04 et l
 - Un plantage classique du processus de la page, qui laisse un rapport, devient peu probable.
 - Une fermeture de la page par Safari lui-même, pour excès de mémoire, ne laisse pas de rapport. C'est l'hypothèse la plus cohérente avec le tri : plausible et renforcée, mais pas démontrée.
 
+### Confirmation de la piste « lumière » (07/10, Safari, hauteur visible 695)
+
+`?stress=1&versions=proposition,proposition-lumiere&passes=3` : 6 pages, 10 chargements, 11,7 min.
+
+| Version | Arrêts | Détail |
+|---|---|---|
+| proposition | 3 sur 3 | Tous à 9 s : retour 1 (étude, E), retour 1 (étude, E), aller 1 (blanc, H) |
+| -lumiere | 1 sur 3 | Arrêt à 38 s (retour 10, étude E, caméras en couche séparée) ; 2 passes au bout, 19 allers-retours chacune |
+
+- **Avec le tri du 06/10** : avec la lumière, 6 arrêts sur 7 pages (plus 9 sur 9 le 05/10) ; sans la lumière, 1 sur 7, et tardif.
+- **La lumière du projecteur, facteur majeur de l'arrêt** : fortement étayé (tri puis confirmation, règle convenue avec Loan).
+- **La lumière, seule cause** : non démontré. L'arrêt restant a eu lieu dans l'étude, caméras à l'écran. Hypothèse plausible : mémoire cumulée de la lumière et des caméras (sans les deux : 0 arrêt sur 2).
+- **Protocole borné sur l'iPhone** : la page p3 de la référence a été rechargée 457 s après son arrêt, l'arrêt a été compté une fois, sans relance. Le protocole fonctionne : démontré.
+
+### Découpage de la lumière (phase 5)
+
+Deux familles de nature différente :
+- `?sans=mobiles` : les lumières qui se déplacent, c'est-à-dire celles que la proposition a transformées en textures (faisceaux, rayons, halo, brume, éclat, sol, flaque, ombre) ;
+- `?sans=effets` : les effets plein écran, que les textures n'ont pas touchés (exposition `color-dodge`, blanc, rémanence floue, poussière).
+
+« actuel » (lumières en CSS) et « proposition » (lumières en textures) s'arrêtent autant l'un que l'autre. Les `effets`, identiques dans les deux, sont donc la première piste, à vérifier.
+
+**Contrôles** :
+- géométrie identique à 0 px pour les deux retraits, aux formats iPhone et ordinateur (`verif-retraits.mjs`) ;
+- captures dans `mesures/retraits/`. Au point P 0,7, l'écran blanc vient des lumières mobiles (halo, éclat), pas du calque `blanc`.
+
+**Tri** : `?stress=lumiere`, soit `proposition`, `-mobiles` et `-effets`, 2 passes chacune en ordre alterné, puis confirmation de la variante qui se distingue.
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).

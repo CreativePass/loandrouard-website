@@ -29,8 +29,10 @@ const PROFILS = {
   mobile: { viewport: { width: 393, height: 852 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
   bureau: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 },
 };
-const RETRAITS = ["", "etude", "lumiere", "etude,lumiere"];
-const LUMIERE = [".vfp-faisceau", ".vfp-rayons", ".vfp-halo", ".vfp-brume", ".vfp-eclat", ".vfp-expo", ".vfp-blanc", ".vfp-reman", ".vfp-poussiere", ".vfp-sol", ".vfp-flaque", ".vfp-ombre"];
+const RETRAITS = ["", "etude", "lumiere", "etude,lumiere", "mobiles", "effets"];
+const MOBILES = [".vfp-faisceau", ".vfp-rayons", ".vfp-halo", ".vfp-brume", ".vfp-eclat", ".vfp-sol", ".vfp-flaque", ".vfp-ombre"], EFFETS = [".vfp-expo", ".vfp-blanc", ".vfp-reman", ".vfp-poussiere"];
+const LUMIERE = [...MOBILES, ...EFFETS];
+const GROUPES = { etude: [".vfa-cam"], lumiere: LUMIERE, mobiles: MOBILES, effets: EFFETS };
 
 // Mêmes formules que lancerStress() dans optimise/diag.js.
 const geometrie = () => {
@@ -64,10 +66,10 @@ for (const [profil, opts] of Object.entries(PROFILS)) {
       mesures.push(await page.evaluate(geometrie));
       if (profil === "mobile") await page.screenshot({ path: path.join(SORTIE, `${profil}-${sans.replace(",", "-") || "reference"}-${k % 2 === 0 ? "yA" : "yB"}.png`) });
     }
-    const vis = await page.evaluate(({ LUMIERE, affiche }) => {
+    const vis = await page.evaluate(({ SELS, affiche }) => {
       const f = new Function("sel", "return (" + affiche + ")(sel)");
-      return { cams: f(".vfa-cam"), lumiere: LUMIERE.map((s) => f(s)).flat(), fig: f(".vfp-fig"), scenes: f(".vfp-scene, .vfa-scene"), classes: document.documentElement.className };
-    }, { LUMIERE, affiche: affiche.toString() });
+      return { par: Object.fromEntries(SELS.map((s) => [s, f(s)])), fig: f(".vfp-fig"), scenes: f(".vfp-scene, .vfa-scene") };
+    }, { SELS: [".vfa-cam", ...LUMIERE], affiche: affiche.toString() });
     await ctx.close();
     const nom = `${profil} ${sans || "référence"}`;
     if (!sans) { ref.mesures = mesures; resume[nom] = mesures[0]; }
@@ -75,9 +77,10 @@ for (const [profil, opts] of Object.entries(PROFILS)) {
       const ecart = Math.max(...mesures.flatMap((m, i) => Object.keys(m).map((k) => Math.abs(m[k] - ref.mesures[i][k]))));
       verifier(`${nom} : géométrie identique à la référence (chargée + 4 bornes du parcours)`, ecart <= 0.5, `écart max ${ecart} px`);
     }
-    const veutCams = !sans.includes("etude"), veutLum = !sans.includes("lumiere");
-    verifier(`${nom} : caméras de l'étude ${veutCams ? "affichées" : "retirées"}`, vis.cams.length === 2 && vis.cams.every((x) => x === veutCams));
-    verifier(`${nom} : calques de lumière ${veutLum ? "affichés" : "retirés"}`, vis.lumiere.length >= LUMIERE.length && vis.lumiere.every((x) => x === veutLum), `${vis.lumiere.length} éléments`);
+    // Chaque élément visé : retiré s'il appartient à un groupe retiré, affiché sinon.
+    const retires = sans ? sans.split(",").flatMap((g) => GROUPES[g]) : [];
+    const faux = Object.entries(vis.par).filter(([s, l]) => !l.length || l.some((x) => x === retires.includes(s))).map(([s]) => s);
+    verifier(`${nom} : ${retires.length} sélecteurs retirés, les ${Object.keys(vis.par).length - retires.length} autres affichés`, vis.par[".vfa-cam"].length === 2 && faux.length === 0, faux.length ? "en défaut : " + faux.join(" ") : "");
     verifier(`${nom} : figure et scènes affichées`, vis.fig.every(Boolean) && vis.scenes.length === 2 && vis.scenes.every(Boolean));
   }
 }

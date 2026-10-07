@@ -1,11 +1,12 @@
 // Vérification LOCALE (Chromium) du protocole borné des séries (optimise/diag.js) et de resultats.html, avec des
 // arrêts brutaux provoqués (CDP Page.crash) : la série doit toujours se terminer, chaque arrêt compté une fois.
-// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j]
+// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j,k]
 //   a sans arrêt · b arrêt sur la dernière page · c arrêt à chaque passe · c2 arrêt à chaque chargement
 //   d rechargement tardif (4 min) · e bouton « Arrêter le test » · f limite de 25 min · g ancienne série intacte
 //   h resultats.html (résumé, copie, lecture seule, clés du diagnostic seulement)
 //   i tri ?stress=sans : chaque page ouverte porte la variante et les retraits attendus, série terminée
 //   j contrôle du bouton ?banc=bouton : proposition / +affiche en ordre ABBA, images comptées au repos, série terminée
+//   k tri ?stress=lumiere : 6 pages préparées (référence, -mobiles, -effets × 2, ordre alterné), 1re page conforme
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -177,6 +178,19 @@ const TESTS = {
       resume(s) + ` · adresses ${vus.join(" ")} · chargements vus ${n()}`);
     const ph = s ? s.res.map((r) => Object.keys(r.phases || {}).join("/")) : [];
     verifier("(j) images comptées au repos (ouverture) et dans la vitrine pour chaque page", s && s.res.every((r) => r.phases && r.phases.ouverture && r.phases.ouverture.n > 100 && r.phases.vitrine), ph.join(" | "));
+    await ctx.close();
+  },
+  async k() { // tri ?stress=lumiere : liste préparée au départ, première page ouverte avec le bon retrait
+    const { ctx } = await contexte(); const page = await demarrer(ctx, "/?stress=lumiere&duree=3");
+    await page.waitForURL(/serie=stress/); await attendrePasse(page, 0);
+    const s = await serie(ctx), noms = s ? s.liste.map((it) => it.nom + " " + it.passe) : [];
+    const attendu = ["proposition p1", "proposition-mobiles p1", "proposition-effets p1", "proposition-mobiles p2", "proposition-effets p2", "proposition p2"];
+    const classes = await page.evaluate(() => document.documentElement.className).catch(() => "");
+    verifier("(k) tri ?stress=lumiere : 6 pages en ordre alterné, sans témoin", JSON.stringify(noms) === JSON.stringify(attendu), noms.join(", "));
+    await page.click("#ld-diag-stop"); await dormir(1500);
+    const p2 = await rouvrir(ctx, BASE + "/?serie=stress&passe=p1&sans=mobiles"); await dormir(2500);
+    const cl2 = await p2.evaluate(() => document.documentElement.className);
+    verifier("(k) adresse d'une page -mobiles : classe lds-mobiles posée", /\blds-mobiles\b/.test(cl2) && !/\blds-/.test(classes), cl2.slice(0, 80));
     await ctx.close();
   },
 };
