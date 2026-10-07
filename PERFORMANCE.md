@@ -350,9 +350,9 @@ Les résultats des 9 premières passes (`ld-diag-serie`) et les 10 derniers arr�
 
 ### Résultats du test de 2 h (récupérés le 06/10 avec `resultats.html`)
 
-Le test a démarré le 05/10 à 11:13 (heure de Paris) sur l'iPhone de Loan (iOS Safari 27.0, hauteur visible 695, lvh 735).
+Le test a démarré le 05/10 à 09:13 UTC (17:13 à l'heure du téléphone de Loan, UTC+8) sur son iPhone (iOS Safari 27.0, hauteur visible 695, lvh 735).
 - Les **9 passes** se sont toutes arrêtées en 3 minutes.
-- Le **témoin** s'est ensuite arrêté en boucle jusqu'à 12:45, soit environ 1 h 30. Il y a eu 10 arrêts rien que dans ses 9 dernières minutes, entre 7 et 45 s chacun.
+- Le **témoin** s'est ensuite arrêté en boucle jusqu'à 10:45 UTC (18:45 heure du téléphone), soit environ 1 h 30. Il y a eu 10 arrêts rien que dans ses 9 dernières minutes, entre 7 et 45 s chacun.
 
 | Passe | Version | Arrêt après | Étape | Dernier relevé enregistré (y, phase, à l'écran, vitesse) |
 |---|---|---|---|---|
@@ -443,6 +443,35 @@ Cette paire concorde avec la paire `filtre` du 05/10 : la validation visuelle es
   - banc borné et alterné `?banc=1&liste=proposition,proposition+affiche,proposition,proposition+affiche` ;
   - arrêts et durées d'images là où le bouton est à l'écran ;
   - nombre de calques dans Chromium, à titre indicatif.
+
+### Résultat du tri `?stress=sans` (06/10, iPhone de Loan)
+
+Conditions : 8 pages, 11 chargements, 7,7 min, dans le navigateur intégré d'une application (hauteur visible 647, lvh 768). Ce n'est pas Safari lui-même.
+
+| Version | p1 | p2 |
+|---|---|---|
+| proposition (référence) | ARRÊT brutal, 21 s, retour 4 | ok, 10 allers-retours, étude 250 ms / 95 % |
+| -etude | ARRÊT brutal, 10 s, retour 2 | ARRÊT brutal, 16 s, retour 3 |
+| -lumiere | ok, 19 allers-retours | ok, 11 allers-retours, étude 250 ms / 100 % |
+| -etude-lumiere | ok, 20 allers-retours | ok, 19 allers-retours |
+
+- **Par facteur** : avec la lumière, 3 arrêts sur 4 pages ; sans la lumière, 0 sur 4. Retirer les caméras de l'étude n'empêche pas l'arrêt (2 sur 2).
+- **Moment des 3 arrêts** : au retour de l'étude vers le projecteur blanc, quand le projecteur réapparaît (HE, défilement vers le haut, calques BRXEWM actifs).
+- **Interprétation provisoire** (tri de 2 passes, pas une démonstration) : piste prioritaire, les calques de lumière du projecteur.
+- **Confirmation à faire** : référence et `-lumiere`, 3 passes chacune, en ordre alterné, dans Safari, où la référence s'arrêtait 9 fois sur 9 le 05/10 :
+
+  `?stress=1&versions=proposition,proposition-lumiere&passes=3`
+- **ResizeObserver** : 0 dans les 4 pages sans lumière, contre 14 à 15 avec. Ce constat est lié à la lumière ou au projecteur (priorité basse).
+- **Étude, à titre indicatif** : p95 de 39 à 55 ms sans les caméras, contre 104 à 250 ms avec.
+
+**Données d'analyse de l'iPhone** (recherches de Loan, 06/10) :
+- « Web » : un seul rapport, `com.apple.WebKit.Networking.diskwrites_resource` du 23/09 ;
+- « Safar » : un seul rapport, `ExcUserFault_MobileSafari` du 24/09 ;
+- aucun JetsamEvent depuis le 02/10.
+
+Aucun rapport n'a donc été laissé par des dizaines d'arrêts entre le 04 et le 06/10.
+- Un plantage classique du processus de la page, qui laisse un rapport, devient peu probable.
+- Une fermeture de la page par Safari lui-même, pour excès de mémoire, ne laisse pas de rapport. C'est l'hypothèse la plus cohérente avec le tri : plausible et renforcée, mais pas démontrée.
 
 ## Vérifications
 
