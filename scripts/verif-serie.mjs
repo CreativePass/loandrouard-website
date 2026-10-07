@@ -1,6 +1,6 @@
 // Vérification LOCALE (Chromium) du protocole borné des séries (optimise/diag.js) et de resultats.html, avec des
 // arrêts brutaux provoqués (CDP Page.crash) : la série doit toujours se terminer, chaque arrêt compté une fois.
-// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j,k,l,m]
+// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j,k,l,m,n]
 //   a sans arrêt · b arrêt sur la dernière page · c arrêt à chaque passe · c2 arrêt à chaque chargement
 //   d rechargement tardif (4 min) · e bouton « Arrêter le test » · f limite de 25 min · g ancienne série intacte
 //   h resultats.html (résumé, copie, lecture seule, clés du diagnostic seulement)
@@ -9,6 +9,7 @@
 //   k tri ?stress=lumiere : 6 pages préparées (référence, -mobiles, -effets × 2, ordre alterné), 1re page conforme
 //   l tri ?stress=mobiles : 10 pages préparées (référence, -faisceaux, -rayons, -halo, -sol × 2, ordre alterné)
 //   m contrôle de la vitrine ?banc=bouton&variante=proposition-mobiles : ABBA, retrait posé sur les pages de la variante
+//   n validation ?banc=valide : endurance (e1–e3) puis vitrine (v1–v2), proposition / corrige.html, série menée au bout
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -213,6 +214,20 @@ const TESTS = {
     const p2 = await rouvrir(ctx, BASE + "/?serie=bouton&passe=p1&sans=mobiles"); await dormir(2500);
     const cl = await p2.evaluate(() => document.documentElement.className);
     verifier("(m) page de la variante : classe lds-mobiles posée", /\blds-mobiles\b/.test(cl), cl.slice(0, 80));
+    await ctx.close();
+  },
+  async n() { // validation de la correction : une seule série mêlant endurance et vitrine
+    const { ctx, n } = await contexte(); const vus = [];
+    ctx.on("request", (r) => { if (r.resourceType() === "document" && /serie=/.test(r.url())) { const u = new URL(r.url()); vus.push(u.pathname.replace("/", "") + ":" + u.searchParams.get("serie") + "/" + u.searchParams.get("passe")); } });
+    await demarrer(ctx, "/?banc=valide&duree=3");
+    const s = await attendreFin(ctx, 600000);
+    const attendu = ["proposition e1", "corrige e1", "corrige e2", "proposition e2", "proposition e3", "corrige e3", "corrige v1", "proposition v1", "proposition v2", "corrige v2"];
+    const noms = s ? s.liste.map((it) => it.nom + " " + it.passe) : [];
+    verifier("(n) validation : 10 pages dans l'ordre prévu", JSON.stringify(noms) === JSON.stringify(attendu), noms.join(", "));
+    const bonnesAdresses = vus.length === 10 && vus.every((v, k) => v === (attendu[k].startsWith("corrige") ? "corrige.html" : "") + ":" + (k < 6 ? "stress" : "bouton") + "/" + attendu[k].split(" ")[1]);
+    verifier("(n) bonnes pages et bons modes, série terminée", s && s.type === "validation" && s.fini && s.arret === "complet" && s.res.length === 10 && s.res.every((r) => !r.plantage) && bonnesAdresses,
+      resume(s) + " · " + vus.join(" ") + ` · chargements vus ${n()}`);
+    verifier("(n) vitrine mesurée sur les pages v, endurance sur les pages e", s && s.res.slice(6).every((r) => r.phases.vitrine && r.phases.ouverture.n > 100) && s.res.slice(0, 6).every((r) => r.allersRetours > 0));
     await ctx.close();
   },
 };

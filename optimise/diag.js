@@ -17,7 +17,9 @@
    ?stress=lumiere  tri : proposition, -mobiles, -effets, 2 passes chacune, ordre alterné
    ?stress=mobiles  tri : proposition, -faisceaux, -rayons, -halo (halo, brume, éclat), -sol (sol, flaque, ombre)
    ?banc=bouton  contrôle de la vitrine See pricing, sans défilement rapide : proposition / variante en ordre ABBA
-                 (&variante=nom, par défaut proposition+affiche ; ex. proposition-mobiles) */
+                 (&variante=nom, par défaut proposition+affiche ; ex. proposition-mobiles)
+   ?banc=valide  validation de la correction « sousblanc » (corrige.html) : endurance 3 passes et vitrine 2 passes,
+                 proposition / corrige en ordre alterné, une seule série */
 (() => {
   if (window.__ldDiag) return; window.__ldDiag = 1;
   const Q = new URLSearchParams(location.search);
@@ -27,7 +29,7 @@
   const lire = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
   const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const fichier = decodeURIComponent(location.pathname.split("/").pop() || "");
-  const PAGE = { "actuel.html": "actuel", "textures.html": "textures" }[fichier] || "proposition";
+  const PAGE = { "actuel.html": "actuel", "textures.html": "textures", "corrige.html": "corrige" }[fichier] || "proposition";
   const V = (Q.get("v") || "").split(",").filter(Boolean), SANS = (Q.get("sans") || "").split(",").filter(Boolean);
   const NOM = PAGE + (V.length ? "+" + V.join("+") : "") + (SANS.length ? "-" + SANS.join("-") : "") + (Q.get("panneau") === "0" ? "#sanspanneau" : "");
   V.forEach((v) => h.classList.add("ldv-" + v)); SANS.forEach((s) => h.classList.add("lds-" + s));
@@ -266,7 +268,7 @@
   // Nom d'un élément : page[+variante…][-retrait…][#sanspanneau], ex. « proposition+nuit », « proposition-etude-lumiere ».
   const adresse = (it) => { const [corps, ...sans] = it.nom.split("#")[0].split("-"), [p, ...v] = corps.split("+"), q = new URLSearchParams();
     q.set("serie", it.mode); q.set("passe", it.passe || ""); if (v.length) q.set("v", v.join(",")); if (sans.length) q.set("sans", sans.join(",")); if (it.nom.includes("#sanspanneau")) q.set("panneau", "0");
-    return ({ actuel: "actuel.html", textures: "textures.html" }[p] || "./") + "?" + q.toString(); };
+    return ({ actuel: "actuel.html", textures: "textures.html", corrige: "corrige.html" }[p] || "./") + "?" + q.toString(); };
   // Endurance : 3 passes par version, ordre alterné (carré latin), plus une passe sans panneau hors comparaison.
   // ?stress=sans : tri des retraits (2 passes par version suffisent à repérer une variante qui se distingue ; à confirmer ensuite).
   const PRESETS = { sans: "proposition,proposition-etude,proposition-lumiere,proposition-etude-lumiere", lumiere: "proposition,proposition-mobiles,proposition-effets",
@@ -276,6 +278,9 @@
     if (!Q.has("versions") && !PRESET) l.push({ nom: "proposition#sanspanneau", passe: "témoin", mode: "stress" }); return l; };
   const VARIANTE = Q.get("variante") || "proposition+affiche";
   const planBouton = () => [["proposition", "p1"], [VARIANTE, "p1"], [VARIANTE, "p2"], ["proposition", "p2"]].map(([nom, passe]) => ({ nom, passe, mode: "bouton" }));
+  // Validation d'une correction : endurance (e1–e3) puis vitrine (v1–v2), référence et version corrigée en ordre alterné.
+  const planValide = () => [["proposition", "e1"], ["corrige", "e1"], ["corrige", "e2"], ["proposition", "e2"], ["proposition", "e3"], ["corrige", "e3"]].map(([nom, passe]) => ({ nom, passe, mode: "stress" }))
+    .concat([["corrige", "v1"], ["proposition", "v1"], ["proposition", "v2"], ["corrige", "v2"]].map(([nom, passe]) => ({ nom, passe, mode: "bouton" })));
   const planBanc = () => (Q.get("liste") || "actuel,textures,proposition,proposition+filtre,proposition+nuit").split(",").map((n) => ({ nom: n, passe: "", mode: "auto" }));
   // Série BORNÉE (format v: 2) : l'état est enregistré avant chaque passe (enCours) et aussitôt après chaque
   // chargement. Une passe qui ne va pas au bout (arrêt brutal, page en arrière-plan supprimée, rechargement), quel
@@ -305,12 +310,13 @@
   async function serie() {
     let s = lire(CLE_SERIE);
     if (!SERIE) { // page de départ (?stress=1 ou ?banc=1) : un toucher pour démarrer (garde l'écran allumé)
-      const stress = Q.has("stress"), bouton = !stress && Q.get("banc") === "bouton", liste = stress ? planStress() : bouton ? planBouton() : planBanc();
+      const stress = Q.has("stress"), bouton = !stress && Q.get("banc") === "bouton", valide = !stress && Q.get("banc") === "valide";
+      const liste = stress ? planStress() : bouton ? planBouton() : valide ? planValide() : planBanc();
       const bt = document.createElement("button"); bt.id = "ld-diag-go";
-      bt.innerHTML = (stress ? "Démarrer le test d'endurance" : bouton ? "Démarrer le contrôle du bouton" : "Démarrer le banc") + `<br><small>${liste.length} pages · environ ${Math.round(liste.length * (stress ? 1.25 : bouton ? 1.2 : 2))} min · 25 min au plus</small>` +
+      bt.innerHTML = (stress ? "Démarrer le test d'endurance" : bouton ? "Démarrer le contrôle du bouton" : valide ? "Démarrer la validation" : "Démarrer le banc") + `<br><small>${liste.length} pages · environ ${Math.round(liste.length * (stress || valide ? 1.25 : bouton ? 1.2 : 2))} min · 25 min au plus</small>` +
         (s && !s.fini ? "<br><small>(remplace la série précédente, non terminée : la lire d'abord avec resultats.html)</small>" : "");
       bt.onclick = async () => { await garderEveil(); ecrire(CLE, null);
-        suivant({ v: 2, type: stress ? "stress" : bouton ? "bouton" : "banc", liste, i: 0, res: [], debut: Date.now(), chargements: 0, enCours: null, duree: +Q.get("duree") || 60 }); };
+        suivant({ v: 2, type: stress ? "stress" : bouton ? "bouton" : valide ? "validation" : "banc", liste, i: 0, res: [], debut: Date.now(), chargements: 0, enCours: null, duree: +Q.get("duree") || 60 }); };
       h.appendChild(bt); return;
     }
     if (!s || s.fini) return;
@@ -336,19 +342,22 @@
     const t = document.createElement("div"); t.id = "ld-diag-t";
     const i0 = info();
     const CAUSE = { complet: "terminé", manuel: "arrêté avec le bouton (résultats partiels)", "durée": "arrêté : limite de 25 min atteinte (résultats partiels)", chargements: "arrêté : trop de rechargements (résultats partiels)" };
-    let txt = `<b>${s.type === "stress" ? "Endurance" : s.type === "bouton" ? "Contrôle du bouton" : "Banc"} ${CAUSE[s.arret] || "terminé"}</b> — ${new Date().toLocaleString()}\n${ua} · dpr ${devicePixelRatio} · écran ${screen.width}×${screen.height}\nih ${i0.ih} vv ${i0.vv} · svh ${i0.svh} lvh ${i0.lvh} dvh ${i0.dvh} · en-tête ${i0.entete}\n`;
+    let txt = `<b>${s.type === "stress" ? "Endurance" : s.type === "bouton" ? "Contrôle du bouton" : s.type === "validation" ? "Validation" : "Banc"} ${CAUSE[s.arret] || "terminé"}</b> — ${new Date().toLocaleString()}\n${ua} · dpr ${devicePixelRatio} · écran ${screen.width}×${screen.height}\nih ${i0.ih} vv ${i0.vv} · svh ${i0.svh} lvh ${i0.lvh} dvh ${i0.dvh} · en-tête ${i0.entete}\n`;
     if (s.liste) txt += `pages ${Math.min(s.i, s.liste.length)}/${s.liste.length} · chargements ${s.chargements || "?"} · durée ${s.debut ? Math.round(((s.fin || Date.now()) - s.debut) / 6000) / 10 + " min" : "?"}\n`;
-    const noms = [...new Set(s.res.map((r) => r.nom))];
+    // Validation : regroupement par version ET par épreuve (endurance e…, vitrine v…).
+    const vit = (r) => s.type === "bouton" || (s.type === "validation" && (r.passe || "")[0] === "v");
+    const cle = (r) => r.nom + (s.type === "validation" ? (vit(r) ? " · vitrine" : " · endurance") : "");
+    const noms = [...new Set(s.res.map(cle))];
     const f = (st) => (st ? st.p95 + "ms/" + st.pc25 + "%" : "—");
     for (const n of noms) {
-      const rs = s.res.filter((r) => r.nom === n), ko = rs.filter((r) => r.plantage);
+      const rs = s.res.filter((r) => cle(r) === n), ko = rs.filter((r) => r.plantage);
       txt += `\n<b>${COURT(n)}</b> : arrêts ${ko.length}/${rs.length}\n`;
       for (const r of rs) {
         const ph = r.phases || {}, base = `  ${r.passe || "·"} `;
         if (r.plantage) { const pl = r.plantage, d = (pl.j || []).slice(-1)[0] || []; txt += `<span class="ko">${base}ARRÊT${pl.type ? " " + pl.type : ""} après ${pl.apres == null ? "?" : pl.apres} s, ${pl.etape || ""}, phase ${pl.ph}, écran ${d[4] || "?"}${d[5] ? " cam:w" : ""}, ${d[6] || 0} px/s${pl.delai != null ? ", rechargée " + pl.delai + " s plus tard" : ""}</span>\n`; }
         else if (r.interrompu) txt += `${base}interrompue (bouton)${r.allersRetours ? " · " + r.allersRetours + " allers-retours" : ""}\n`;
         else txt += `<span class="ok">${base}ok</span>${r.allersRetours ? " · " + r.allersRetours + " allers-retours" : ""}\n`;
-        txt += `     images : ${s.type === "bouton" ? `repos/ouverture ${f(ph.ouverture)} · texte ${f(ph.texte)} · vitrine ${f(ph.vitrine)} · blanc ${f(ph.blanc)}` : `éblouiss. ${f(ph.eblouissement)} · blanc ${f(ph.blanc)} · étude ${f(ph.etude)}${s.type === "banc" ? " · planche " + f(ph.planche) : ""}`} · RO ${r.ro == null ? "—" : r.ro}${r.res && r.res.length ? " · ressources en échec " + r.res.length : ""}\n`;
+        txt += `     images : ${vit(r) ? `repos/ouverture ${f(ph.ouverture)} · texte ${f(ph.texte)} · vitrine ${f(ph.vitrine)} · blanc ${f(ph.blanc)}` : `éblouiss. ${f(ph.eblouissement)} · blanc ${f(ph.blanc)} · étude ${f(ph.etude)}${s.type === "banc" ? " · planche " + f(ph.planche) : ""}`} · RO ${r.ro == null ? "—" : r.ro}${r.res && r.res.length ? " · ressources en échec " + r.res.length : ""}\n`;
       }
     }
     const ko = s.res.filter((r) => r.plantage);

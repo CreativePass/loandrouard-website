@@ -250,6 +250,7 @@ node scripts/banc.mjs calques mobile actuel,textures
 node scripts/verif-entete.mjs                                      # en-tête à 375–1440 px
 node scripts/verif-serie.mjs                                       # séries bornées et resultats.html (arrêts provoqués)
 node scripts/verif-retraits.mjs                                    # retraits ?sans= : géométrie inchangée, éléments retirés
+node scripts/banc.mjs captures mobile proposition,corrige           # image identique avec la correction « sousblanc » (+ jonction, étude)
 ```
 
 ### 1er tour sur l'iPhone de Loan (04/10, iOS Safari 27.0, 393×852, DPR 3)
@@ -533,6 +534,49 @@ Deux familles de nature différente :
 - `?banc=bouton&variante=proposition-mobiles` : la vitrine avec et sans lumières mobiles, en ordre ABBA ;
 - `?sans=sol` (sol, flaque, ombre) et `?stress=mobiles` : référence, `-faisceaux`, `-rayons`, `-halo` (halo, brume, éclat) et `-sol`, 2 passes chacune. Ce tri ne sera lancé que si la confirmation des mobiles tient ;
 - géométrie identique à 0 px pour `faisceaux`, `rayons`, `halo` et `sol`, aux formats iPhone et ordinateur (`node scripts/verif-retraits.mjs faisceaux,rayons,halo,sol`).
+
+### Découpage des lumières mobiles (08/10, Safari) et correction « sousblanc »
+
+**Tri** `?stress=mobiles` : 10 pages, 20 chargements, 9,1 min. **10 arrêts sur 10** : référence, `-faisceaux`, `-rayons`, `-halo` et `-sol`, chacun 2 sur 2.
+- Aucune famille seule n'empêche l'arrêt ; sans toutes les lumières mobiles, plus d'arrêt (0 sur 2, le 07/10).
+- C'est la **somme** des calques qui compte (fortement étayé pour la famille, plausible pour le mécanisme mémoire).
+- Comme convenu avec Loan, on passe à une correction de toute la famille, sans autre test de recherche.
+
+**Ce que montre le code** (`initProjecteur`, `maj()`) :
+- À partir de P ≥ 0,8 (phase blanc, jonction, étude), le blanc papier `.vfp-blanc` est strictement opaque et couvre toute la scène (`overflow: hidden`).
+- Sous lui restaient actifs, invisibles mais composités : tout `.vfp-lumiere` (faisceaux, sol, flaque, ombre, poussière, halo, lampe, rayons), la brume, l'exposition `color-dodge` et l'éclat, tous à pleine intensité.
+- Le code d'origine libère déjà les calques **éteints** (« libère la mémoire graphique (sinon tuiles manquantes au retour vers le haut) »), mais pas les calques **recouverts**.
+- Les arrêts relevés surviennent presque tous dans ces états : la lumière invisible s'y ajoute aux caméras de l'étude.
+
+**Correction candidate `sousblanc`** (`scripts/safari.mjs`, une ligne de `maj()` remplacée, à l'occurrence exacte) :
+- quand `blanc` est à l'opacité 1, la brume, les rayons, l'exposition et l'éclat passent en `visibility: hidden`, et le conteneur `.vfp-lumiere` aussi ;
+- tout revient dans la même image dès que le blanc repasse sous 1. Le projecteur couvre alors l'écran et l'étude n'est plus visible.
+- Statut : candidat (pas dans `SAFARI_IDS`). Page de comparaison `corrige.html` = proposition + `sousblanc`.
+
+**Preuves locales (Chromium)** :
+- **Image identique** (`banc.mjs captures`, animations figées, polices chinoises de Google Fonts bloquées sur toutes les pages, car leur arrivée variable faussait la comparaison) :
+  - de P 0 à 0,8 et à la jonction : **0 pixel de différence**, formats iPhone et ordinateur ;
+  - dans l'étude : écarts au même endroit que le témoin proposition/proposition (photo animée de l'étude), 0,5 / 0,65 % (iPhone) et 0,6 / 1,5 % (ordinateur) ;
+  - le projecteur n'y montre que 85 à 90 px de blanc, identique dans les deux versions.
+- **Visibilité** : lumière et brume masquées au blanc, à la jonction et dans l'étude, rétablies au retour à P 0,7.
+- **Mémoire graphique** (`banc.mjs calques mobile`, calques dessinés et surface à l'écran) :
+
+| Position | proposition | corrige |
+|---|---|---|
+| P 0 à 0,75, vitrine | identique | identique |
+| P 0,8 (blanc) | 41 calques, 312 Mpx | 26 calques, 213 Mpx (−32 %) |
+| jonction | 64 calques, 378 Mpx | 49 calques, 279 Mpx (−26 %) |
+| étude | 63 calques, 375 Mpx | 48 calques, 276 Mpx (−26 %) |
+
+**Validation sur l'iPhone** : `?banc=valide`, une seule série de 10 pages, environ 12 min.
+- Endurance : proposition et corrige, 3 passes chacune, ordre alterné.
+- Vitrine « See pricing » : 2 passes chacune, ordre ABBA.
+
+Critère fixé à l'avance :
+- **endurance** : validée si `corrige` s'arrête au plus 1 fois sur 3 et la référence au moins 2 fois sur 3 ;
+- **vitrine** : pas d'arrêt de plus (information seulement, cette correction ne vise pas la vitrine).
+
+Si la correction est validée, elle entre dans `SAFARI_IDS` avec `affiche`, puis mise en ligne avec l'accord de Loan.
 
 ## Vérifications
 

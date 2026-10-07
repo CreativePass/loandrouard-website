@@ -26,7 +26,7 @@ const REP = +(repArg || 1);
 // Nom : page[+variante…][-calque retiré…][@param=valeur…], ex. « proposition@nodiag=1 » (page sans diagnostic).
 const chemin = (nom) => { const [corps, ...extra] = nom.split("@"), [avant, ...sans] = corps.split("-"), [p, ...v] = avant.split("+"), q = [...extra];
   if (v.length) q.push("v=" + v.join(",")); if (sans.length) q.push("sans=" + sans.join(","));
-  return "/" + ({ actuel: "actuel.html", textures: "textures.html" }[p] || "") + (q.length ? "?" + q.join("&") : ""); };
+  return "/" + ({ actuel: "actuel.html", textures: "textures.html", corrige: "corrige.html" }[p] || "") + (q.length ? "?" + q.join("&") : ""); };
 
 if (!fs.existsSync(path.join(PUBLIC, "diag.js"))) { console.error("Construire d'abord avec ESSAI=1 node scripts/construire.mjs"); process.exit(1); }
 const TYPES = { html: "text/html", js: "text/javascript", css: "text/css", png: "image/png", webp: "image/webp", jpg: "image/jpeg", svg: "image/svg+xml", woff2: "font/woff2", json: "application/json" };
@@ -47,6 +47,8 @@ async function ouvrir(nom, suffixe = "") {
   const page = await ctx.newPage(), cdp = await ctx.newCDPSession(page), erreurs = [];
   page.on("pageerror", (e) => erreurs.push(e.message.slice(0, 160)));
   await page.route(/loan-api|stripe|cloudflareinsights|jsdelivr/, (r) => r.abort());
+  // Captures : polices chinoises de Google Fonts bloquées pour toutes les pages (arrivée trop variable ici pour comparer au pixel).
+  if (scenario === "captures") await page.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, (r) => r.abort());
   if (P.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: P.cpu });
   const url = BASE + chemin(nom) + (suffixe ? (chemin(nom).includes("?") ? "&" : "?") + suffixe : "");
   await page.goto(url, { waitUntil: "load", timeout: 120000 });
@@ -57,6 +59,15 @@ const attendreChargement = (page) => page.waitForFunction(() => !document.getEle
 const allerP = (page, p) => page.evaluate((p) => { const sec = document.getElementById("hero"), H = sec.querySelector(".vfp-scene").clientHeight, tenue = 1.25 * H, plage = sec.offsetHeight - tenue - H - 0.8 * H, s0 = 0.198 * plage, s = 0.6 * p * plage;
   document.documentElement.style.scrollBehavior = "auto"; window.scrollTo(0, sec.getBoundingClientRect().top + scrollY + (s < s0 ? s : s + tenue * 0.994)); }, p);
 const ETAPES = [0, 0.2, 0.45, 0.6, 0.7, 0.75, 0.8];
+// Captures et calques : étapes du projecteur, puis la jonction (bas de la scène à mi-écran, blanc opaque) et l'étude.
+const POSITIONS = [...ETAPES, "jonction", "etude"];
+const etiquette = (p) => (typeof p === "number" ? "P" + p : p);
+const allerA = (page, p) => (typeof p === "number" ? allerP(page, p) : page.evaluate((p) => {
+  document.documentElement.style.scrollBehavior = "auto";
+  const abs = (el) => el.getBoundingClientRect().top + scrollY;
+  const hero = document.getElementById("hero"), etu = document.getElementById("analysis");
+  window.scrollTo(0, p === "jonction" ? abs(hero) + hero.offsetHeight - 0.5 * innerHeight : abs(etu) + 0.3 * innerHeight);
+}, p));
 
 const R = { profil: profilNom, scenario, date: new Date().toISOString(), res: {} };
 if (scenario === "parcours") {
@@ -72,12 +83,12 @@ if (scenario === "parcours") {
   const dos = path.join(MESURES, "captures", profilNom); fs.mkdirSync(dos, { recursive: true });
   const prendre = async (nom, tag) => {
     const o = await ouvrir(nom); await attendreChargement(o.page); await o.page.waitForTimeout(7000);
-    for (const p of ETAPES) {
-      await allerP(o.page, p); await o.page.waitForTimeout(1500);
+    for (const p of POSITIONS) {
+      await allerA(o.page, p); await o.page.waitForTimeout(1500);
       // Images figées pour comparer : animations CSS posées au même instant, poussière (tirage aléatoire) masquée.
       await o.page.evaluate(() => { document.getAnimations().forEach((a) => { a.pause(); a.currentTime = 6000; }); document.querySelectorAll(".vfp-poussiere").forEach((c) => (c.style.visibility = "hidden")); });
       await o.page.waitForTimeout(300);
-      await o.page.screenshot({ path: path.join(dos, `${tag}-P${p}.png`) });
+      await o.page.screenshot({ path: path.join(dos, `${tag}-${etiquette(p)}.png`) });
       await o.page.evaluate(() => { document.getAnimations().forEach((a) => a.play()); document.querySelectorAll(".vfp-poussiere").forEach((c) => (c.style.visibility = "")); });
     }
     await o.ctx.close();
@@ -90,10 +101,10 @@ if (scenario === "parcours") {
     let somme = 0, max = 0; for (let i = 0; i < A.data.length; i += 4) for (let k = 0; k < 3; k++) { const e = Math.abs(A.data[i + k] - B.data[i + k]); somme += e; if (e > max) max = e; }
     // visible : % de pixels au seuil 0,06 ; fin : seuil 0,02 ; moyen / max : écart par canal (0–255).
     return { visible: +(100 * n / N).toFixed(3), fin: +(100 * f / N).toFixed(3), moyen: +(somme / (3 * N)).toFixed(3), max }; };
-  for (const p of ETAPES) {
-    const ref = path.join(dos, `${LISTE[0]}-a-P${p}.png`), ligne = { temoin: ecart(ref, path.join(dos, `${LISTE[0]}-b-P${p}.png`), path.join(dos, `diff-temoin-P${p}.png`)) };
-    for (const nom of LISTE.slice(1)) ligne[nom] = ecart(ref, path.join(dos, `${nom}-P${p}.png`), path.join(dos, `diff-${nom}-P${p}.png`));
-    R.res["P" + p] = ligne; console.log("P" + p, "% de pixels différents :", JSON.stringify(ligne));
+  for (const p of POSITIONS) {
+    const e = etiquette(p), ref = path.join(dos, `${LISTE[0]}-a-${e}.png`), ligne = { temoin: ecart(ref, path.join(dos, `${LISTE[0]}-b-${e}.png`), path.join(dos, `diff-temoin-${e}.png`)) };
+    for (const nom of LISTE.slice(1)) ligne[nom] = ecart(ref, path.join(dos, `${nom}-${e}.png`), path.join(dos, `diff-${nom}-${e}.png`));
+    R.res[e] = ligne; console.log(e, "% de pixels différents :", JSON.stringify(ligne));
   }
 } else if (scenario === "calques") {
   for (const nom of LISTE) {
@@ -105,7 +116,7 @@ if (scenario === "parcours") {
       const dessin = calques.filter((l) => l.drawsContent);
       const px = dessin.reduce((s, l) => s + l.width * l.height, 0), grands = dessin.filter((l) => l.width * l.height > 0.5e6).length;
       res[etiquette] = { calques: calques.length, dessines: dessin.length, mpxCss: +(px / 1e6).toFixed(1), mpxAppareil: +(px * P.deviceScaleFactor ** 2 / 1e6).toFixed(1), grands }; };
-    for (const p of ETAPES) { await allerP(o.page, p); await etat("P" + p); }
+    for (const p of POSITIONS) { await allerA(o.page, p); await etat(etiquette(p)); }
     await allerP(o.page, 0); await o.page.waitForTimeout(800); await o.page.evaluate(() => document.querySelector(".vfp-affiche").click()); await etat("vitrine");
     R.res[nom] = res; console.log(nom, JSON.stringify(res));
     await o.ctx.close();
