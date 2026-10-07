@@ -4,7 +4,8 @@
 //     puis pendant un parcours de stress raccourci (yA ↔ yB, deux allers-retours) ;
 //  2. retrait effectif : éléments visés non affichés, figure et scènes toujours affichées ;
 //  3. affiche : will-change: filter sur le seul bouton See pricing.
-// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-retraits.mjs   → captures dans mesures/retraits/
+// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-retraits.mjs [retraits,…]   → captures dans mesures/retraits/
+//   sans argument : etude, lumiere, etude+lumiere, mobiles, effets, faisceaux, rayons, halo, sol (la référence est toujours mesurée)
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -29,10 +30,11 @@ const PROFILS = {
   mobile: { viewport: { width: 393, height: 852 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
   bureau: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 },
 };
-const RETRAITS = ["", "etude", "lumiere", "etude,lumiere", "mobiles", "effets"];
+const RETRAITS = ["", ...(process.argv[2] ? process.argv[2].split(",").map((r) => r.replace("+", ",")) : ["etude", "lumiere", "etude,lumiere", "mobiles", "effets", "faisceaux", "rayons", "halo", "sol"])];
 const MOBILES = [".vfp-faisceau", ".vfp-rayons", ".vfp-halo", ".vfp-brume", ".vfp-eclat", ".vfp-sol", ".vfp-flaque", ".vfp-ombre"], EFFETS = [".vfp-expo", ".vfp-blanc", ".vfp-reman", ".vfp-poussiere"];
 const LUMIERE = [...MOBILES, ...EFFETS];
-const GROUPES = { etude: [".vfa-cam"], lumiere: LUMIERE, mobiles: MOBILES, effets: EFFETS };
+const GROUPES = { etude: [".vfa-cam"], lumiere: LUMIERE, mobiles: MOBILES, effets: EFFETS,
+  faisceaux: [".vfp-faisceau"], rayons: [".vfp-rayons"], halo: [".vfp-halo", ".vfp-brume", ".vfp-eclat"], sol: [".vfp-sol", ".vfp-flaque", ".vfp-ombre"] };
 
 // Mêmes formules que lancerStress() dans optimise/diag.js.
 const geometrie = () => {

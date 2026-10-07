@@ -501,6 +501,39 @@ Deux familles de nature différente :
 
 **Tri** : `?stress=lumiere`, soit `proposition`, `-mobiles` et `-effets`, 2 passes chacune en ordre alterné, puis confirmation de la variante qui se distingue.
 
+### Résultats du 07/10 (Safari) : tri de la lumière et contrôle de la vitrine
+
+**Tri** `?stress=lumiere` : 6 pages, 4,9 min.
+
+| Version | Arrêts | Détail |
+|---|---|---|
+| proposition | 2 sur 2 | 8 s (retour 1, étude E) ; 18 s (retour 3, jonction HE) |
+| -mobiles | 0 sur 2 | 20 et 17 allers-retours |
+| -effets | 2 sur 2 | 11 s et 11 s (aller 2, blanc) |
+
+- **Interprétation provisoire** (tri de 2 passes) : la piste prioritaire est celle des **lumières mobiles**.
+- L'indice qui désignait les effets plein écran (« actuel » et « proposition » s'arrêtent autant l'un que l'autre) est **contredit**. Les lumières mobiles pèsent donc aussi bien en dégradés CSS qu'en textures.
+- **Confirmation** : `?stress=1&versions=proposition,proposition-mobiles&passes=3`.
+- **ResizeObserver** : 0 sans les effets, 16 sans les mobiles. Les avertissements viennent de la famille des effets (exposition, blanc, rémanence, poussière). Constat, priorité basse.
+
+**Contrôle de la vitrine** `?banc=bouton` : 4 pages, 3,5 min, sans défilement rapide.
+
+| Version | p1 | p2 |
+|---|---|---|
+| proposition | ARRÊT brutal à 24 s, « P2 See pricing », en haut, à l'arrêt | ok |
+| +affiche | ok | ARRÊT brutal à 12 s, « P2 See pricing », en haut, à l'arrêt |
+
+- **Fait nouveau** (démontré, constat) : la page peut s'arrêter **sans défilement rapide**, à l'ouverture de la vitrine des formules. Les derniers relevés indiquent y = 0, phase ouverture, projecteur seul à l'écran, 0 px/s.
+- **Règle de décision `affiche`** : elle est remplie.
+  - Arrêts : 1 sur 2 avec, 1 sur 2 sans, donc aucun de plus.
+  - Images au repos et à l'ouverture : 17–19 / 17–18 ms ; texte : 17 / 17 ms ; vitrine : 43–64 / 57 ms. Pas de dégradation nette.
+- **`affiche` est retenu**. Il n'entrera dans `scripts/safari.mjs` (`SAFARI_IDS`) qu'à la fin de l'enquête sur les arrêts, pour garder une référence identique d'un test à l'autre.
+
+**Préparé pour la suite** (adresse de test) :
+- `?banc=bouton&variante=proposition-mobiles` : la vitrine avec et sans lumières mobiles, en ordre ABBA ;
+- `?sans=sol` (sol, flaque, ombre) et `?stress=mobiles` : référence, `-faisceaux`, `-rayons`, `-halo` (halo, brume, éclat) et `-sol`, 2 passes chacune. Ce tri ne sera lancé que si la confirmation des mobiles tient ;
+- géométrie identique à 0 px pour `faisceaux`, `rayons`, `halo` et `sol`, aux formats iPhone et ordinateur (`node scripts/verif-retraits.mjs faisceaux,rayons,halo,sol`).
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).

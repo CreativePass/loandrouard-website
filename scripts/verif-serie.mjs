@@ -1,12 +1,14 @@
 // Vérification LOCALE (Chromium) du protocole borné des séries (optimise/diag.js) et de resultats.html, avec des
 // arrêts brutaux provoqués (CDP Page.crash) : la série doit toujours se terminer, chaque arrêt compté une fois.
-// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j,k]
+// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j,k,l,m]
 //   a sans arrêt · b arrêt sur la dernière page · c arrêt à chaque passe · c2 arrêt à chaque chargement
 //   d rechargement tardif (4 min) · e bouton « Arrêter le test » · f limite de 25 min · g ancienne série intacte
 //   h resultats.html (résumé, copie, lecture seule, clés du diagnostic seulement)
 //   i tri ?stress=sans : chaque page ouverte porte la variante et les retraits attendus, série terminée
 //   j contrôle du bouton ?banc=bouton : proposition / +affiche en ordre ABBA, images comptées au repos, série terminée
 //   k tri ?stress=lumiere : 6 pages préparées (référence, -mobiles, -effets × 2, ordre alterné), 1re page conforme
+//   l tri ?stress=mobiles : 10 pages préparées (référence, -faisceaux, -rayons, -halo, -sol × 2, ordre alterné)
+//   m contrôle de la vitrine ?banc=bouton&variante=proposition-mobiles : ABBA, retrait posé sur les pages de la variante
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -191,6 +193,26 @@ const TESTS = {
     const p2 = await rouvrir(ctx, BASE + "/?serie=stress&passe=p1&sans=mobiles"); await dormir(2500);
     const cl2 = await p2.evaluate(() => document.documentElement.className);
     verifier("(k) adresse d'une page -mobiles : classe lds-mobiles posée", /\blds-mobiles\b/.test(cl2) && !/\blds-/.test(classes), cl2.slice(0, 80));
+    await ctx.close();
+  },
+  async l() { // tri ?stress=mobiles : liste préparée au départ
+    const { ctx } = await contexte(); const page = await demarrer(ctx, "/?stress=mobiles&duree=3");
+    await page.waitForURL(/serie=stress/); await attendrePasse(page, 0);
+    const s = await serie(ctx), noms = s ? s.liste.map((it) => it.nom + " " + it.passe) : [];
+    const V = ["proposition", "proposition-faisceaux", "proposition-rayons", "proposition-halo", "proposition-sol"];
+    const attendu = [...V.map((v) => v + " p1"), ...V.map((_, j) => V[(j + 1) % 5] + " p2")];
+    verifier("(l) tri ?stress=mobiles : 10 pages en ordre alterné, sans témoin", JSON.stringify(noms) === JSON.stringify(attendu), noms.join(", "));
+    await page.click("#ld-diag-stop"); await ctx.close();
+  },
+  async m() { // contrôle de la vitrine avec une autre variante : ?banc=bouton&variante=proposition-mobiles
+    const { ctx } = await contexte(); const page = await demarrer(ctx, "/?banc=bouton&variante=proposition-mobiles");
+    await page.waitForURL(/serie=bouton/); await attendrePasse(page, 0);
+    const s = await serie(ctx), noms = s ? s.liste.map((it) => it.nom + " " + it.passe) : [];
+    verifier("(m) vitrine : proposition / proposition-mobiles en ordre ABBA", s && s.type === "bouton" && JSON.stringify(noms) === JSON.stringify(["proposition p1", "proposition-mobiles p1", "proposition-mobiles p2", "proposition p2"]), noms.join(", "));
+    await page.click("#ld-diag-stop"); await dormir(1000);
+    const p2 = await rouvrir(ctx, BASE + "/?serie=bouton&passe=p1&sans=mobiles"); await dormir(2500);
+    const cl = await p2.evaluate(() => document.documentElement.className);
+    verifier("(m) page de la variante : classe lds-mobiles posée", /\blds-mobiles\b/.test(cl), cl.slice(0, 80));
     await ctx.close();
   },
 };
