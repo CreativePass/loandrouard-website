@@ -629,8 +629,28 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
 - **Calques** (indicatif ; Chromium n'alloue pas comme Safari) : surface −21 à −25 %.
 - **Erreurs** : aucune pendant un parcours complet, vitrine comprise. Les 7 images compactes sont chargées.
 
+**Mesure de contrôle dans Safari** (08/10, iPhone de Loan, `corrige.html?pose=75`, même méthode) : **214,61 Mo** pour 94 calques, contre 489,55 Mo pour 100 calques avant, soit **−56 %**. C'est conforme à l'estimation (environ 210 Mo).
+
+| Lumières | Avant | Après |
+|---|---|---|
+| Stries | 45 Mo | 7,2 Mo |
+| Rayons | 18,9 Mo | 7,2 Mo |
+| Brume | 29,9 Mo | 3,15 Mo |
+| Faisceau et cœur | 2 × 45 Mo | 2 × 1,8 Mo |
+| Halo et éclat | 2 × 45 Mo | 2 × 1,8 Mo |
+| Sol, flaque, ombre | 3 × 9 Mo | 3 × 0,36 Mo |
+| **Total des lumières** | **≈ 300 Mo** | **≈ 26 Mo** |
+
+- Les conteneurs (`div.vfp-*.vfp-compact`) occupent 0 o.
+- **La baisse de mémoire est démontrée** dans Safari sur l'iPhone.
+- Restent lourds, en réserve, avec une correction invisible possible :
+  - `div.vfp-mur` : 26,9 Mo, invisible hors de la vitrine ;
+  - `div.vfp-cartes` : 13,4 Mo ;
+  - `i.vfp-coeur` : 12,6 Mo ;
+  - `#document` et `html` : 21,7 Mo chacun.
+
 **Suite** :
-- mesure Safari de `corrige.html?pose=75`, avec la même méthode, pour confirmer la baisse réelle ;
+- ~~mesure Safari de `corrige.html?pose=75` pour confirmer la baisse réelle~~ (faite, voir ci-dessus) ;
 - validation `?banc=valide` (endurance et vitrine, proposition / corrige) ;
 - si les deux sont bonnes, `compact` (avec `affiche`) entre dans `SAFARI_IDS`, puis mise en ligne avec l'accord de Loan.
 
