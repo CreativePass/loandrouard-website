@@ -42,7 +42,7 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 ## Adresse de test (essais sur appareil)
 
 - `https://loandrouard-essai.loandrouard-website.workers.dev`, Worker `loandrouard-essai` (`wrangler.essai.jsonc`, `worker/essai.js`). Il n'a **aucun domaine** : loandrouard.com n'est jamais touché.
-- `npm run publier:essai` (avec l'accord de Loan) construit avec `ESSAI=1` : diagnostic temporaire `diag.js` et pages de comparaison `actuel.html` et `textures.html`. Voir « Safari / iPhone » dans `PERFORMANCE.md`.
+- `npm run publier:essai` (avec l'accord de Loan) construit avec `ESSAI=1` : diagnostic temporaire `diag.js` et pages de comparaison `actuel.html`, `textures.html` et `corrige.html`. La page `/` est la version qui partirait sur loandrouard.com, plus le diagnostic (invisible sans paramètre). Voir « Safari / iPhone » dans `PERFORMANCE.md`.
 - `npm run publier` construit toujours sans `ESSAI` ; la construction échoue si le diagnostic s'y trouve.
 - Journal du diagnostic, pendant un test seulement (rien n'est conservé ensuite) : `npx wrangler tail --config wrangler.essai.jsonc`.
 - Résultats gardés dans le navigateur du téléphone : `https://loandrouard-essai.loandrouard-website.workers.dev/resultats.html`. Page en lecture seule, sans le site ni le diagnostic, avec un bouton « Copier tout ». Construite seulement avec `ESSAI=1`, refusée dans une construction normale.
@@ -99,5 +99,9 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
   - parcours ordinateur et mobile identiques à la version précédente (vitrine, paiement jusqu'au formulaire Stripe sans créer de session, sommaire, retournement des cartes, langues, navigation, retour `?session_id=`) ;
   - molette libre au cran du projecteur, poussière arrêtée hors écran.
 - [ ] Reporter dans Claude Design : aimantation au cran du projecteur retirée (03/10)
-- [ ] Safari / iPhone (04/10) : corrections `entete` (retenue) et `textures` (provisoire) sur la branche, publiées sur l'adresse de test seulement. En attente du banc sur l'iPhone et le Mac de Loan (`PERFORMANCE.md`, « Safari / iPhone »). À reporter dans Claude Design une fois validées : hauteur réelle de l'en-tête.
+- [ ] Safari / iPhone (04–08/10) : corrections `entete`, `textures`, `compact` et `affiche` retenues (`SAFARI_IDS`).
+  - Validées sur l'iPhone de Loan le 08/10 : arrêts du test d'endurance 3 sur 3 → 0 sur 3 ; mémoire graphique 490 → 215 Mo ; ligne rose disparue (`PERFORMANCE.md`, « Safari / iPhone »).
+  - Mise en ligne prévue avec l'accord de Loan, après un dernier coup d'œil sur l'adresse de test. Elle reprend aussi les optimisations du 03/10 et leurs corrections (`c9bb055`).
+  - Le chargement à 96 % ne se vérifie qu'en production : la balise Cloudflare n'existe pas sur l'adresse de test.
+  - À reporter dans Claude Design : hauteur réelle de l'en-tête.
 - [ ] Cloudflare Web Analytics est actif sur loandrouard.com et .fr depuis le 06/09 (installation automatique : Cloudflare ajoute sa balise aux pages). À confirmer ou désactiver par Loan ; la page Privacy n'en parle pas.

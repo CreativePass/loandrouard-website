@@ -210,10 +210,13 @@ Les captures de Loan, prises sur un vrai iPhone (Safari) et sur Mac (Safari, cap
 | Identifiant | Statut | Effet mesuré (Chromium local) |
 |---|---|---|
 | `entete` | Retenue (choix de Loan : corriger le calcul, design inchangé) | Bande en haut 66 px → 0 à 375–402 px (31 → 0 à 430). Texte, titre et cartes juste sous l'en-tête au lieu de 40–46 px dessous. « See pricing » entièrement à l'écran. Ordinateur inchangé dans Chromium (en-tête de 68 px) |
-| `textures` | **Retenue provisoirement**, à confirmer sur Safari réel | Rendu : écart de pixels au niveau du témoin (actuel contre actuel), écart moyen < 1 niveau sur 255 (ordinateur et mobile, P de 0 à 0,8). Dessin pendant la traversée du projecteur : 10,9–11,2 s → 3,8 s (ordinateur), 9,5 → 3,1 s (mobile). Script par image −30 à −50 %. Surface des calques ±10 % |
+| `textures` | Retenue (avec `compact`, validée sur l'iPhone le 08/10) | Rendu : écart de pixels au niveau du témoin (actuel contre actuel), écart moyen < 1 niveau sur 255 (ordinateur et mobile, P de 0 à 0,8). Dessin pendant la traversée du projecteur : 10,9–11,2 s → 3,8 s (ordinateur), 9,5 → 3,1 s (mobile). Script par image −30 à −50 %. Surface des calques ±10 % |
 | `filtre` (`will-change: filter`) | Variante de test seulement (`?v=filtre`) | Peut ajouter des calques : gardée seulement si la ligne magenta disparaît sur iPhone sans coût mesuré |
 | `lvh`, `dvh` | Variantes de test seulement | Choix après les valeurs mesurées sur l'iPhone |
 | `nuit` (fond fixe caché sous une scène opaque) | Variante de test seulement | Sans effet sur le dessin dans Chromium (fond animé par le compositeur) ; effet mémoire à mesurer sur l'iPhone |
+| `compact` (textures dans un petit cadre agrandi) | **Retenue le 08/10** : arrêts 3 sur 3 → 0 sur 3 sur l'iPhone | Image identique ; mémoire graphique Safari 490 → 215 Mo (voir « Correction candidate `compact` ») |
+| `affiche` (`will-change: filter` sur « See pricing ») | **Retenue le 08/10** : ligne rose disparue sur l'iPhone, aucun arrêt de plus | Seul élément touché, image identique |
+| `sousblanc` (lumière masquée sous le blanc) | Écartée le 08/10 : 3 arrêts sur 3 avec la correction | — |
 
 **Lumière en textures** (`scripts/textures.mjs`) : faisceaux, stries, cœur, rayons, halo, brume, éclat, sol, flaque et ombre sont calculés une fois en PNG (370 Ko au total), à partir des règles CSS de l'export relues telles quelles (interpolation prémultipliée, suréchantillonnage 3×3). La page déplace ces images par `transform` et `opacity`.
 - **Avant** : le halo plein écran est redessiné à chaque image (353 fois sur la traversée, 428 en mobile) ; le calque des rayons, de 3 232 px de côté, est redessiné 116 fois (218 en mobile) ; la scène l'est 100 fois (194).
@@ -649,10 +652,29 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
   - `i.vfp-coeur` : 12,6 Mo ;
   - `#document` et `html` : 21,7 Mo chacun.
 
-**Suite** :
-- ~~mesure Safari de `corrige.html?pose=75` pour confirmer la baisse réelle~~ (faite, voir ci-dessus) ;
-- validation `?banc=valide` (endurance et vitrine, proposition / corrige) ;
-- si les deux sont bonnes, `compact` (avec `affiche`) entre dans `SAFARI_IDS`, puis mise en ligne avec l'accord de Loan.
+**Validation sur l'iPhone** (08/10, Safari, `?banc=valide`) : même protocole et même critère, fixé d'avance, que pour `sousblanc`.
+- `corrige` = proposition + `compact`.
+- Ordre alterné.
+
+| Version | Endurance (allers-retours rapides) | Vitrine (See pricing) |
+|---|---|---|
+| proposition (sans `compact`) | 3 arrêts sur 3 | 0 sur 2 |
+| corrige (avec `compact`) | **0 arrêt sur 3** (20, 19 et 20 allers-retours, passes menées à leur terme) | 0 sur 2 |
+
+- **Critère rempli** : `corrige` s'arrête 0 fois sur 3, la référence 3 fois sur 3. Aucun arrêt de plus dans la vitrine.
+- **Démontré** : la baisse de mémoire graphique, de 490 à 215 Mo (mesure Safari ci-dessus).
+- **Fortement étayé** : `compact` supprime les arrêts du test d'endurance (3 passes de chaque côté, avec et sans la correction, en alternance). Le mécanisme est cohérent avec la mesure : les arrêts cessent quand la mémoire des lumières passe de 300 à 26 Mo.
+- **Non démontré** : l'absence totale d'arrêt dans tous les usages réels (autres iPhone, autres versions d'iOS, onglets ouverts).
+- **`compact` et `affiche` sont retenus** : ils entrent dans `SAFARI_IDS` (page publiée). `affiche` y prend la forme d'une correction de `safari.mjs` (`.vfp-affiche { will-change: filter; }`), la même règle que la variante `?v=affiche` essayée sur l'iPhone.
+- Contrôles locaux de la page publiée (Chromium) :
+  - image identique au pixel à `corrige.html` (iPhone et ordinateur, de P 0 à l'étude) ;
+  - 7 textures compactes chargées ;
+  - `will-change: filter` sur le seul bouton ;
+  - arrivée en haut ;
+  - en-tête à sa hauteur réelle ;
+  - vitrine et Pricing jusqu'au lien Stripe, sans paiement ;
+  - aucune erreur JavaScript.
+- **Mise en ligne** : avec l'accord de Loan, après un dernier coup d'œil sur l'adresse de test (voir `MISE-EN-LIGNE.md`). Les calques encore lourds (`vfp-mur`, `vfp-cartes`, `vfp-coeur`) restent en réserve, à reprendre seulement si des arrêts réapparaissent.
 
 ## Vérifications
 
