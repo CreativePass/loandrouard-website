@@ -595,6 +595,45 @@ Si la correction est validée, elle entre dans `SAFARI_IDS` avec `affiche`, puis
 - Vérifié localement (`verif-serie.mjs`, cas o).
 - **Ensuite** : une lumière allégée sur iPhone, ciblée sur les calques les plus lourds selon la mesure. Captures avant/après pour Loan, puis un seul test de validation.
 
+### Mesure réelle dans Safari (08/10, iPhone de Loan, `?pose=75`, inspecteur web du Mac)
+
+Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
+
+| Calque | Mémoire |
+|---|---|
+| 3 × `img.vfp-faisceau` | 3 × 45 Mo |
+| 2 × `img.vfp-tex` (halo, éclat) | 2 × 45 Mo |
+| `img.vfp-tex` (brume) | 29,9 Mo |
+| `div.vfp-mur` (vitrine, invisible hors vitrine) | 26,9 Mo |
+| `#document`, `html` | 21,7 Mo chacun |
+| `img.vfp-rayons` | 18,9 Mo |
+| `div.vfp-cartes` | 13,4 Mo |
+| `i.vfp-coeur` | 12,6 Mo |
+| `.vf-nuit`, `u`, `canvas.vfp-poussiere` (7 450 dessins), `.vfp-grain` | 12,3 Mo chacun |
+| sol, flaque, ombre | 3 × 9 Mo |
+
+- **Les lumières mobiles pèsent environ 300 Mo sur 490**. Retirer une seule famille (au plus 135 Mo) ne suffisait pas ; les retirer toutes, si. C'est cohérent avec les tris.
+- **Démontré par la mesure** : Safari dessine chaque texture à la taille de son cadre (1000 × 1000 px CSS, soit 3000 × 3000 px à l'écran, 45 Mo), alors que l'image ne fait que 512 px.
+
+### Correction candidate `compact` (textures compactes)
+
+**Principe** : chaque texture est posée dans un petit cadre, au moins égal à sa résolution une fois multiplié par 3, puis agrandie par `transform: scale()`.
+- Faisceaux, sol, flaque, ombre et rayons : un conteneur garde la classe, le cadre et les transformations du code. L'image, à l'intérieur, fait 200 × 200 px (×5), 400 × 400 px (×2,5 ou ×3) ou 200 × 40 px (×5).
+- Halo et éclat : cadre de 200 px, échelle `r/100` au lieu de `r/500`.
+- Brume : cadre de 36 vmax, `scale(5)`.
+- Même géométrie, même image source. Visée : la mémoire de ces calques divisée par environ 25.
+- Page de test : `corrige.html` (proposition + `compact`). `sousblanc` est écarté.
+
+**Vérifications locales (Chromium)** :
+- **Image** (`banc.mjs captures`) : 0 % de pixels visiblement différents à toutes les étapes, au format iPhone comme sur ordinateur. Écart maximal : 3 nuances sur 255, en moyenne < 0,05. Dans l'étude, les écarts sont ceux du témoin (photo animée).
+- **Calques** (indicatif ; Chromium n'alloue pas comme Safari) : surface −21 à −25 %.
+- **Erreurs** : aucune pendant un parcours complet, vitrine comprise. Les 7 images compactes sont chargées.
+
+**Suite** :
+- mesure Safari de `corrige.html?pose=75`, avec la même méthode, pour confirmer la baisse réelle ;
+- validation `?banc=valide` (endurance et vitrine, proposition / corrige) ;
+- si les deux sont bonnes, `compact` (avec `affiche`) entre dans `SAFARI_IDS`, puis mise en ligne avec l'accord de Loan.
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).
