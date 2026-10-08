@@ -19,7 +19,9 @@
    ?banc=bouton  contrôle de la vitrine See pricing, sans défilement rapide : proposition / variante en ordre ABBA
                  (&variante=nom, par défaut proposition+affiche ; ex. proposition-mobiles)
    ?banc=valide  validation de la correction « sousblanc » (corrige.html) : endurance 3 passes et vitrine 2 passes,
-                 proposition / corrige en ordre alterné, une seule série */
+                 proposition / corrige en ordre alterné, une seule série
+   ?pose=75|jonction|vitrine  pose fixe pour mesurer (inspecteur web de Safari, onglet Calques) : la page se place
+                 (P 0,75 ; bas du projecteur à mi-écran ; See pricing ouvert) puis ne bouge plus, sans panneau */
 (() => {
   if (window.__ldDiag) return; window.__ldDiag = 1;
   const Q = new URLSearchParams(location.search);
@@ -247,6 +249,16 @@
     h.style.scrollBehavior = ""; etape = "terminé";
     return resultat();
   }
+  // Pose fixe pour une mesure dans l'inspecteur web : la page se place une fois, puis plus rien ne bouge.
+  async function poser(cible) {
+    await pret(); h.style.scrollBehavior = "auto";
+    if (cible === "vitrine") { await dormir(9000); const aff = $(".vfp-affiche"); if (aff) aff.click(); return; }
+    const sec = $("#hero"); if (!sec) return;
+    const abs = (el) => el.getBoundingClientRect().top + scrollY;
+    if (cible === "jonction") { window.scrollTo(0, abs(sec) + sec.offsetHeight - 0.5 * innerHeight); return; }
+    const P = parseFloat(cible) / 100, q = projecteur(); if (!q || !(P >= 0 && P <= 0.8)) return;
+    const s = 0.6 * P * q.plage; window.scrollTo(0, abs(sec) + (s < q.s0 ? s : s + q.tenue * 0.994)); // même formule que maj()
+  }
   // Endurance : depuis le haut (page neuve, pause de 3 s), allers-retours rapides entre le projecteur en
   // éblouissement (P 0,7) et l'étude (son début + 1,2 écran), 60 s, à 3,5 hauteurs d'écran par seconde.
   // duree : durée des allers-retours en secondes (60 ; plus court seulement pour les vérifications locales).
@@ -374,6 +386,7 @@
     poserSondes();
     setInterval(relever, 200); requestAnimationFrame(image);
     if (SERIE || Q.has("stress") || Q.has("banc")) serie();
+    else if (Q.has("pose")) poser(Q.get("pose"));
     else if (Q.has("auto")) lancerAuto().then((r) => { ecrire("ld-diag-auto", r); envoyer({ type: "auto", resultat: r }); tableau({ type: "banc", res: [r] }); });
     else (async () => { await pret(); await dormir(800); arrivee = Math.round(scrollY); })();
     const fin = lire(CLE_SERIE); if (Q.has("diag") && fin && fin.fini && !SERIE) { const bt = document.createElement("button"); bt.textContent = "dernier test"; bt.style.cssText = "position:fixed;right:6px;bottom:6px;z-index:2147483600;font:11px ui-monospace,monospace"; bt.onclick = () => { tableau(fin); bt.remove(); }; h.appendChild(bt); }

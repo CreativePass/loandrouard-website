@@ -1,6 +1,6 @@
 // Vérification LOCALE (Chromium) du protocole borné des séries (optimise/diag.js) et de resultats.html, avec des
 // arrêts brutaux provoqués (CDP Page.crash) : la série doit toujours se terminer, chaque arrêt compté une fois.
-// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j,k,l,m,n]
+// Usage (après ESSAI=1 node scripts/construire.mjs) : node scripts/verif-serie.mjs [a,b,c,c2,d,e,f,g,h,i,j,k,l,m,n,o]
 //   a sans arrêt · b arrêt sur la dernière page · c arrêt à chaque passe · c2 arrêt à chaque chargement
 //   d rechargement tardif (4 min) · e bouton « Arrêter le test » · f limite de 25 min · g ancienne série intacte
 //   h resultats.html (résumé, copie, lecture seule, clés du diagnostic seulement)
@@ -10,6 +10,7 @@
 //   l tri ?stress=mobiles : 10 pages préparées (référence, -faisceaux, -rayons, -halo, -sol × 2, ordre alterné)
 //   m contrôle de la vitrine ?banc=bouton&variante=proposition-mobiles : ABBA, retrait posé sur les pages de la variante
 //   n validation ?banc=valide : endurance (e1–e3) puis vitrine (v1–v2), proposition / corrige.html, série menée au bout
+//   o poses fixes ?pose=75|jonction|vitrine (mesure dans l'inspecteur web) : état atteint, stable, sans panneau
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -229,6 +230,18 @@ const TESTS = {
       resume(s) + " · " + vus.join(" ") + ` · chargements vus ${n()}`);
     verifier("(n) vitrine mesurée sur les pages v, endurance sur les pages e", s && s.res.slice(6).every((r) => r.phases.vitrine && r.phases.ouverture.n > 100) && s.res.slice(0, 6).every((r) => r.allersRetours > 0));
     await ctx.close();
+  },
+  async o() { // poses fixes pour la mesure dans l'inspecteur web de Safari
+    const etat = () => { const sec = document.getElementById("hero"), sc = sec.querySelector(".vfp-scene"), H = sc.clientHeight, tenue = 1.25 * H, plage = Math.max(1, sec.offsetHeight - tenue - H - 0.8 * H), s0 = 0.198 * plage, s1 = -sec.getBoundingClientRect().top;
+      const s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994;
+      return { P: Math.round(1000 * Math.min(0.8, Math.max(0, s / plage) / 0.6)) / 1000, basScene: Math.round(sc.getBoundingClientRect().bottom), mi: Math.round(innerHeight / 2), vitrine: sc.hasAttribute("data-vitrine"), panneau: !!document.getElementById("ld-diag-p"), y: Math.round(scrollY) }; };
+    for (const [pose, attente, ok] of [["75", 6000, (a, b) => Math.abs(a.P - 0.75) < 0.01 && a.y === b.y], ["jonction", 6000, (a, b) => Math.abs(a.basScene - a.mi) <= 2 && a.y === b.y], ["vitrine", 13000, (a, b) => a.vitrine && a.y === 0 && b.vitrine]]) {
+      const { ctx } = await contexte(); const page = await ctx.newPage(); await page.goto(BASE + "/?pose=" + pose);
+      await page.waitForFunction(() => !document.getElementById("ld-chargement"), null, { timeout: 60000 }); await dormir(attente);
+      const a = await page.evaluate(etat); await dormir(3000); const b = await page.evaluate(etat);
+      verifier(`(o) ?pose=${pose} : état atteint et stable, sans panneau`, ok(a, b) && !a.panneau && !b.panneau, JSON.stringify(a));
+      await ctx.close();
+    }
   },
 };
 

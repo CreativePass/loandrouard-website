@@ -578,6 +578,23 @@ Critère fixé à l'avance :
 
 Si la correction est validée, elle entre dans `SAFARI_IDS` avec `affiche`, puis mise en ligne avec l'accord de Loan.
 
+**Résultat de la validation** (08/10, Safari, iPhone ; 10 pages, 19 chargements, 3,4 min) :
+
+| Version | Endurance | Vitrine |
+|---|---|---|
+| proposition | 3 arrêts sur 3 (7, 8, 10 s ; étude) | 2 sur 2 (12 et 15 s, pendant « See pricing ») |
+| corrige | 3 arrêts sur 3 (6, 10, 6 s ; blanc, projecteur seul, calques `WM`) | 1 sur 2 (19 s, « Back to Loan ») |
+
+- La correction agit comme prévu : sous le blanc, seuls le blanc et la rémanence restent actifs. **L'arrêt survient quand même**, aussi vite.
+- **L'hypothèse « lumière cachée sous le blanc » est réfutée** (démontré). `sousblanc` n'est pas retenu ; il reste dans `safari.mjs` comme candidat écarté.
+- **Ce qui reste établi** : sans aucune lumière mobile, plus d'arrêt ; un seul groupe retiré ne suffit pas. Le problème vient des lumières mobiles **visibles** (montée de l'éblouissement ; haut de page avec la vitrine ouverte), par leur somme. Le mécanisme précis (mémoire, ou autre limite de Safari) n'est pas démontré.
+
+**Mesure réelle dans Safari** (choix de Loan) : inspecteur web du Mac, iPhone branché, onglet Calques.
+- Poses fixes : `?pose=75` (P 0,75), `?pose=jonction` (bas du projecteur à mi-écran), `?pose=vitrine` (See pricing ouvert 9 s après le chargement).
+- Chaque pose se combine avec `?sans=` ou `?v=`. La page se place puis ne bouge plus, sans panneau : la mesure n'est pas faussée.
+- Vérifié localement (`verif-serie.mjs`, cas o).
+- **Ensuite** : une lumière allégée sur iPhone, ciblée sur les calques les plus lourds selon la mesure. Captures avant/après pour Loan, puis un seul test de validation.
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).
