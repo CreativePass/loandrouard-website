@@ -18,6 +18,10 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 - Corrections appliquées sur la copie (liste complète : `CORRECTIONS` dans `scripts/construire.mjs`), validées par Loan :
   - 01/10 : crédits photo de `Legal.dc.html` → « David GROUARD » (l'e-mail provisoire Gmail a été retiré le 02/10 : `contact@loandrouard.com` est redirigé vers Gmail chez OVH) ;
   - 02/10, cartes des formules de Video Feedback : prix « one full analysis / 3 full analyses / weekly coaching », puce « Written or voice feedback », délai de réponse sorti de la liste et affiché sous chaque carte, « Valid 6 months from your first video » dans le pack, « Also included » (blanc) et « In the program » (or) dans le programme, lien « Terms of sale » cliquable, page maintenue sur la planche jusqu'à la fin du retournement des cartes, fond noir au-dessus de la page (rebond du trackpad).
+  - 08/10, retour de Loan sur iPhone (demandé par Loan, pas encore validé à l'écran — à voir sur l'adresse de test) :
+    - en-tête mobile : langues EN / FR / 中文 à droite du nom, sur la même ligne (en-tête 134 → 99 px de haut) ; même en-tête sur CGV, Privacy et Legal, qui débordaient de l'écran sur mobile ;
+    - pied de page (toutes les pages) : sous 770 px de large, Meta et Global côte à côte, China en dessous ;
+    - cartes des formules sur mobile (< 1000 px) : trois petites cartes côte à côte (nom et prix, « + »), retournées en cascade ; un toucher ouvre la carte en grand, par-dessus la page, sur le papier sombre de la planche (Close, Échap ou toucher hors de la carte pour refermer ; paiement inchangé). Le trait de crayon suit de nouveau le bord de la carte (il entourait aussi le délai de réponse). Au retour d'un paiement, la carte payée s'ouvre d'elle-même. Ordinateur inchangé.
 
   À reporter aussi dans Claude Design. Chaque correction attend un nombre précis d'occurrences : si l'export contient déjà le texte corrigé, elle ne fait rien ; si le passage d'origine a changé, la construction s'arrête (à revoir). La construction vérifie aussi que les balises restent équilibrées.
 - Applique ensuite les **optimisations de performance** (`scripts/optimisations.mjs`, détail et mesures dans `PERFORMANCE.md`), sur la copie aussi et avec les mêmes garde-fous. Elles ne changent ni le contenu ni le rendu, sauf l'**aimantation au cran du projecteur, retirée** (validé par Loan le 02/10, à reporter dans Claude Design) : la page s'ouvre toujours au même endroit, mais la molette n'y est plus ramenée.
@@ -42,7 +46,7 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 ## Adresse de test (essais sur appareil)
 
 - `https://loandrouard-essai.loandrouard-website.workers.dev`, Worker `loandrouard-essai` (`wrangler.essai.jsonc`, `worker/essai.js`). Il n'a **aucun domaine** : loandrouard.com n'est jamais touché.
-- `npm run publier:essai` (avec l'accord de Loan) construit avec `ESSAI=1` : diagnostic temporaire `diag.js` et pages de comparaison `actuel.html`, `textures.html` et `corrige.html`. La page `/` est la version qui partirait sur loandrouard.com, plus le diagnostic (invisible sans paramètre). Voir « Safari / iPhone » dans `PERFORMANCE.md`.
+- `npm run publier:essai` (avec l'accord de Loan) construit avec `ESSAI=1` : diagnostic temporaire `diag.js` et pages de comparaison `actuel.html`, `textures.html`, `corrige.html` et `avant.html` (page vue par Loan le 08/10, sans `lvh` ni `camera`). La page `/` est la version qui partirait sur loandrouard.com, plus le diagnostic (invisible sans paramètre). Voir « Safari / iPhone » dans `PERFORMANCE.md`.
 - `npm run publier` construit toujours sans `ESSAI` ; la construction échoue si le diagnostic s'y trouve.
 - Journal du diagnostic, pendant un test seulement (rien n'est conservé ensuite) : `npx wrangler tail --config wrangler.essai.jsonc`.
 - Résultats gardés dans le navigateur du téléphone : `https://loandrouard-essai.loandrouard-website.workers.dev/resultats.html`. Page en lecture seule, sans le site ni le diagnostic, avec un bouton « Copier tout ». Construite seulement avec `ESSAI=1`, refusée dans une construction normale.
@@ -99,7 +103,9 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
   - parcours ordinateur et mobile identiques à la version précédente (vitrine, paiement jusqu'au formulaire Stripe sans créer de session, sommaire, retournement des cartes, langues, navigation, retour `?session_id=`) ;
   - molette libre au cran du projecteur, poussière arrêtée hors écran.
 - [ ] Reporter dans Claude Design : aimantation au cran du projecteur retirée (03/10)
-- [ ] Safari / iPhone (04–08/10) : corrections `entete`, `textures`, `compact` et `affiche` retenues (`SAFARI_IDS`).
+- [ ] Retour de Loan du 08/10 (iPhone, adresse de test) : en-tête, pied de page et cartes (ci-dessus), bande noire en bas quand la barre de Safari se replie (`lvh`), lenteur du yin-yang (`camera`), voir « Retour de Loan du 08/10 » dans `PERFORMANCE.md`. À publier sur l'adresse de test avec l'accord de Loan, puis à regarder sur l'iPhone. Nouveau plantage du 08/10 vers 15 h 18 : lire `resultats.html` sur l'iPhone de Loan (fil d'Ariane du diagnostic).
+- [ ] Reporter dans Claude Design (si Loan valide) : en-tête mobile, pied de page mobile, petites cartes mobiles.
+- [ ] Safari / iPhone (04–08/10) : corrections `entete`, `textures`, `compact` et `affiche` retenues (`SAFARI_IDS`), plus `lvh` et `camera` le 08/10.
   - Validées sur l'iPhone de Loan le 08/10 : arrêts du test d'endurance 3 sur 3 → 0 sur 3 ; mémoire graphique 490 → 215 Mo ; ligne rose disparue (`PERFORMANCE.md`, « Safari / iPhone »).
   - Mise en ligne prévue avec l'accord de Loan, après un dernier coup d'œil sur l'adresse de test. Elle reprend aussi les optimisations du 03/10 et leurs corrections (`c9bb055`).
   - Le chargement à 96 % ne se vérifie qu'en production : la balise Cloudflare n'existe pas sur l'adresse de test.

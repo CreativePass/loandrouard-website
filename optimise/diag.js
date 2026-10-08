@@ -31,7 +31,7 @@
   const lire = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
   const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const fichier = decodeURIComponent(location.pathname.split("/").pop() || "");
-  const PAGE = { "actuel.html": "actuel", "textures.html": "textures", "corrige.html": "corrige" }[fichier] || "proposition";
+  const PAGE = { "actuel.html": "actuel", "textures.html": "textures", "corrige.html": "corrige", "avant.html": "avant" }[fichier] || "proposition";
   const V = (Q.get("v") || "").split(",").filter(Boolean), SANS = (Q.get("sans") || "").split(",").filter(Boolean);
   const NOM = PAGE + (V.length ? "+" + V.join("+") : "") + (SANS.length ? "-" + SANS.join("-") : "") + (Q.get("panneau") === "0" ? "#sanspanneau" : "");
   V.forEach((v) => h.classList.add("ldv-" + v)); SANS.forEach((s) => h.classList.add("lds-" + s));
@@ -280,7 +280,7 @@
   // Nom d'un élément : page[+variante…][-retrait…][#sanspanneau], ex. « proposition+nuit », « proposition-etude-lumiere ».
   const adresse = (it) => { const [corps, ...sans] = it.nom.split("#")[0].split("-"), [p, ...v] = corps.split("+"), q = new URLSearchParams();
     q.set("serie", it.mode); q.set("passe", it.passe || ""); if (v.length) q.set("v", v.join(",")); if (sans.length) q.set("sans", sans.join(",")); if (it.nom.includes("#sanspanneau")) q.set("panneau", "0");
-    return ({ actuel: "actuel.html", textures: "textures.html", corrige: "corrige.html" }[p] || "./") + "?" + q.toString(); };
+    return ({ actuel: "actuel.html", textures: "textures.html", corrige: "corrige.html", avant: "avant.html" }[p] || "./") + "?" + q.toString(); };
   // Endurance : 3 passes par version, ordre alterné (carré latin), plus une passe sans panneau hors comparaison.
   // ?stress=sans : tri des retraits (2 passes par version suffisent à repérer une variante qui se distingue ; à confirmer ensuite).
   const PRESETS = { sans: "proposition,proposition-etude,proposition-lumiere,proposition-etude-lumiere", lumiere: "proposition,proposition-mobiles,proposition-effets",

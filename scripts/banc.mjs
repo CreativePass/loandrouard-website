@@ -6,6 +6,8 @@
 //   node scripts/banc.mjs parcours [bureau|mobile] [actuel,textures,proposition,proposition+filtre] [répétitions]
 //   node scripts/banc.mjs captures [bureau|mobile] [actuel,textures]   → captures/<profil>/… + écarts au pixel
 //   node scripts/banc.mjs calques  [bureau|mobile] [actuel,textures]   → surface des calques par étape du projecteur
+//   BANC_GESTE=bascule [BANC_PLAGE=6.95,7.4] [BANC_DUREE=3000] BANC_PEINTS=1 node scripts/banc.mjs trace mobile avant,proposition
+//                                                                   → bascule yin-yang de l'étude (dessin, redessins par calque)
 // Résultats : mesures/banc-<scénario>-<profil>.json (dossier non publié).
 import fs from "node:fs";
 import http from "node:http";
@@ -26,7 +28,7 @@ const REP = +(repArg || 1);
 // Nom : page[+variante…][-calque retiré…][@param=valeur…], ex. « proposition@nodiag=1 » (page sans diagnostic).
 const chemin = (nom) => { const [corps, ...extra] = nom.split("@"), [avant, ...sans] = corps.split("-"), [p, ...v] = avant.split("+"), q = [...extra];
   if (v.length) q.push("v=" + v.join(",")); if (sans.length) q.push("sans=" + sans.join(","));
-  return "/" + ({ actuel: "actuel.html", textures: "textures.html", corrige: "corrige.html" }[p] || "") + (q.length ? "?" + q.join("&") : ""); };
+  return "/" + ({ actuel: "actuel.html", textures: "textures.html", corrige: "corrige.html", avant: "avant.html" }[p] || "") + (q.length ? "?" + q.join("&") : ""); };
 
 if (!fs.existsSync(path.join(PUBLIC, "diag.js"))) { console.error("Construire d'abord avec ESSAI=1 node scripts/construire.mjs"); process.exit(1); }
 const TYPES = { html: "text/html", js: "text/javascript", css: "text/css", png: "image/png", webp: "image/webp", jpg: "image/jpeg", svg: "image/svg+xml", woff2: "font/woff2", json: "application/json" };
@@ -132,7 +134,16 @@ if (scenario === "trace") {
     let calques = []; const avantPeints = {};
     if (process.env.BANC_PEINTS) { o.cdp.on("LayerTree.layerTreeDidChange", (e) => { if (e.layers) calques = e.layers; }); await o.cdp.send("LayerTree.enable"); await o.page.waitForTimeout(500); for (const l of calques) avantPeints[l.layerId] = l.paintCount || 0; }
     await nav.startTracing(o.page, { categories: ["devtools.timeline", "disabled-by-default-devtools.timeline", "cc", "viz", "gpu", "benchmark"] });
-    const images = process.env.BANC_GESTE === "vitrine" ? await o.page.evaluate(() => new Promise(async (ok) => {
+    const images = process.env.BANC_GESTE === "bascule" ? await o.page.evaluate(([UA, UB, D]) => new Promise((ok) => {
+      // Bascule yin-yang de l'étude (u UA → UB, même conversion u → défilement que initEtude), à vitesse constante en D ms.
+      const K = 5.8 / 1.8, TR = [[0, 1], [6.2, K], [6.9, 2 * K], [7.4, K], [8, K], [8.45, 0]];
+      const XS = TR.reduce((a, t, i) => { a.push(i ? a[i - 1] + (t[0] - TR[i - 1][0]) * TR[i - 1][1] : 0); return a; }, []);
+      const depuisU = (u) => { for (let i = TR.length - 2; i >= 0; i--) if (u >= TR[i][0]) return XS[i] + (u - TR[i][0]) * TR[i][1]; return 0; };
+      const sec = document.getElementById("analysis"), sonde = document.querySelector("#formules .vfk-sonde"), tenue = sonde ? sonde.offsetHeight : 0, crs = Math.max(1, sec.offsetHeight - innerHeight), UR = XS[XS.length - 1] * crs / Math.max(1, crs - tenue);
+      const yU = (u) => sec.getBoundingClientRect().top + scrollY + depuisU(u) / UR * crs, y0 = yU(UA), y1 = yU(UB); let t0 = 0, prec = 0; const d = [];
+      document.documentElement.style.scrollBehavior = "auto";
+      const pas = (t) => { if (!t0) t0 = t; if (prec) d.push(t - prec); prec = t; const u = Math.min(1, (t - t0) / D); window.scrollTo(0, y0 + (y1 - y0) * u); if (u < 1) requestAnimationFrame(pas); else { d.sort((a, b) => a - b); ok({ n: d.length, p50: Math.round(d[d.length >> 1]), p95: Math.round(d[Math.floor(d.length * 0.95)]), pc25: Math.round(100 * d.filter((x) => x > 25).length / d.length) }); } };
+      window.scrollTo(0, yU(UA - 0.5)); setTimeout(() => requestAnimationFrame(pas), 2500); }), [...(process.env.BANC_PLAGE || "6.1,8.5").split(",").map(Number), +(process.env.BANC_DUREE || 8000)]) : process.env.BANC_GESTE === "vitrine" ? await o.page.evaluate(() => new Promise(async (ok) => {
       // Parcours 2 : See pricing, survol des cartes (ordinateur), Back to Loan — mêmes gestes que diag.js.
       const d = [], dormir = (ms) => new Promise((r) => setTimeout(r, ms)); let prec = 0, fin = false;
       const boucle = (t) => { if (prec) d.push(t - prec); prec = t; if (!fin) requestAnimationFrame(boucle); }; requestAnimationFrame(boucle);

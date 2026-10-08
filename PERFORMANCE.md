@@ -234,7 +234,9 @@ Les captures de Loan, prises sur un vrai iPhone (Safari) et sur Mac (Safari, cap
 - Pages :
   - `/` : proposition (corrections retenues) ;
   - `actuel.html` : version `c9bb055` ;
-  - `textures.html` : actuel + textures seulement.
+  - `textures.html` : actuel + textures seulement ;
+  - `corrige.html` : validation du 08/10 (entete, textures, compact) ;
+  - `avant.html` : page vue par Loan le 08/10 après-midi (sans `lvh` ni `camera`), pour comparer le yin-yang et le bas d'écran.
 - Paramètres :
   - `?diag=1` : panneau ;
   - `?auto=1` : parcours 1 (lent, rapide, descente complète, remontée) et parcours 2 (See pricing, cartes, Back to Loan, reprise), deux fois chacun ;
@@ -675,6 +677,34 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
   - vitrine et Pricing jusqu'au lien Stripe, sans paiement ;
   - aucune erreur JavaScript.
 - **Mise en ligne** : avec l'accord de Loan, après un dernier coup d'œil sur l'adresse de test (voir `MISE-EN-LIGNE.md`). Les calques encore lourds (`vfp-mur`, `vfp-cartes`, `vfp-coeur`) restent en réserve, à reprendre seulement si des arrêts réapparaissent.
+
+## Retour de Loan du 08/10 (iPhone, adresse de test)
+
+« Le reste est beaucoup mieux. » Restent : bande noire en bas quand Safari replie sa barre, séparation du yin-yang « particulièrement lente », un plantage (« A problem repeatedly occurred », vers 15 h 18). Corrections dans `scripts/safari.mjs` (`lvh`, `camera`, retenues dans `SAFARI_IDS`) ; les demandes de mise en page (en-tête, pied de page, cartes) sont des corrections de contenu (`scripts/construire.mjs`, voir `MISE-EN-LIGNE.md`).
+
+**Bande noire en bas** (capture de l'étude, barre repliée) : cause démontrée le 04/10 (svh 695, lvh 735 sur son iPhone : les scènes épinglées font 100svh, l'écran barre repliée 100lvh). Correction `lvh` : les deux scènes prennent 100lvh, et tout ce qui est posé contre leur bas (See pricing, « Feedback », indice de défilement, règle des frames, texte mobile, « On the carpet ») remonte de 100lvh − 100svh. Barre déployée, rien ne bouge à l'écran ; barre repliée, la scène va jusqu'en bas.
+- Contrôle local (barre simulée : scènes de 735 px dans 695 px visibles) : règle des frames 632–683, texte ≤ 617, See pricing ≤ 656 : tout reste au-dessus de la barre.
+- Ordinateur et Chromium : lvh = svh, aucun changement (0 pixel de différence à 1440 px).
+
+**Lenteur du yin-yang** : `BANC_GESTE=bascule BANC_PLAGE=6.95,7.4 BANC_DUREE=3000 BANC_PEINTS=1 node scripts/banc.mjs trace mobile avant,proposition` (Chromium, iPhone 393×852, DPR 3, processeur ×4, séparation des moitiés).
+- Cause (démontrée dans Chromium par le suivi des invalidations) : après le recadrage (u 6,2 → 6,8), la caméra de l'étude rejoint sa cible par un amorti compté en **images** (8 % par image). Plus le téléphone est lent, plus elle met de temps à arriver ; pendant tout ce temps, chaque micro-mouvement change l'échelle, donc l'épaisseur des traits (`--k`) et la mise en page du texte SVG, et **les deux caméras** (photo, dessin, corrections en or et leurs ombres floues, négatif inversé) sont redessinées à chaque image.
+- Correction `camera` : même amorti, compté en **temps** (identique à 60 images/s) ; en mouvement, `--k` n'est réécrit que s'il change de plus de 2 % ; valeur exacte 220 ms après l'arrêt (déjà le moment où la caméra se redessine nette).
+
+| Séparation (u 6,95 → 7,4, 3 s) | avant | proposition |
+|---|---|---|
+| Images affichées | 43 | 94 |
+| Image médiane / p95 | 67 / 117 ms | 33 / 67 ms |
+| Images > 25 ms | 100 % | 61 % |
+| Rastérisation | 8,3 s | 3,3 s |
+| Redessins des caméras | 85 + 78 | 57 + 20 |
+
+- Bascule complète (u 6,1 → 8,5 en 8 s, outil de travail) : 140 → 227 images, rastérisation 10,4–11,7 → 6,0–6,1 s.
+- Image : identique au repos (ordinateur 1440 px : 0 % à P 0–0,75, jonction, planche ; 0,01 à 0,1 % dans l'étude, anticrénelage d'un cadrage arrêté à un résidu sous le pixel près). Chromium ne dit rien de Safari : à confirmer sur l'iPhone (`avant.html` contre `/`).
+- Reste coûteux, laissé tel quel : le recadrage réel (u 6,2 → 6,9, la caméra bouge vraiment) et le passage photo → croquis (u 8 → 8,45, opacité des deux photos de la caméra noire).
+
+**Cartes en petit sur mobile** : la planche mobile passe de 2 864 à 804 px de haut (calque `.vfk-cam`, qui porte `will-change: transform`, environ 3,5 fois plus petit).
+
+**Plantage** : cause non établie. Le diagnostic de l'adresse de test garde un fil d'Ariane ; à lire sur l'iPhone de Loan (`resultats.html`, « Copier tout »).
 
 ## Vérifications
 

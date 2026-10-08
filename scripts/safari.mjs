@@ -124,6 +124,52 @@ const TOUTES = [
     apres: ".vfp-affiche:hover, .vfp-affiche:focus-visible { outline: none; color: #F6F5F1; filter: none; }\n" +
       SAF + "flou de « See pricing » dans son propre calque (ligne magenta de Safari 27 sur iPhone). */\n" +
       ".vfp-affiche { will-change: filter; }\n" },
+
+  // « Bande noire du bas » (retour de Loan, 08/10, capture de l'étude) : les deux scènes épinglées font 100svh, la hauteur
+  // visible barre de Safari DÉPLOYÉE (695 px sur son iPhone). Barre repliée, l'écran fait 100lvh (735 px) : les 40 px du bas
+  // montraient le fond noir de la page. Les scènes prennent donc 100lvh (le bas reste caché sous la barre quand elle est
+  // déployée) et tout ce qui est posé contre leur bas remonte d'autant (100lvh − 100svh) : barre déployée, rien ne bouge
+  // à l'écran. Sans barre mobile (ordinateur, Chromium), lvh = svh : aucun changement.
+  { id: "lvh", quoi: "Scènes à la hauteur barre repliée (100lvh)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "scènes épinglées à la hauteur barre repliée ; ce qui est posé contre leur bas remonte de la hauteur de la barre. */\n" +
+      ":is(.vfp-scene, .vfa-scene) { height: 100lvh; }\n" +
+      ".vfp-mot--feedback { bottom: calc(var(--vfp-marge-y) + 100lvh - 100svh) !important; }\n" +
+      ".vfp-mot--feedback.vfp-pour { bottom: calc(var(--vfp-marge-y) + 9svh + 100lvh - 100svh) !important; }\n" +
+      ".vfp-indice { bottom: calc(22px + 100lvh - 100svh); }\n" +
+      ".vfp-voir { bottom: calc(24px + 5svh + 100lvh - 100svh); }\n" +
+      ".vfa-pied { bottom: calc(18px + 100lvh - 100svh); }\n" +
+      ".vfa-yang { bottom: calc(11svh + 100lvh - 100svh); }\n" +
+      "@media (max-width: 899px) { .vfp-voir { bottom: calc(18px + 3svh + 100lvh - 100svh); } .vfa-pied { bottom: calc(12px + 100lvh - 100svh); } .vfa-yang { bottom: calc(8svh + 100lvh - 100svh); } .vfa-texte { bottom: calc(78px + 100lvh - 100svh); } }\n" +
+      "</style>\n</helmet>" },
+
+  // « Caméra de l'étude » (retour de Loan, 08/10 : « la section du yin-yang qui se sépare est particulièrement lente »).
+  // Mesuré (Chromium, format iPhone, processeur ×4, séparation u 6,95 → 7,4) : les deux caméras de l'étude (photo, dessin,
+  // corrections en or et leurs ombres) étaient redessinées à CHAQUE image, 48 fois en 3 s, 3,9 s de rastérisation.
+  // Cause : la caméra rejoint son cadrage par un amorti compté en IMAGES (8 % par image) ; plus le téléphone est lent, plus
+  // elle met de temps à arriver, et chaque micro-mouvement change l'échelle, donc l'épaisseur des traits (--k), donc
+  // redessine tout. Correction 1 : même amorti, compté en TEMPS (identique à 60 images/s) → 19 redessins, rastérisation
+  // 3,9 → 1,5 s, images médianes 83 → 33 ms. Correction 2 : pendant le mouvement, --k n'est réécrit que s'il change de plus
+  // de 2 % (écart d'épaisseur invisible) ; valeur exacte à l'arrêt, image identique au repos.
+  { id: "camera", quoi: "Étude : amorti de la caméra compté en temps", fichiers: VF, n: 1,
+    avant: "    const suivre = () => {\n      anim = 0;\n      const a = calme ? 1 : 0.08;\n",
+    apres: "    let tSuivre = 0; " + SAF + "amorti compté en temps (identique à 60 images/s), plus en images. */\n" +
+      "    const suivre = (now) => {\n      anim = 0;\n" +
+      "      const dt = tSuivre && now ? Math.min(0.1, (now - tSuivre) / 1000) : 1 / 60; tSuivre = now || 0;\n" +
+      "      const a = calme ? 1 : 1 - Math.pow(0.92, dt * 60);\n" },
+  { id: "camera", quoi: "Étude : fin de l'amorti", fichiers: VF, n: 1,
+    avant: "Math.abs(cible.fy - cur.fy) > 0.0002) anim = requestAnimationFrame(suivre);\n",
+    apres: "Math.abs(cible.fy - cur.fy) > 0.0002) anim = requestAnimationFrame(suivre); else tSuivre = 0;\n" },
+  { id: "camera", quoi: "Étude : épaisseur des traits réécrite seulement si elle change vraiment", fichiers: VF, n: 1,
+    avant: '      cam.style.transform = tr; cam.style.setProperty("--k", k);\n      cam2.style.transform = tr; cam2.style.setProperty("--k", k);\n',
+    apres: "      cam.style.transform = tr; cam2.style.transform = tr;\n" +
+      "      " + SAF + "en mouvement, --k n'est réécrit que s'il change de plus de 2 % ; valeur exacte à l'arrêt (ci-dessous). */\n" +
+      '      kEx = k; if (!kPose || Math.abs(k / kPose - 1) > 0.02) { kPose = +k; cam.style.setProperty("--k", k); cam2.style.setProperty("--k", k); }\n' },
+  { id: "camera", quoi: "Étude : épaisseur exacte à l'arrêt", fichiers: VF, n: 1,
+    avant: '      clearTimeout(tNet); tNet = setTimeout(() => { cam.style.willChange = cam2.style.willChange = "auto"; }, 220);\n',
+    apres: '      clearTimeout(tNet); tNet = setTimeout(() => { cam.style.willChange = cam2.style.willChange = "auto"; kPose = +kEx; cam.style.setProperty("--k", kEx); cam2.style.setProperty("--k", kEx); }, 220);\n' },
+  { id: "camera", quoi: "Étude : mémoire de l'épaisseur posée", fichiers: VF, n: 1,
+    avant: "    let tNet = 0;\n", apres: '    let tNet = 0, kPose = 0, kEx = "1";\n' },
 ];
 
 // Fichiers ajoutés par une correction (copiés seulement si une page construite l'utilise).
@@ -135,13 +181,16 @@ const choix = process.env.SAFARI;
 // Retenues pour la page publiée. Les candidats n'y entrent qu'après mesure (voir PERFORMANCE.md).
 // « compact » et « affiche » : retenus le 08/10 après la validation sur l'iPhone de Loan (endurance : 0 arrêt sur 3 avec
 // « compact », 3 sur 3 sans ; mémoire graphique 490 → 215 Mo ; ligne rose disparue avec « affiche »).
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche"];
+// « lvh » et « camera » (retour de Loan du 08/10 : bande noire en bas, yin-yang lent) : proposés pour la page publiée ; sans effet
+// visible sur ordinateur (lvh = svh ; caméra identique à 60 images/s, traits exacts au repos). À confirmer sur l'iPhone.
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).
 //   actuel.html   = version c9bb055 (aucune correction Safari)    textures.html = actuel + prototype de textures, rien d'autre
 //   corrige.html  = entete + textures + compact : page de la validation du 08/10 (la proposition y ajoute « affiche »)
-export const VARIANTES_ESSAI = { "actuel.html": [], "textures.html": ["textures"], "corrige.html": ["entete", "textures", "compact"] };
+//   avant.html    = page vue par Loan le 08/10 (sans « lvh » ni « camera ») : comparaison du yin-yang et du bas d'écran
+export const VARIANTES_ESSAI = { "actuel.html": [], "textures.html": ["textures"], "corrige.html": ["entete", "textures", "compact"], "avant.html": ["entete", "textures", "compact", "affiche"] };
 export const fichiersSafari = (ids) => [...new Set(ids)].flatMap((id) => FICHIERS_PAR_ID[id] || []);
 
 // Les textures doivent avoir été calculées à partir des règles CSS actuelles de l'export.
