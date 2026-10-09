@@ -81,7 +81,7 @@
   const projecteur = () => {
     const sec = $("#hero"), sc = sec && sec.querySelector(".vfp-scene");
     if (!sc) return null;
-    const H = sc.clientHeight, r = sec.getBoundingClientRect(), tenue = 1.25 * H, plage = Math.max(1, sec.offsetHeight - tenue - H - 0.8 * H), s0 = 0.198 * plage, s1 = -r.top;
+    const H = Math.min(sc.clientHeight, (sondes.svh && sondes.svh.offsetHeight) || Infinity), r = sec.getBoundingClientRect(), /* scènes à 100lvh : composition sur svh (correction « lvh ») */ tenue = 1.25 * H, plage = Math.max(1, sec.offsetHeight - tenue - H - 0.8 * H), s0 = 0.198 * plage, s1 = -r.top;
     const s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994, Rp = Math.min(1, Math.max(0, s / plage));
     return { P: Math.min(0.8, Rp / 0.6), Rp, r, sc, sec, H, tenue, plage, s0 };
   };
@@ -141,12 +141,16 @@
   const enregistrer = () => ecrire(CLE, etatDisque());
   const prec = lire(CLE);
   let incident = null;
-  if (prec && prec.etat === "en-cours" && Date.now() - prec.dernier < 180000) {
-    incident = { quand: new Date(prec.dernier).toISOString().slice(11, 19), page: prec.page, passe: prec.passe, apres: Math.round((prec.dernier - prec.debut) / 1000), etape: prec.etape, ph: prec.ph, j: (prec.j || []).slice(-8), st: prec.st || {}, ro: prec.ro, res: prec.res, err: prec.err };
+  // Fenêtre élargie (09/10) : le plantage du 08/10 vers 15 h 18 n'a pas été retrouvé avec 3 min. Une page restée « en cours »
+  // (visible, sans pagehide ni visibilitychange) puis relue dans les 30 min ne peut s'être arrêtée que brutalement.
+  if (prec && prec.etat === "en-cours" && Date.now() - prec.dernier < 1800000) {
+    incident = { quand: new Date(prec.dernier).toISOString().slice(0, 19).replace("T", " "), relu: Math.round((Date.now() - prec.dernier) / 1000), page: prec.page, passe: prec.passe, apres: Math.round((prec.dernier - prec.debut) / 1000), etape: prec.etape, ph: prec.ph, j: (prec.j || []).slice(-8), st: prec.st || {}, ro: prec.ro, res: prec.res, err: prec.err };
     const l = lire(CLE_INC) || []; l.push(incident); ecrire(CLE_INC, l.slice(-10));
     envoyer({ type: "interruption", incident });
   }
   function envoyer(o) { try { navigator.sendBeacon && navigator.sendBeacon("/__diag", JSON.stringify(Object.assign({ sid, page: NOM }, o))); } catch (e) {} }
+  // Première trace tout de suite (09/10) : un arrêt pendant la première seconde du chargement laissait l'état de la visite précédente.
+  try { enregistrer(); } catch (e) {}
   addEventListener("pagehide", () => { etatPage = "fermee"; enregistrer(); });
   document.addEventListener("visibilitychange", () => { etatPage = document.hidden ? "cachee" : "en-cours"; enregistrer(); });
 

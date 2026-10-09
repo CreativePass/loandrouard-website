@@ -682,8 +682,9 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
 
 « Le reste est beaucoup mieux. » Restent : bande noire en bas quand Safari replie sa barre, séparation du yin-yang « particulièrement lente », un plantage (« A problem repeatedly occurred », vers 15 h 18). Corrections dans `scripts/safari.mjs` (`lvh`, `camera`, retenues dans `SAFARI_IDS`) ; les demandes de mise en page (en-tête, pied de page, cartes) sont des corrections de contenu (`scripts/construire.mjs`, voir `MISE-EN-LIGNE.md`).
 
-**Bande noire en bas** (capture de l'étude, barre repliée) : cause démontrée le 04/10 (svh 695, lvh 735 sur son iPhone : les scènes épinglées font 100svh, l'écran barre repliée 100lvh). Correction `lvh` : les deux scènes prennent 100lvh, et tout ce qui est posé contre leur bas (See pricing, « Feedback », indice de défilement, règle des frames, texte mobile, « On the carpet ») remonte de 100lvh − 100svh. Barre déployée, rien ne bouge à l'écran ; barre repliée, la scène va jusqu'en bas.
-- Contrôle local (barre simulée : scènes de 735 px dans 695 px visibles) : règle des frames 632–683, texte ≤ 617, See pricing ≤ 656 : tout reste au-dessus de la barre.
+**Bande noire en bas** (capture de l'étude, barre repliée) : cause démontrée le 04/10 (svh 695, lvh 735 sur son iPhone : les scènes épinglées font 100svh, l'écran barre repliée 100lvh). Correction `lvh` : les deux scènes prennent 100lvh, et tout ce qui est posé contre leur bas (See pricing, « Feedback », indice de défilement, règle des frames, texte mobile et son fond, « On the carpet ») remonte de 100lvh − 100svh. La composition (Loan, lumière, vitrine, cadrage de l'étude, diagonale du yin-yang) reste calculée sur 100svh (`hautVisible()`), comme avant : seul le fond s'étend sous la barre. Barre déployée, rien ne bouge à l'écran ; barre repliée, la scène va jusqu'en bas.
+- Première version (sans `hautVisible()`) écartée avant publication : avec l'écart relevé sur l'iPhone de Loan le 08/10 (121 px), Loan et son sol descendaient de 60 à 90 px, derrière « See pricing » (simulation à 393 × 647 avec des scènes de 768 px).
+- Contrôle local (barre simulée : scènes plus hautes que la zone visible de 40 et de 121 px) : voir « Vérification avant l'adresse de test (09/10) » ci-dessous.
 - Ordinateur et Chromium : lvh = svh, aucun changement (0 pixel de différence à 1440 px).
 
 **Lenteur du yin-yang** : `BANC_GESTE=bascule BANC_PLAGE=6.95,7.4 BANC_DUREE=3000 BANC_PEINTS=1 node scripts/banc.mjs trace mobile avant,proposition` (Chromium, iPhone 393×852, DPR 3, processeur ×4, séparation des moitiés).
@@ -704,7 +705,11 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
 
 **Cartes en petit sur mobile** : la planche mobile passe de 2 864 à 804 px de haut (calque `.vfk-cam`, qui porte `will-change: transform`, environ 3,5 fois plus petit).
 
-**Plantage** : cause non établie. Le diagnostic de l'adresse de test garde un fil d'Ariane ; à lire sur l'iPhone de Loan (`resultats.html`, « Copier tout »).
+**Plantage** : cause non établie. Résultats du diagnostic relus sur l'iPhone de Loan le 09/10 (`resultats.html`) :
+- **le plantage du 08/10 vers 15 h 18 n'a pas été enregistré** : les 10 derniers arrêts gardés datent des tests d'endurance des 05–06/10 (phases blanc et étude, avant `compact`) ; dernière visite gardée : 08/10 à 19 h 11, page cachée après 1 s ;
+- causes possibles de l'absence (non démontrées) : page relue plus de 3 min après l'arrêt, page passée « cachée » juste avant, ou arrêt pendant la première seconde du chargement (première trace écrite au bout d'1 s) ;
+- **diagnostic renforcé le 09/10** (`optimise/diag.js`, adresse de test seulement) : trace écrite dès le chargement, fenêtre de détection 3 → 30 min, date complète et délai de relecture de chaque arrêt (affichés par `resultats.html`) ;
+- fait nouveau : sur son iPhone, hauteurs relevées le 08/10 au soir **svh 647, lvh 768** (contre 695 / 735 le 04/10, autre disposition de la barre de Safari) : l'écart couvert par `lvh` est de 121 px.
 
 ## Vérifications
 

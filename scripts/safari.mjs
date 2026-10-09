@@ -140,8 +140,25 @@ const TOUTES = [
       ".vfp-voir { bottom: calc(24px + 5svh + 100lvh - 100svh); }\n" +
       ".vfa-pied { bottom: calc(18px + 100lvh - 100svh); }\n" +
       ".vfa-yang { bottom: calc(11svh + 100lvh - 100svh); }\n" +
-      "@media (max-width: 899px) { .vfp-voir { bottom: calc(18px + 3svh + 100lvh - 100svh); } .vfa-pied { bottom: calc(12px + 100lvh - 100svh); } .vfa-yang { bottom: calc(8svh + 100lvh - 100svh); } .vfa-texte { bottom: calc(78px + 100lvh - 100svh); } }\n" +
+      "@media (max-width: 899px) { .vfp-voir { bottom: calc(18px + 3svh + 100lvh - 100svh); } .vfa-pied { bottom: calc(12px + 100lvh - 100svh); } .vfa-yang { bottom: calc(8svh + 100lvh - 100svh); } .vfa-texte { bottom: calc(78px + 100lvh - 100svh); }\n" +
+      "  .vfa-marge { background: linear-gradient(to top, #F6F5F1 0, #F6F5F1 calc(100lvh - 60svh), rgba(246,245,241,.85) calc(100lvh - 53svh), rgba(246,245,241,0) calc(100lvh - 42svh)); } }\n" +
       "</style>\n</helmet>" },
+  // La composition (Loan, lumière, cadrage de l'étude, diagonale du yin-yang) reste calculée sur la hauteur visible barre
+  // déployée (100svh), comme avant : seul le fond s'étend dessous. Sinon, avec l'écart relevé sur l'iPhone de Loan le 08/10
+  // (svh 647, lvh 768), Loan et son sol descendaient de 60 à 90 px, derrière « See pricing » (vu en simulation).
+  { id: "lvh", quoi: "Hauteur visible (svh) pour la composition des scènes", fichiers: VF, n: 1,
+    avant: 'const calmeMQ = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);\n',
+    apres: 'const calmeMQ = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);\n' +
+      SAF + "les scènes font 100lvh, leur composition se calcule sur la hauteur visible barre déployée (100svh). */\n" +
+      "let sondeSvh = null;\n" +
+      'const hautVisible = (sc) => { if (!sondeSvh || !sondeSvh.isConnected) { sondeSvh = document.createElement("i"); sondeSvh.setAttribute("aria-hidden", "true"); sondeSvh.style.cssText = "position:absolute;left:0;top:0;width:1px;height:100svh;visibility:hidden;pointer-events:none"; document.documentElement.appendChild(sondeSvh); }\n' +
+      "  return Math.min(sc.clientHeight, sondeSvh.offsetHeight || Infinity); };\n" },
+  { id: "lvh", quoi: "Projecteur : composition sur la hauteur visible", fichiers: VF, n: 1,
+    avant: "      const W = scene.clientWidth, H = scene.clientHeight, mob = W < 900;\n",
+    apres: "      const W = scene.clientWidth, H = hautVisible(scene), mob = W < 900;\n" },
+  { id: "lvh", quoi: "Étude : composition sur la hauteur visible", fichiers: VF, n: 1,
+    avant: "      const W = scene.clientWidth, H = scene.clientHeight, mobile = W < 900;\n",
+    apres: "      const W = scene.clientWidth, H = hautVisible(scene), mobile = W < 900;\n" },
 
   // « Caméra de l'étude » (retour de Loan, 08/10 : « la section du yin-yang qui se sépare est particulièrement lente »).
   // Mesuré (Chromium, format iPhone, processeur ×4, séparation u 6,95 → 7,4) : les deux caméras de l'étude (photo, dessin,
