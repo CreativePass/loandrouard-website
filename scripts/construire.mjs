@@ -64,6 +64,7 @@ const CARTES_CSS = `/* Correction du 08/10 (scripts/construire.mjs) : sur mobile
   .vfk-c[data-grand="on"]::before { opacity: 1; }
   .vfk-c[data-grand] > .vfk-ombre, .vfk-c[data-grand] .vfk-dos { display: none; }
   .vfk-c[data-grand] > .vfk-flip { flex: none; width: min(460px, 100%); margin-top: auto; transform: none !important; will-change: auto; }
+  .vfk-c[data-grand] .vf-carte { transform: none !important; } /* vue de lecture à plat : pas d'inclinaison au toucher */
   .vfk-c[data-grand] .vfk-delai { flex: none; margin: 18px 0 0; opacity: 0; transition: opacity .4s ease .25s; }
   .vfk-c[data-grand="on"] .vfk-delai { opacity: 1; }
   .vfk-fermer { position: fixed; z-index: 3; top: calc(env(safe-area-inset-top, 0px) + 16px); right: 16px; display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 16px; border: 1px solid rgba(246,245,241,.3); border-radius: 999px; background: rgba(16,16,16,.6); color: #F6F5F1; font: 500 10.5px/1 'Cinzel', Georgia, serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; opacity: 0; transition: opacity .3s ease .2s; -webkit-tap-highlight-color: transparent; }
@@ -78,7 +79,7 @@ html.vfk-ouverte { overflow: hidden; }
 const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mobile, un toucher ouvre la petite carte en grand, par-dessus la page ;
        Close, Échap ou un toucher hors de la carte la referme. La carte glisse et grandit depuis sa place (translate / scale). */
     const petit = window.matchMedia("(max-width: 999px)"), racine = document.documentElement;
-    let grand = null, rGrand = null, tGrand = 0;
+    let grand = null, rGrand = null, tGrand = 0, cleGrand = "", remesurer = false, finAttente = null, clavier = false;
     const fermerBtn = document.createElement("button");
     fermerBtn.type = "button"; fermerBtn.className = "vfk-fermer"; fermerBtn.innerHTML = "<span>Close</span><i aria-hidden=\\"true\\"></i>";
     const poser = (a, de, vers) => { const s = de.width / Math.max(1, vers.width); a.style.transformOrigin = "50% 0";
@@ -86,7 +87,8 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     const nettoyer = (a) => { a.style.transition = a.style.translate = a.style.scale = a.style.transformOrigin = ""; };
     const ouvrirCarte = (k, auto) => {
       if (grand || !petit.matches || !k.vu) return;
-      const a = k.front; clearTimeout(tGrand); rGrand = a.getBoundingClientRect(); grand = k;
+      if (finAttente) { clearTimeout(tGrand); const f = finAttente; finAttente = null; f(); } /* une carte qui se refermait est rangée d'abord */
+      const a = k.front; clearTimeout(tGrand); rGrand = a.getBoundingClientRect(); grand = k; cleGrand = innerWidth + "x" + scrollY;
       sec.setAttribute("data-grand", ""); k.c.setAttribute("data-grand", ""); racine.classList.add("vfk-ouverte"); k.c.appendChild(fermerBtn); k.c.scrollTop = 0;
       if (!auto) fermerBtn.focus({ preventScroll: true });
       if (calme) { k.c.setAttribute("data-grand", "on"); return; }
@@ -97,22 +99,29 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     };
     const fermerCarte = (immediat) => {
       const k = grand; if (!k) return; grand = null; clearTimeout(tGrand);
-      const a = k.front, fin = () => { nettoyer(a); k.c.removeAttribute("data-grand"); fermerBtn.remove(); if (!grand) { sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); } };
-      if (immediat === true || calme || !rGrand) { fin(); return; }
+      const a = k.front, fin = () => { nettoyer(a); k.c.removeAttribute("data-grand"); if (clavier) { clavier = false; k.front.focus({ preventScroll: true }); } fermerBtn.remove();
+        if (!grand) { sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer) { remesurer = false; refaire(); cle = cleDims(); } } };
+      /* Largeur ou défilement changés pendant l'ouverture (rotation) : la place relevée à l'ouverture n'est plus la bonne. */
+      if (immediat === true || calme || !rGrand || cleGrand !== innerWidth + "x" + scrollY) { fin(); return; }
       k.c.setAttribute("data-grand", "");
       a.style.transition = "translate .4s cubic-bezier(.4,0,.2,1), scale .4s cubic-bezier(.4,0,.2,1)"; poser(a, rGrand, a.getBoundingClientRect());
-      tGrand = setTimeout(fin, 420);
+      finAttente = fin; tGrand = setTimeout(() => { finAttente = null; fin(); }, 420);
     };
     const onClicGrand = (e) => {
-      if (grand) { if (e.target === grand.c || e.target.closest(".vfk-fermer")) { e.preventDefault(); fermerCarte(); } return; }
+      if (grand) { if (e.target === grand.c || e.target.closest(".vfk-fermer")) { e.preventDefault(); if (e.detail === 0) clavier = true; fermerCarte(); } return; }
       if (!petit.matches) return;
       const c = e.target.closest(".vfk-c"), k = c && C.find((x) => x.c === c);
       if (k && k.vu && e.target.closest(".vf-carte")) ouvrirCarte(k);
     };
     const onToucheGrand = (e) => {
-      if (grand) { if (e.key === "Escape" && !document.querySelector(".vf-modale")) fermerCarte(); return; }
+      /* Carte ouverte : Échap la referme ; Tab reste dans la carte (carte, liens et boutons, Close), la page cachée ne défile pas. */
+      if (grand) { if (document.querySelector(".vf-modale")) return;
+        if (e.key === "Escape") { clavier = true; fermerCarte(); }
+        else if (e.key === "Tab") { const f = [grand.front, ...grand.front.querySelectorAll("a[href], button"), fermerBtn].filter((x) => x.getClientRects().length), i = f.indexOf(document.activeElement);
+          if (i < 0 || (e.shiftKey ? i === 0 : i === f.length - 1)) { e.preventDefault(); f[e.shiftKey ? f.length - 1 : 0].focus({ preventScroll: true }); } }
+        return; }
       if (petit.matches && (e.key === "Enter" || e.key === " ") && e.target && e.target.matches && e.target.matches(".vfk-c[data-vu] .vf-carte")) {
-        const k = C.find((x) => x.front === e.target); if (k) { e.preventDefault(); ouvrirCarte(k); } }
+        const k = C.find((x) => x.front === e.target); if (k) { e.preventDefault(); clavier = true; ouvrirCarte(k); } }
     };
     const onPetit = () => { if (!petit.matches) fermerCarte(true); };
     sec.addEventListener("click", onClicGrand);
@@ -177,7 +186,7 @@ const CORRECTIONS = [
     apres: "@media (max-width: 1040px) { .vf-entete { flex-wrap: wrap; row-gap: 9px; padding: 12px 20px; } .vf-entete nav { order: 3; width: 100%; justify-content: space-between; gap: 14px !important; font-size: 10.5px !important; } }\n" +
       "/* Correction du 08/10 (scripts/construire.mjs) : sur mobile, les langues à droite du nom, sur la même ligne. */\n" +
       "@media (max-width: 1040px) { .vf-entete { column-gap: 12px; } .vf-entete nav.ld-langues { gap: 8px !important; } .vf-entete .ld-stat__groupe { gap: 8px; } .vf-entete .ld-stat__sep { width: 12px; } }\n" +
-      "@media (max-width: 370px) { .vf-entete { padding-inline: 14px; } }\n" },
+      "@media (max-width: 370px) { .vf-entete { padding-inline: 14px; column-gap: 10px; } .vf-entete > div:first-child > span { font-size: 17px !important; } .vf-entete nav.ld-langues, .vf-entete .ld-stat__groupe { gap: 5px !important; } .vf-entete .ld-stat__sep { width: 8px; } }\n" },
   // Pages légales : même en-tête mobile (il débordait de l'écran : navigation et langues hors champ).
   ...LEGALES.map((f) => ({ quoi: "En-tête mobile des pages légales : repère (08/10)", fichiers: [f], n: 1,
     avant: '<div style="max-width:none;margin:0;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:32px">',
@@ -190,7 +199,10 @@ const CORRECTIONS = [
       "  .lg-entete { flex-wrap: wrap; row-gap: 9px !important; column-gap: 12px !important; padding: 12px 20px !important; }\n" +
       "  .lg-entete > nav:not(.ld-langues) { order: 3; width: 100%; justify-content: space-between; gap: 14px !important; font-size: 10.5px !important; }\n" +
       "  .lg-entete .ld-langues, .lg-entete .ld-stat__groupe { gap: 8px; } .lg-entete .ld-stat__sep { width: 12px; }\n" +
+      "  /* En-tête de 82 à 99 px (68 prévus par le design system) : la section et son fond remontent derrière lui, le texte ne bouge pas. */\n" +
+      "  .ld-header { margin-bottom: -112px; } .ld-section { padding-top: calc(var(--section-y) + 44px); }\n" +
       "}\n" +
+      "@media (min-width: 900px) and (max-width: 1040px) { .ld-section { padding-top: calc(var(--section-y-large) + 44px); } }\n" +
       "@media (max-width: 370px) { .lg-entete { padding-inline: 14px !important; } }\n" +
       "</style>" })),
   // Cartes des formules sur mobile (< 1000 px) : trois petites cartes côte à côte (nom et prix), qui se retournent en
@@ -200,7 +212,7 @@ const CORRECTIONS = [
   { quoi: "Cartes mobiles : styles des petites cartes et de la carte ouverte (08/10)", fichiers: VF, n: 1,
     avant: VFK_MOUV, apres: VFK_MOUV + CARTES_CSS },
   { quoi: "Cartes mobiles : ouverture en grand (08/10)", fichiers: VF, n: 1,
-    avant: VFK_REFAIRE, apres: CARTES_JS + VFK_REFAIRE },
+    avant: VFK_REFAIRE, apres: CARTES_JS + VFK_REFAIRE.replace("const refaire = () => { ", 'const refaire = () => { if (sec.hasAttribute("data-grand")) { remesurer = true; return; } /* carte ouverte : mesure reportée à la fermeture */ ') },
   { quoi: "Cartes mobiles : arrêt de l'ouverture au démontage (08/10)", fichiers: VF, n: 1,
     avant: "    return () => { clearTimeout(tRo); if (ro) ro.disconnect(); ",
     apres: "    return () => { offGrand(); clearTimeout(tRo); if (ro) ro.disconnect(); " },
@@ -209,13 +221,17 @@ const CORRECTIONS = [
     apres: '      if (vu !== k.vu) { k.vu = vu; k.c.toggleAttribute("data-vu", vu); k.c.inert = !vu; k.flip.style.transformStyle = vu ? "flat" : ""; k.dos.style.visibility = vu ? "hidden" : ""; if (vu && window.__vfkPayee && k.front.querySelector(".vf-deverrou")) { window.__vfkPayee = false; setTimeout(() => ouvrirCarte(k, true), 400); } }\n' },
   { quoi: "Cartes mobiles : retour du paiement, carte payée à ouvrir (08/10)", fichiers: VF, n: 1,
     avant: '  allerFormules() {\n    const el = document.getElementById("formules");\n',
-    apres: '  allerFormules() {\n    window.__vfkPayee = true; /* Correction du 08/10 : sur mobile, la petite carte payée s\'ouvrira en grand une fois retournée. */\n    const el = document.getElementById("formules");\n' },
+    apres: '  allerFormules() {\n    if (document.querySelector("#formules .vfk-c[data-grand]")) return; /* Correction du 08/10 : paiement fait depuis la carte ouverte, elle montre déjà WhatsApp. */\n    window.__vfkPayee = true; /* Correction du 08/10 : sur mobile, la petite carte payée s\'ouvrira en grand une fois retournée. */\n    const el = document.getElementById("formules");\n' },
   { quoi: "Cartes mobiles : retournement en cascade (cartes sur une même ligne) (08/10)", fichiers: VF, n: 1,
     avant: "        C.forEach((k) => { const t = haut(k.c); if (t < vh * 0.85) { if (!k.t0) k.t0 = performance.now(); } else if (t > vh) k.t0 = 0; on(k.g, !!k.t0); });\n",
     apres: "        C.forEach((k, i) => { const t = haut(k.c); if (t < vh * 0.85) { if (!k.t0) k.t0 = performance.now() + i * LAG / VIT * 1000; } else if (t > vh) k.t0 = 0; on(k.g, !!k.t0); });\n" },
   { quoi: "Cartes : congé du trait de crayon lu sur la carte (petites cartes moins arrondies) (08/10)", fichiers: VF, n: 1,
     avant: "      const rad = 24 * R[0].w / Math.max(1, C[0].c.offsetWidth);\n",
     apres: "      const rad = (parseFloat(getComputedStyle(C[0].front).borderTopLeftRadius) || 24) * R[0].w / Math.max(1, C[0].c.offsetWidth);\n" },
+  // Pages légales à 320 px (iPhone en « texte plus grand ») : le sommaire imposait une colonne de 300 px (page plus large que l'écran).
+  ...LEGALES.map((f) => ({ quoi: "Sommaire des pages légales : colonne jamais plus large que l'écran (09/10)", fichiers: [f], n: 1,
+    avant: "grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); column-gap: 40px; }",
+    apres: "grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); column-gap: 40px; }" })),
   // Pied de page (toutes les pages) : sur mobile, Meta et Global côte à côte, China dessous.
   { quoi: "Pied de page : repère de la grille des réseaux (08/10)", fichiers: ["Sponsors.dc.html"], n: 1,
     avant: '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));',
@@ -232,6 +248,7 @@ const CORRECTIONS = [
       "  .ld-familles { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; column-gap: 20px !important; }\n" +
       "  .ld-familles > [data-famille=\"China\"] { grid-column: 1 / -1; grid-row: 2; }\n" +
       "}\n" +
+      "@media (min-width: 770px) { .ld-familles { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } } /* jamais Meta | China puis Global, même avec une barre de défilement */\n" +
       "</style>\n</helmet>" },
 ];
 
@@ -420,6 +437,15 @@ if (ESSAI) for (const f of Object.keys(VARIANTES_ESSAI)) {
   if (avantC !== apresC) erreurs.push(`${f} : les corrections déséquilibrent les balises (${avantC} → ${apresC})`);
 }
 
+// Le script de chaque page doit rester du JavaScript valide : une correction d'ajout (cartes, hautVisible…) appliquée sur un
+// export qui contient déjà ce code sous une autre forme redéclarerait ses constantes, et le moteur n'afficherait plus que le
+// gabarit (projecteur, étude, cartes et paiement inertes). Compilation seule, comme le moteur (new Function), sans exécution.
+for (const f of [...PAGES, "index.html", ...(ESSAI ? Object.keys(VARIANTES_ESSAI) : [])]) {
+  const t = fs.readFileSync(path.join(PUBLIC, f), "utf8"), blocs = [...t.matchAll(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/g)];
+  if (blocs.length !== (t.match(/<script type="text\/x-dc"/g) || []).length) erreurs.push(`${f} : script de la page illisible par le contrôle`);
+  for (const m of blocs) { try { new Function(m[1]); } catch (e) { erreurs.push(`${f} : JavaScript invalide après corrections (${e.message}) — correction appliquée deux fois ?`); } }
+}
+
 // Le diagnostic et les pages de comparaison ne doivent JAMAIS partir en production (construction sans ESSAI=1).
 if (!ESSAI) {
   for (const f of fichiers) {
@@ -465,5 +491,5 @@ for (const a of [...new Set(avert)]) console.log("ATTENTION : " + a);
 for (const e of erreurs) console.error("ERREUR : " + e);
 if (erreurs.length) process.exit(1);
 console.log(ESSAI ? "Construction OK (ADRESSE DE TEST : diagnostic et pages de comparaison inclus, ne pas publier sur loandrouard.com)." : "Construction OK.");
-// Pour les essais : import { CORRECTIONS } from "./scripts/construire.mjs".
+// NE PAS importer ce fichier pour lire CORRECTIONS : il efface et reconstruit public/ dès son chargement.
 export { CORRECTIONS };

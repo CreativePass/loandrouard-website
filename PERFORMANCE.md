@@ -236,7 +236,7 @@ Les captures de Loan, prises sur un vrai iPhone (Safari) et sur Mac (Safari, cap
   - `actuel.html` : version `c9bb055` ;
   - `textures.html` : actuel + textures seulement ;
   - `corrige.html` : validation du 08/10 (entete, textures, compact) ;
-  - `avant.html` : page vue par Loan le 08/10 après-midi (sans `lvh` ni `camera`), pour comparer le yin-yang et le bas d'écran.
+  - `avant.html` : page publiée sans `lvh` ni `camera` (contenu du 08/10 inclus : en-tête, pied de page, petites cartes), pour comparer le yin-yang et le bas d'écran ; ce n'est pas la page du plantage du 08/10.
 - Paramètres :
   - `?diag=1` : panneau ;
   - `?auto=1` : parcours 1 (lent, rapide, descente complète, remontée) et parcours 2 (See pricing, cartes, Back to Loan, reprise), deux fois chacun ;
@@ -684,7 +684,7 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
 
 **Bande noire en bas** (capture de l'étude, barre repliée) : cause démontrée le 04/10 (svh 695, lvh 735 sur son iPhone : les scènes épinglées font 100svh, l'écran barre repliée 100lvh). Correction `lvh` : les deux scènes prennent 100lvh, et tout ce qui est posé contre leur bas (See pricing, « Feedback », indice de défilement, règle des frames, texte mobile et son fond, « On the carpet ») remonte de 100lvh − 100svh. La composition (Loan, lumière, vitrine, cadrage de l'étude, diagonale du yin-yang) reste calculée sur 100svh (`hautVisible()`), comme avant : seul le fond s'étend sous la barre. Barre déployée, rien ne bouge à l'écran ; barre repliée, la scène va jusqu'en bas.
 - Première version (sans `hautVisible()`) écartée avant publication : avec l'écart relevé sur l'iPhone de Loan le 08/10 (121 px), Loan et son sol descendaient de 60 à 90 px, derrière « See pricing » (simulation à 393 × 647 avec des scènes de 768 px).
-- Contrôle local (barre simulée : scènes plus hautes que la zone visible de 40 et de 121 px) : voir « Vérification avant l'adresse de test (09/10) » ci-dessous.
+- Contrôle local (barre simulée : scènes plus hautes que la zone visible de 40 et de 121 px) : voir « Vérification avant l'adresse de test (09–10/10) » ci-dessous.
 - Ordinateur et Chromium : lvh = svh, aucun changement (0 pixel de différence à 1440 px).
 
 **Lenteur du yin-yang** : `BANC_GESTE=bascule BANC_PLAGE=6.95,7.4 BANC_DUREE=3000 BANC_PEINTS=1 node scripts/banc.mjs trace mobile avant,proposition` (Chromium, iPhone 393×852, DPR 3, processeur ×4, séparation des moitiés).
@@ -702,6 +702,32 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
 - Bascule complète (u 6,1 → 8,5 en 8 s, outil de travail) : 140 → 227 images, rastérisation 10,4–11,7 → 6,0–6,1 s.
 - Image : identique au repos (ordinateur 1440 px : 0 % à P 0–0,75, jonction, planche ; 0,01 à 0,1 % dans l'étude, anticrénelage d'un cadrage arrêté à un résidu sous le pixel près). Chromium ne dit rien de Safari : à confirmer sur l'iPhone (`avant.html` contre `/`).
 - Reste coûteux, laissé tel quel : le recadrage réel (u 6,2 → 6,9, la caméra bouge vraiment) et le passage photo → croquis (u 8 → 8,45, opacité des deux photos de la caméra noire).
+
+### Vérification avant l'adresse de test (09–10/10)
+
+**Revue adversariale** (4 relecteurs, un sceptique par domaine, essais dans Chromium) : 18 constats ; retenus et corrigés :
+- `lvh` : la composition calculée sur 100lvh faisait descendre Loan derrière « See pricing » et le dessin de l'étude sous son texte → `hautVisible()` (déjà dans `d849bb0`) ; la diagonale du yin-yang part du bas réel de la scène (sinon, barre repliée, un triangle noir de la hauteur de la barre apparaissait d'un coup) ; toile de poussière à 100svh (sinon étirée de 19 %) ;
+- cartes mobiles : mesure du trait de crayon reportée pendant l'ouverture (rotation), paiement fait depuis la carte ouverte (la page ne remonte plus de 90 px, pas de réouverture surprise), clavier (Tab reste dans la carte, Échap rend le focus), carte qui se ferme rangée avant d'en ouvrir une autre, carte ouverte à plat ;
+- pages légales : plus de bande unie en haut (section remontée derrière l'en-tête de 82–99 px, texte immobile), sommaire jamais plus large que l'écran à 320 px ; en-tête de Video Feedback sur 2 lignes jusqu'à 320 px ; pied de page à 3 colonnes dès 770 px même avec une barre de défilement ;
+- construction : contrôle que le JavaScript de chaque page compile (une correction d'ajout appliquée deux fois cassait toute la page avec « Construction OK »).
+- Écartés : chiffres de `camera` différents entre deux passes du banc (commentaire aligné sur le tableau) ; inclinaison au toucher (déjà dans l'export ; la carte ouverte est quand même mise à plat).
+
+**Barre de Safari simulée** (svh et lvh figés ; construction du 10/10 contre `avant.html`, mêmes corrections sans `lvh` ni `camera`) :
+
+| Mesure (393 px, svh 647 / lvh 768) | avant.html | proposition |
+|---|---|---|
+| Pied de Loan / flaque de lumière (ouverture) | 511 / 497–529 | 511 / 497–529 |
+| « See pricing » | 513–610 | 513–610 |
+| Toile de poussière | 393 × 647 | 393 × 647 |
+| Étude, dessin (étapes 0 et 4) | 76–444 / −134–547 | 76–444 / −134–547 |
+| Étude, texte | 244–569 | 244–569 |
+| Diagonale à u 6,401, barre repliée | bord à 647 (bande noire dessous) | bord à 768, 0 px² de noir |
+| Pause et fin de la diagonale | 252,8–394,2 / −141,5–0 | identiques |
+
+- Écart de 40 px (svh 695 / lvh 735) : positions identiques à `avant.html` également.
+- Barre repliée simulée (zone visible 768) : `avant.html` montre la bande sombre en bas (comme la capture de Loan) ; la proposition va jusqu'en bas.
+- Ordinateur 1440 px, `avant.html` contre proposition : 0 % de pixels différents (0,01 % dans l'étude, sous le pixel).
+- Cartes (scripts de la revue rejoués) : traits justes après rotation, paiement depuis la carte ouverte sans saut, Tab bouclé dans la carte, aucune couche restée en place, aucune erreur JavaScript.
 
 **Cartes en petit sur mobile** : la planche mobile passe de 2 864 à 804 px de haut (calque `.vfk-cam`, qui porte `will-change: transform`, environ 3,5 fois plus petit).
 

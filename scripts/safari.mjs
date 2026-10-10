@@ -140,6 +140,7 @@ const TOUTES = [
       ".vfp-voir { bottom: calc(24px + 5svh + 100lvh - 100svh); }\n" +
       ".vfa-pied { bottom: calc(18px + 100lvh - 100svh); }\n" +
       ".vfa-yang { bottom: calc(11svh + 100lvh - 100svh); }\n" +
+      ".vfp-poussiere { height: 100svh; } /* toile dessinée sur la hauteur visible, comme la composition (sinon étirée) */\n" +
       "@media (max-width: 899px) { .vfp-voir { bottom: calc(18px + 3svh + 100lvh - 100svh); } .vfa-pied { bottom: calc(12px + 100lvh - 100svh); } .vfa-yang { bottom: calc(8svh + 100lvh - 100svh); } .vfa-texte { bottom: calc(78px + 100lvh - 100svh); }\n" +
       "  .vfa-marge { background: linear-gradient(to top, #F6F5F1 0, #F6F5F1 calc(100lvh - 60svh), rgba(246,245,241,.85) calc(100lvh - 53svh), rgba(246,245,241,0) calc(100lvh - 42svh)); } }\n" +
       "</style>\n</helmet>" },
@@ -159,15 +160,25 @@ const TOUTES = [
   { id: "lvh", quoi: "Étude : composition sur la hauteur visible", fichiers: VF, n: 1,
     avant: "      const W = scene.clientWidth, H = scene.clientHeight, mobile = W < 900;\n",
     apres: "      const W = scene.clientWidth, H = hautVisible(scene), mobile = W < 900;\n" },
+  // Diagonale du yin-yang : elle part du bas RÉEL de la scène (sinon, barre repliée, un triangle noir de toute la hauteur de la
+  // barre apparaissait d'un coup au début de la bascule), fait sa pause au milieu de la zone visible, puis finit sa course.
+  // Sur ordinateur (Hs = H), formule identique à l'origine. Relevé par la revue du 09/10 (simulation 393 × 768, svh 647).
+  { id: "lvh", quoi: "Étude : hauteur réelle de la scène gardée pour la diagonale", fichiers: VF, n: 1,
+    avant: "V = { W, H, mobile, s0, Tx0: mobile ? W / 2 : W * 0.31, Ty0: haut + ah / 2, m: V ? V.m : 0 };",
+    apres: "V = { W, H, Hs: scene.clientHeight, mobile, s0, Tx0: mobile ? W / 2 : W * 0.31, Ty0: haut + ah / 2, m: V ? V.m : 0 };" },
+  { id: "lvh", quoi: "Étude : la diagonale part du bas réel de la scène", fichiers: VF, n: 1,
+    avant: "const t = 0.18 * V.W, yc = (V.H + t) - d * (V.H + 2 * t);",
+    apres: "const t = 0.18 * V.W, yc = d <= 0.5 ? (V.Hs + t) - 2 * d * (V.Hs + t - V.H / 2) : V.H / 2 - (2 * d - 1) * (V.H / 2 + t);" },
 
   // « Caméra de l'étude » (retour de Loan, 08/10 : « la section du yin-yang qui se sépare est particulièrement lente »).
   // Mesuré (Chromium, format iPhone, processeur ×4, séparation u 6,95 → 7,4) : les deux caméras de l'étude (photo, dessin,
-  // corrections en or et leurs ombres) étaient redessinées à CHAQUE image, 48 fois en 3 s, 3,9 s de rastérisation.
+  // corrections en or et leurs ombres) étaient redessinées à chaque image (85 + 78 redessins en 3 s, 8,3 s de rastérisation).
   // Cause : la caméra rejoint son cadrage par un amorti compté en IMAGES (8 % par image) ; plus le téléphone est lent, plus
   // elle met de temps à arriver, et chaque micro-mouvement change l'échelle, donc l'épaisseur des traits (--k), donc
-  // redessine tout. Correction 1 : même amorti, compté en TEMPS (identique à 60 images/s) → 19 redessins, rastérisation
-  // 3,9 → 1,5 s, images médianes 83 → 33 ms. Correction 2 : pendant le mouvement, --k n'est réécrit que s'il change de plus
-  // de 2 % (écart d'épaisseur invisible) ; valeur exacte à l'arrêt, image identique au repos.
+  // redessine tout. Correction 1 : même amorti, compté en TEMPS (identique à 60 images/s). Correction 2 : pendant le
+  // mouvement, --k n'est réécrit que s'il change de plus de 2 % (écart d'épaisseur invisible) ; valeur exacte à l'arrêt, image
+  // identique au repos. Les deux ensemble : 57 + 20 redessins, rastérisation 8,3 → 3,3 s, images médianes 67 → 33 ms (banc du
+  // 08/10, PERFORMANCE.md, « Retour de Loan du 08/10 »).
   { id: "camera", quoi: "Étude : amorti de la caméra compté en temps", fichiers: VF, n: 1,
     avant: "    const suivre = () => {\n      anim = 0;\n      const a = calme ? 1 : 0.08;\n",
     apres: "    let tSuivre = 0; " + SAF + "amorti compté en temps (identique à 60 images/s), plus en images. */\n" +
@@ -205,8 +216,9 @@ export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).
 //   actuel.html   = version c9bb055 (aucune correction Safari)    textures.html = actuel + prototype de textures, rien d'autre
-//   corrige.html  = entete + textures + compact : page de la validation du 08/10 (la proposition y ajoute « affiche »)
-//   avant.html    = page vue par Loan le 08/10 (sans « lvh » ni « camera ») : comparaison du yin-yang et du bas d'écran
+//   corrige.html  = entete + textures + compact (contenu actuel) : mêmes corrections Safari que la validation du 08/10
+//   avant.html    = page publiée sans « lvh » ni « camera » (avec le contenu du 08/10 : en-tête, pied de page, petites cartes ;
+//                   ce n'est pas la page du plantage du 08/10 à 15 h 18) : comparaison du yin-yang et du bas d'écran
 export const VARIANTES_ESSAI = { "actuel.html": [], "textures.html": ["textures"], "corrige.html": ["entete", "textures", "compact"], "avant.html": ["entete", "textures", "compact", "affiche"] };
 export const fichiersSafari = (ids) => [...new Set(ids)].flatMap((id) => FICHIERS_PAR_ID[id] || []);
 
