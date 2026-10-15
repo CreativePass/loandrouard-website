@@ -270,9 +270,28 @@ const CORRECTIONS = [
   { quoi: "Cartes mobiles : retour du paiement, carte payée à ouvrir (08/10)", fichiers: VF, n: 1,
     avant: '  allerFormules() {\n    const el = document.getElementById("formules");\n',
     apres: '  allerFormules() {\n    if (document.querySelector("#formules .vfk-c[data-grand]")) return; /* Correction du 08/10 : paiement fait depuis la carte ouverte, elle montre déjà WhatsApp. */\n    window.__vfkPayee = true; /* Correction du 08/10 : sur mobile, la petite carte payée s\'ouvrira en grand une fois retournée. */\n    const el = document.getElementById("formules");\n' },
-  { quoi: "Cartes mobiles : retournement en cascade (cartes sur une même ligne) (08/10)", fichiers: VF, n: 1,
+  // Retournement sur mobile en défilement rapide (retour de Loan du 15/10 : « quand je scrolle super vite, c'est un peu buggé »).
+  // Démontré dans Chromium (iPhone simulé, défilement à 3 000–8 000 px/s, images relevées une à une, revue du 15/10) :
+  // la séquence, minutée dès l'entrée, se jouait hors de vue au-dessus de l'écran (en revenant : cartes à moitié retournées,
+  // de dos ou esquissées) ; et une carte se remettait à zéro dès qu'elle passait d'un pixel sous l'écran, puis se rembobinait
+  // sous les yeux (y compris au seul redéploiement de la barre de Safari). Désormais : cascade comptée depuis la carte
+  // précédente (cartes empilées), carte passée au-dessus de l'écran finie hors de vue, remise à zéro seulement loin sous
+  // l'écran (1,5 hauteur), toutes ensemble et d'un coup. Vitesse normale : départs et animation inchangés.
+  { quoi: "Cartes mobiles : cascade, défilement rapide sans carte à moitié retournée ni rembobinage visible (08 et 15/10)", fichiers: VF, n: 1,
     avant: "        C.forEach((k) => { const t = haut(k.c); if (t < vh * 0.85) { if (!k.t0) k.t0 = performance.now(); } else if (t > vh) k.t0 = 0; on(k.g, !!k.t0); });\n",
-    apres: "        C.forEach((k, i) => { const t = haut(k.c); if (t < vh * 0.85) { if (!k.t0) k.t0 = performance.now() + i * LAG / VIT * 1000; } else if (t > vh) k.t0 = 0; on(k.g, !!k.t0); });\n" },
+    apres: "        /* Corrections du 08 et du 15/10 (scripts/construire.mjs) : cascade comptée depuis la carte précédente ; carte passée au-dessus\n" +
+      "           de l'écran finie hors de vue ; remise à zéro seulement loin sous l'écran, toutes ensemble et d'un coup. */\n" +
+      "        const loin = haut(C[0].c) > vh * 1.5;\n" +
+      "        C.forEach((k, i) => { const q = k.c.getBoundingClientRect(), t = q.top;\n" +
+      "          if (t < vh * 0.85) { if (!k.t0) k.t0 = Math.max(performance.now(), i && C[i - 1].t0 ? C[i - 1].t0 + LAG / VIT * 1000 : 0); if (q.bottom < 0) k.t0 = Math.min(k.t0, performance.now() - 3.8 / VIT * 1000); }\n" +
+      "          else if (loin && k.t0) { k.t0 = 0; k.p = 0; peindre(k); }\n" +
+      "          on(k.g, !!k.t0); });\n" },
+  // Retournement 3D : chaque face est aussi montrée / cachée à 90° (en plus de backface-visibility), pour éviter que Safari iOS
+  // ne montre brièvement la mauvaise face d'un calque 3D recomposé pendant un défilement rapide. Identique au pixel (revue du
+  // 15/10 : 0 pixel différent sur 40 comparaisons sur mobile et 13 sur ordinateur).
+  { quoi: "Retournement des cartes : faces montrées / cachées à 90° (Safari) (15/10)", fichiers: VF, n: 1,
+    avant: "    };\n\n    const etat = () => { const fini",
+    apres: "      k.front.style.visibility = e < 0.5 ? \"hidden\" : \"\"; k.dos.style.visibility = e < 0.5 ? \"\" : \"hidden\"; /* Correction du 15/10 : faces à 90° (Safari). */\n    };\n\n    const etat = () => { const fini" },
   { quoi: "Cartes : congé du trait de crayon lu sur la carte (petites cartes moins arrondies) (08/10)", fichiers: VF, n: 1,
     avant: "      const rad = 24 * R[0].w / Math.max(1, C[0].c.offsetWidth);\n",
     apres: "      const rad = (parseFloat(getComputedStyle(C[0].front).borderTopLeftRadius) || 24) * R[0].w / Math.max(1, C[0].c.offsetWidth);\n" },

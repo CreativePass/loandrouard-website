@@ -149,6 +149,13 @@ const TOUTES = [
   // (aucun octet économisé) et l'actuel : −0,8 Mo au premier chargement, aucune apparition tardive mesurée.
   ...IMAGES_DIFFEREES.map(([f, avant, n]) => ({ id: "images", quoi: 'Image loin sous la ligne de flottaison : loading="lazy"', fichiers: [f], n,
     avant, apres: avant.replace("<img ", '<img loading="lazy" ') })),
+  // Revers des cartes chargés dès que la planche approche (3 écrans) : en défilement rapide, le seuil du chargement différé du
+  // navigateur arrivait trop tard et le revers se posait sans son motif (revue du 15/10, réseau lent simulé).
+  { id: "images", quoi: "Revers des cartes chargés à l'approche de la planche", fichiers: VF, n: 1,
+    avant: '    window.addEventListener("load", refaire);\n',
+    apres: '    window.addEventListener("load", refaire);\n' +
+      '    ' + OPTIM + "revers des cartes chargés dès que la planche approche (3 écrans). */\n" +
+      '    if (window.IntersectionObserver) { const io = new IntersectionObserver((es) => { if (!es.some((e) => e.isIntersecting)) return; io.disconnect(); sec.querySelectorAll(".vfk-dos img[loading]").forEach((im) => { im.loading = "eager"; }); }, { rootMargin: "0px 0px 300% 0px" }); io.observe(sec); }\n' },
 ];
 
 // Fichiers ajoutés ou remplacés dans public/ (construire.mjs les contrôle avant de les copier) :

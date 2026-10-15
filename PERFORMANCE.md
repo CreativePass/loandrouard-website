@@ -737,6 +737,30 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
 - **diagnostic renforcé le 09/10** (`optimise/diag.js`, adresse de test seulement) : trace écrite dès le chargement, fenêtre de détection 3 → 30 min, date complète et délai de relecture de chaque arrêt (affichés par `resultats.html`) ;
 - fait nouveau : sur son iPhone, hauteurs relevées le 08/10 au soir **svh 647, lvh 768** (contre 695 / 735 le 04/10, autre disposition de la barre de Safari) : l'écart couvert par `lvh` est de 121 px.
 
+## Retour de Loan du 15/10 : retournement des cartes en défilement très rapide
+
+« Quand je scrolle super vite, c'est un peu buggé ; à vitesse modérée, ça va. » Enquête (2 agents, Chromium, iPhone simulé 393 × 695, DPR 3, processeur ×4 et ×1, défilements à 750, 3 000 et 8 000 px/s, lancers à inertie, gestes tactiles ; images filmées une à une et état des cartes relevé à chaque image ; scripts dans le dossier de travail de la conversation).
+
+| Constat | Statut | Cause |
+|---|---|---|
+| En revenant vite, cartes vues à moitié retournées, de dos ou seulement esquissées | Démontré | La cascade (2 s) est minutée dès l'entrée ; à 3 000 px/s, les cartes sortent par le haut en 0,1–0,4 s et s'animent hors de vue |
+| Rembobinage visible : cartes déjà retournées qui se retournent à l'envers, se vident puis rejouent | Démontré | Remise à zéro dès que le haut d'une carte passe d'un pixel sous l'écran, puis rembobinage amorti sous les yeux (aussi au seul redéploiement de la barre de Safari, simulé) |
+| Carte vide restant en bas de l'écran | Démontré | Même seuil, plus la bande morte entre 0,85 et 1 hauteur d'écran |
+| Cartes vides pendant un passage très rapide | Démontré, inhérent | La séquence n'a pas le temps de se jouer ; inchangé (sinon il faudrait changer le dessin) |
+| Mauvaise face d'un calque 3D recomposé (Safari iOS) | Plausible | Non reproductible dans Chromium |
+| Revers sans son motif en lancer rapide | Plausible (réseau lent) | Images du revers en chargement différé |
+
+Corrections (`scripts/construire.mjs`, `scripts/optimisations.mjs`) : carte passée au-dessus de l'écran finie hors de vue ; remise à zéro seulement quand la première carte est à plus de 1,5 hauteur d'écran sous le bord, toutes ensemble et d'un coup ; cascade comptée depuis la carte précédente (cartes empilées) ; faces montrées / cachées à 90° en plus de `backface-visibility` (identique au pixel) ; revers chargés quand la planche approche (3 écrans).
+
+| Passage (cartes empilées, construction du 15/10) | Rembobinage vu | Revers vu au retour | État au retour |
+|---|---|---|---|
+| Lancer à 8 000 px/s puis retour à 5 000 px/s | 0 | 0 | de face (p 3,00) |
+| 3 000 px/s aller-retour | 0 | 0 | de face |
+| Aller-retour juste sous l'écran (3 000 px/s) | 0 | 0 | de face, pas de relance |
+| 750 px/s (témoin) | 0 | séquence normale | de face ; rejouée après un vrai retour dans l'étude, comme avant |
+
+Ordinateur (1440 et 1100 px) : 0 % de pixels différents contre la version de l'adresse de test (0,01 % dans l'étude, sous le pixel).
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).
