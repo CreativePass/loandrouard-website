@@ -34,28 +34,60 @@ const VF = ["Video Feedback.dc.html"];
 const LEGALES = ["CGV.dc.html", "Privacy.dc.html", "Legal.dc.html"];
 const DELAI = (cond, txt) => `<sc-if value="{{ ${cond} }}" hint-placeholder-val="{{ true }}"><p class="vfk-delai">${txt}</p></sc-if>`;
 // Cartes des formules sur mobile (retour de Loan du 08/10) : repères dans la page, styles et script.
+// Menu hamburger de l'en-tête sur mobile (retour de Loan du 15/10) : Home, Video Feedback, The Journey et Press / Contact
+// passent dans un menu ouvert par un bouton à droite, sous les langues. Même script sur Video Feedback et les pages légales.
+const BURGER = '<button class="ld-burger" type="button" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>\n';
+const MENU_JS = `<script>/* Correction du 15/10 (scripts/construire.mjs) : menu hamburger de l'en-tête sur mobile. */
+(() => { if (window.__ldMenu) return; window.__ldMenu = 1;
+  const ouverts = () => document.querySelectorAll(".ld-header.ld-menu-ouvert");
+  const fermer = (h) => { h.classList.remove("ld-menu-ouvert"); const b = h.querySelector(".ld-burger"); if (b) b.setAttribute("aria-expanded", "false"); };
+  document.addEventListener("click", (e) => {
+    const b = e.target && e.target.closest ? e.target.closest(".ld-burger") : null;
+    ouverts().forEach((h) => { if (!b || !h.contains(b)) fermer(h); });
+    if (!b) return;
+    const h = b.closest(".ld-header"), o = !h.classList.contains("ld-menu-ouvert");
+    h.classList.toggle("ld-menu-ouvert", o); b.setAttribute("aria-expanded", o ? "true" : "false");
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") ouverts().forEach(fermer); });
+  let y0 = 0; addEventListener("scroll", () => { const l = ouverts(); if (!l.length) { y0 = scrollY; return; } if (Math.abs(scrollY - y0) > 40) l.forEach(fermer); }, { passive: true });
+})();
+</script>
+`;
+// Styles communs : bouton à trois traits (croix une fois ouvert) et menu déroulant sombre, aligné à droite.
+const MENU_CSS = (entete, nav) => `.ld-burger { display: none; }
+@media (max-width: 1040px) {
+  ${entete}::after { content: ''; order: 2; flex-basis: 100%; height: 0; }
+  .ld-burger { order: 3; margin: -6px -9px -6px auto; display: flex; flex-direction: column; justify-content: center; gap: 5px; width: 40px; height: 30px; padding: 6px 9px; border: 0; background: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .ld-burger i { display: block; height: 1px; background: currentColor; transition: transform .3s ease, opacity .3s ease; }
+  .ld-menu-ouvert .ld-burger i:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .ld-menu-ouvert .ld-burger i:nth-child(2) { opacity: 0; }
+  .ld-menu-ouvert .ld-burger i:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+  .ld-burger:focus-visible { outline: 1px solid #A9814A; outline-offset: 2px; }
+  ${nav} { position: absolute; top: calc(100% - 4px); right: 12px; width: auto !important; display: flex; flex-direction: column; align-items: flex-end; gap: 16px !important; padding: 18px 22px; border: 1px solid rgba(246,245,241,.14); border-radius: 14px; background: #111; box-shadow: 0 18px 40px rgba(0,0,0,.45); color: #F6F5F1; font-size: 11px !important; text-align: right; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity .25s ease, transform .25s ease, visibility 0s linear .25s; }
+  .ld-menu-ouvert ${nav} { opacity: 1; visibility: visible; transform: none; transition: opacity .25s ease, transform .25s ease; }
+}
+@media (max-width: 1040px) and (prefers-reduced-motion: reduce) { .ld-burger i, ${nav} { transition: none !important; } }
+`;
 const VFK_MOUV = "@media (prefers-reduced-motion: reduce) { .vfk-ecrit, .vfk-svg .c, .vfk-svg .t, .vfk-svg .l, .vfk-svg .pc, .vfk-g, .vfk-note { transition: none !important; } }\n";
 const VFK_REFAIRE = "    const refaire = () => { C.forEach((k) => { k.vu = null; }); mesurer(); C.forEach(peindre); maj(); lancer(); };\n";
 const ENDUIT = "_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a/assets/textures/enduit-noir.jpg";
 const MINI = ".vfk-c:not([data-grand])";
-const CARTES_CSS = `/* Correction du 08/10 (scripts/construire.mjs) : sur mobile, trois petites cartes côte à côte ; un toucher en ouvre une en grand. */
+const CARTES_CSS = `/* Corrections du 08 et du 15/10 (scripts/construire.mjs) : sur mobile, cartes compactes empilées comme celles de la vitrine
+   « See pricing » (nom, prix, Pay) ; un toucher ailleurs que sur Pay ouvre la carte en grand. */
 @media (max-width: 999px) {
-  .vfk-rang { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(560px, calc(100vw - 28px)); gap: 14px; align-items: stretch; }
-  .vfk-c[data-k="0"] { grid-column: 1; } .vfk-c[data-k="1"] { grid-column: 2; } .vfk-c[data-k="2"] { grid-column: 3; }
-  ${MINI} .vf-carte { aspect-ratio: 5 / 7; padding: 11cqw 8cqw; border-radius: 10px; }
-  ${MINI} .vf-carte__tete { min-height: 0; gap: 7cqw; }
-  ${MINI} .vf-nom { font-size: 16.5cqw; line-height: 1.05; }
-  ${MINI} .vf-prix { font-size: 10cqw; line-height: 1.4; letter-spacing: .04em; }
-  ${MINI} :is(.vf-payer, .vf-liste, .vf-tier, .vf-places, .vfk-delai) { display: none; }
-  ${MINI} .vf-deverrou { gap: 7cqw; animation: none; }
+  .vfk-rang { gap: 12px; }
+  .vfk-c[data-k="0"] { grid-row: 1; } .vfk-c[data-k="1"] { grid-row: 2; } .vfk-c[data-k="2"] { grid-row: 3; }
+  ${MINI} .vf-carte { padding: 18px 20px; }
+  ${MINI} .vf-carte__tete { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; }
+  ${MINI} .vf-nom { font-size: 24px; } ${MINI} .vf-prix { font-size: 15px; }
+  ${MINI} :is(.vf-liste, .vf-tier, .vf-places, .vfk-delai) { display: none; }
+  ${MINI} .vf-deverrou { gap: 10px; animation: none; }
   ${MINI} .vf-deverrou > :not(.vf-verrou):not(.vf-nom) { display: none; }
-  ${MINI} .vf-verrou { gap: 4cqw; font-size: 7.5cqw; letter-spacing: .1em; } ${MINI} .vf-verrou i { width: 10cqw; }
-  ${MINI} .vfk-dos { border-radius: 10px; }
-  ${MINI} .vfk-dos-i { left: 9px; top: 8px; font-size: 13px; } ${MINI} .vfk-dos-i.vfk-dos-i--b { left: auto; top: auto; right: 9px; bottom: 8px; }
-  ${MINI} .vfk-dos-sceau { bottom: 14px; width: 14px; }
-  /* Invitation à toucher : un petit « + » cerclé en bas à droite (à la place de la lueur de survol). */
-  ${MINI} .vf-carte::after { inset: auto 7px 7px auto; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; opacity: .75; border: 1px solid rgba(246,245,241,.42); background: linear-gradient(rgba(246,245,241,.8), rgba(246,245,241,.8)) 50% 50% / 7px 1px no-repeat, linear-gradient(rgba(246,245,241,.8), rgba(246,245,241,.8)) 50% 50% / 1px 7px no-repeat; transition: none; }
-  /* Carte ouverte : elle quitte sa place (les deux autres ne bougent pas) et couvre l'écran, sur le papier sombre de la planche. */
+  ${MINI} .vf-deverrou .vf-nom { font-size: 24px; }
+  /* Invitation à ouvrir : un « + » cerclé à droite, sur la ligne du bouton Pay (ou sous le titre d'une carte payée). */
+  ${MINI} :is(.vf-carte__tete, .vf-deverrou)::after { content: ''; flex: none; align-self: center; margin-left: auto; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(246,245,241,.42); background: linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 11px 1px no-repeat, linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 1px 11px no-repeat; }
+  ${MINI} .vf-deverrou::after { align-self: flex-end; margin-top: -40px; }
+  /* Carte ouverte : elle quitte sa place (les autres ne bougent pas : rangées figées) et couvre l'écran, sur le papier sombre de la planche. */
   .vf > .vfk[data-grand] { z-index: 45; }
   .vfk[data-grand] .vfk-cam { will-change: auto; }
   .vfk-c[data-grand] { position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overscroll-behavior: contain; padding: calc(env(safe-area-inset-top, 0px) + 72px) 16px calc(env(safe-area-inset-bottom, 0px) + 36px); perspective: none; }
@@ -89,6 +121,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       if (grand || !petit.matches || !k.vu) return;
       if (finAttente) { clearTimeout(tGrand); const f = finAttente; finAttente = null; f(); } /* une carte qui se refermait est rangée d'abord */
       const a = k.front; clearTimeout(tGrand); rGrand = a.getBoundingClientRect(); grand = k; cleGrand = innerWidth + "x" + scrollY;
+      const rang = k.c.parentNode; rang.style.gridTemplateRows = getComputedStyle(rang).gridTemplateRows; /* rangées figées : les autres cartes ne remontent pas */
       sec.setAttribute("data-grand", ""); k.c.setAttribute("data-grand", ""); racine.classList.add("vfk-ouverte"); k.c.appendChild(fermerBtn); k.c.scrollTop = 0;
       if (!auto) fermerBtn.focus({ preventScroll: true });
       if (calme) { k.c.setAttribute("data-grand", "on"); return; }
@@ -100,7 +133,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     const fermerCarte = (immediat) => {
       const k = grand; if (!k) return; grand = null; clearTimeout(tGrand);
       const a = k.front, fin = () => { nettoyer(a); k.c.removeAttribute("data-grand"); if (clavier) { clavier = false; k.front.focus({ preventScroll: true }); } fermerBtn.remove();
-        if (!grand) { sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer) { remesurer = false; refaire(); cle = cleDims(); } } };
+        if (!grand) { k.c.parentNode.style.gridTemplateRows = ""; sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer) { remesurer = false; refaire(); cle = cleDims(); } } };
       /* Largeur ou défilement changés pendant l'ouverture (rotation) : la place relevée à l'ouverture n'est plus la bonne. */
       if (immediat === true || calme || !rGrand || cleGrand !== innerWidth + "x" + scrollY) { fin(); return; }
       k.c.setAttribute("data-grand", "");
@@ -111,7 +144,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       if (grand) { if (e.target === grand.c || e.target.closest(".vfk-fermer")) { e.preventDefault(); if (e.detail === 0) clavier = true; fermerCarte(); } return; }
       if (!petit.matches) return;
       const c = e.target.closest(".vfk-c"), k = c && C.find((x) => x.c === c);
-      if (k && k.vu && e.target.closest(".vf-carte")) ouvrirCarte(k);
+      if (k && k.vu && e.target.closest(".vf-carte") && !e.target.closest(".vf-payer, a[href], button")) ouvrirCarte(k);
     };
     const onToucheGrand = (e) => {
       /* Carte ouverte : Échap la referme ; Tab reste dans la carte (carte, liens et boutons, Close), la page cachée ne défile pas. */
@@ -187,6 +220,17 @@ const CORRECTIONS = [
       "/* Correction du 08/10 (scripts/construire.mjs) : sur mobile, les langues à droite du nom, sur la même ligne. */\n" +
       "@media (max-width: 1040px) { .vf-entete { column-gap: 12px; } .vf-entete nav.ld-langues { gap: 8px !important; } .vf-entete .ld-stat__groupe { gap: 8px; } .vf-entete .ld-stat__sep { width: 12px; } }\n" +
       "@media (max-width: 370px) { .vf-entete { padding-inline: 14px; column-gap: 10px; } .vf-entete > div:first-child > span { font-size: 17px !important; } .vf-entete nav.ld-langues, .vf-entete .ld-stat__groupe { gap: 5px !important; } .vf-entete .ld-stat__sep { width: 8px; } }\n" },
+  // Menu hamburger (15/10) : bouton sous les langues, navigation dans un menu déroulant ; script commun aux 4 pages.
+  { quoi: "Menu hamburger : bouton sous les langues (15/10)", fichiers: VF, n: 1,
+    avant: '<div><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.SelecteurLangue" ton="sombre" langue="en" hint-size="150px,20px"></x-import></div>\n',
+    apres: '<div><x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.SelecteurLangue" ton="sombre" langue="en" hint-size="150px,20px"></x-import></div>\n' + BURGER },
+  ...LEGALES.map((f) => ({ quoi: "Menu hamburger : bouton sous les langues (15/10)", fichiers: [f], n: 1,
+    avant: '<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.SelecteurLangue" ton="sombre" langue="{{ langue }}" langues="{{ langues }}" onChange="{{ changerLangue }}" hint-size="100px,20px"></x-import>\n',
+    apres: '<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.SelecteurLangue" ton="sombre" langue="{{ langue }}" langues="{{ langues }}" onChange="{{ changerLangue }}" hint-size="100px,20px"></x-import>\n' + BURGER })),
+  ...[...VF, ...LEGALES].map((f) => ({ quoi: "Menu hamburger : script (15/10)", fichiers: [f], n: 1,
+    avant: '<script src="./support.js"></script>', apres: MENU_JS + '<script src="./support.js"></script>' })),
+  { quoi: "Menu hamburger : styles (15/10)", fichiers: VF, n: 1,
+    avant: "@media (max-width: 370px) { .vf-entete {", apres: MENU_CSS(".vf-entete", ".vf-entete > nav:not(.vf-sommaire)") + "@media (max-width: 370px) { .vf-entete {" },
   // Pages légales : même en-tête mobile (il débordait de l'écran : navigation et langues hors champ).
   ...LEGALES.map((f) => ({ quoi: "En-tête mobile des pages légales : repère (08/10)", fichiers: [f], n: 1,
     avant: '<div style="max-width:none;margin:0;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:32px">',
@@ -205,10 +249,14 @@ const CORRECTIONS = [
       "@media (min-width: 900px) and (max-width: 1040px) { .ld-section { padding-top: calc(var(--section-y-large) + 44px); } }\n" +
       "@media (max-width: 370px) { .lg-entete { padding-inline: 14px !important; } }\n" +
       "</style>" })),
-  // Cartes des formules sur mobile (< 1000 px) : trois petites cartes côte à côte (nom et prix), qui se retournent en
-  // cascade comme avant ; un toucher en ouvre une en grand, par-dessus la page (fermeture : Close, Échap, toucher hors de
-  // la carte). Le délai de réponse n'est plus sous la petite carte : le trait de crayon suit à nouveau le bord de la carte
-  // (il dépassait pour entourer ce délai). Ordinateur inchangé. Après un paiement, la carte payée s'ouvre d'elle-même.
+  // Menu hamburger des pages légales : après leur correction d'en-tête (dont il suit les styles).
+  ...LEGALES.map((f) => ({ quoi: "Menu hamburger : styles (15/10)", fichiers: [f], n: 1,
+    avant: "@media (max-width: 370px) { .lg-entete {", apres: MENU_CSS(".lg-entete", ".lg-entete > nav:not(.ld-langues)") + "@media (max-width: 370px) { .lg-entete {" })),
+  // Cartes des formules sur mobile (< 1000 px) : cartes compactes empilées comme la vitrine « See pricing » (nom, prix, Pay ;
+  // choix de Loan le 15/10, après un essai de trois petites cartes côte à côte jugé « noyé dans le décor »), retournées en
+  // cascade comme avant ; un toucher hors de Pay ouvre la carte en grand, par-dessus la page (fermeture : Close, Échap,
+  // toucher hors de la carte). Le délai de réponse n'est plus sous la carte compacte : le trait de crayon suit à nouveau le
+  // bord de la carte (il dépassait pour entourer ce délai). Ordinateur inchangé. Après un paiement, la carte payée s'ouvre.
   { quoi: "Cartes mobiles : styles des petites cartes et de la carte ouverte (08/10)", fichiers: VF, n: 1,
     avant: VFK_MOUV, apres: VFK_MOUV + CARTES_CSS },
   { quoi: "Cartes mobiles : ouverture en grand (08/10)", fichiers: VF, n: 1,
