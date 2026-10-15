@@ -108,6 +108,7 @@ const CARTES_CSS = `/* Corrections du 08 et du 15/10 (scripts/construire.mjs) : 
   .vfk-c[data-grand="on"] .vfk-fermer { opacity: 1; }
 }
 html.vfk-ouverte { overflow: hidden; }
+html.vfk-tenue { overflow: hidden; } /* 15/10 : élan arrêté sur les cartes le temps de leur retournement (mobile) */
 `;
 const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mobile, un toucher ouvre la petite carte en grand, par-dessus la page ;
        Close, Échap ou un toucher hors de la carte la referme. La carte glisse et grandit depuis sa place (translate / scale). */
@@ -137,7 +138,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     const fermerCarte = (immediat) => {
       const k = grand; if (!k) return; grand = null; clearTimeout(tGrand);
       const a = k.front, fin = (fondu) => { nettoyer(a); k.c.removeAttribute("data-grand"); if (clavier) { clavier = false; k.front.focus({ preventScroll: true }); } fermerBtn.remove();
-        if (!grand) { k.c.parentNode.style.gridTemplateRows = ""; sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer) { remesurer = false; refaire(); cle = cleDims(); } }
+        if (!grand) { k.c.parentNode.style.gridTemplateRows = ""; sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer || derive()) { remesurer = false; refaire(); cle = cleDims(); } }
         if (fondu === true) { const c = k.c; c.style.transition = "none"; c.style.opacity = "0"; c.getBoundingClientRect(); c.style.transition = "opacity .24s ease"; c.style.opacity = "1";
           setTimeout(() => { if (!c.hasAttribute("data-grand")) c.style.transition = c.style.opacity = ""; }, 280); } };
       if (immediat === true || calme) { fin(); return; }
@@ -162,10 +163,46 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
         const k = C.find((x) => x.front === e.target); if (k) { e.preventDefault(); clavier = true; ouvrirCarte(k); } }
     };
     const onPetit = () => { if (!petit.matches) fermerCarte(true); };
+    /* Correction du 15/10 (retour de Loan : « quand je les ferme, les lignes sont décalées par rapport aux cartes ») : le dessin au
+       crayon n'était refait que si la largeur, la hauteur d'écran ou celle d'une carte changeait. Si ce qui est au-dessus des cartes
+       change de hauteur (en-tête, texte), les cartes bougeaient sans leurs traits. Sur mobile, leur place est revérifiée à la
+       fermeture d'une carte et au défilement ; le dessin est refait si elles ont bougé. */
+    const derive = () => { if (!G || G.rang || sec.hasAttribute("data-grand")) return false; const p0 = pin.getBoundingClientRect().top;
+      return C.some((k, i) => G.R[i] && Math.abs(k.c.getBoundingClientRect().top - p0 - G.R[i].y) > 1.5); };
+    let tRecal = 0;
+    const recaler = () => { if (!tRecal) tRecal = setTimeout(() => { tRecal = 0; if (derive()) { refaire(); cle = cleDims(); } }, 120); };
+    /* Correction du 15/10 (retour de Loan : en défilant vite, on arrivait en bas de la page sans passer par les cartes) : sur mobile,
+       la page s'arrête sur les cartes, centrées sous l'en-tête (la première juste sous l'en-tête si elles ne tiennent pas), jusqu'à
+       la fin de leur retournement, plus une demi-seconde pour les voir. Comme sur ordinateur : une seule fois, on peut remonter mais
+       pas descendre. Un élan qui les dépasse est arrêté net et la page revient sur elles (sur la première si elles ne tiennent pas),
+       immobile jusqu'à la fin. */
+    const PAUSE = 500, tactile = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+    let tenue = false, tTenue = 0, ySnap = 0;
+    const lacher = () => { clearTimeout(tTenue); tTenue = 0; racine.classList.remove("vfk-tenue"); };
+    const retenir = () => { if (!tactile) return; racine.classList.add("vfk-tenue"); clearTimeout(tTenue); tTenue = setTimeout(lacher, Math.max(0, finVerrou - performance.now()) + 50); };
+    const tenir = () => {
+      if (tenue || calme || grand || window.__vfkPayee || !petit.matches) return;
+      const vh = window.innerHeight, a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect();
+      if (a.top > vh) return;
+      const hd = document.querySelector(".vf > .ld-header"), hh = hd ? hd.offsetHeight : 0;
+      /* Écarts de défilement : cartes centrées, première carte sous l'en-tête, dernière au-dessus du bas de l'écran.
+         Arrêt sur les cartes centrées ; si elles ne tiennent pas (petit écran), sur la première, et on peut encore descendre
+         jusqu'à voir la dernière en entier. */
+      const dMil = (a.top + b.bottom - hh - vh) / 2, cible = Math.min(dMil, a.top - hh - 14), limite = Math.max(dMil, b.bottom + 14 - vh);
+      if (cible > 0) return;
+      tenue = true;
+      if (C.every((k) => k.p >= 2.99)) return; /* déjà retournées (défilement lent) : rien à retenir */
+      const now = performance.now(), y = window.scrollY;
+      C.forEach((k, i) => { if (!k.t0) k.t0 = Math.max(now, i && C[i - 1].t0 ? C[i - 1].t0 + LAG / VIT * 1000 : 0); });
+      yVerrou = Math.max(0, Math.round(y + limite)); ySnap = Math.max(0, Math.round(y + cible)); finVerrou = C[C.length - 1].t0 + 3.8 / VIT * 1000 + PAUSE;
+      if (typeof armerVerrou === "function") armerVerrou();
+      if (limite < -2) { retenir(); window.scrollTo({ top: ySnap, behavior: "instant" }); }
+      lancer();
+    };
     sec.addEventListener("click", onClicGrand);
     window.addEventListener("keydown", onToucheGrand, true);
     if (petit.addEventListener) petit.addEventListener("change", onPetit);
-    const offGrand = () => { fermerCarte(true); sec.removeEventListener("click", onClicGrand); window.removeEventListener("keydown", onToucheGrand, true); if (petit.removeEventListener) petit.removeEventListener("change", onPetit); };
+    const offGrand = () => { fermerCarte(true); lacher(); clearTimeout(tRecal); sec.removeEventListener("click", onClicGrand); window.removeEventListener("keydown", onToucheGrand, true); if (petit.removeEventListener) petit.removeEventListener("change", onPetit); };
 `;
 const CORRECTIONS = [
   {
@@ -290,7 +327,25 @@ const CORRECTIONS = [
       "        C.forEach((k, i) => { const q = k.c.getBoundingClientRect(), t = q.top;\n" +
       "          if (t < vh * 0.85) { if (!k.t0) k.t0 = Math.max(performance.now(), i && C[i - 1].t0 ? C[i - 1].t0 + LAG / VIT * 1000 : 0); if (q.bottom < 0) k.t0 = Math.min(k.t0, performance.now() - 3.8 / VIT * 1000); }\n" +
       "          else if (loin && k.t0) { k.t0 = 0; k.p = 0; peindre(k); }\n" +
-      "          on(k.g, !!k.t0); });\n" },
+      "          on(k.g, !!k.t0); });\n" +
+      "        if (derive()) recaler(); /* Correction du 15/10 : cartes déplacées sans leurs traits, dessin refait. */\n" },
+  // Arrêt sur les cartes en défilement rapide (retour de Loan du 15/10 : « si on scrolle vite, on arrive tout en bas et on ne passe
+  // pas par les cartes ») : la place d'arrêt est vérifiée avant tout le reste, même quand un élan a sauté toute la planche d'un coup.
+  { quoi: "Cartes mobiles : la page s'arrête sur les cartes le temps du retournement (15/10)", fichiers: VF, n: 1,
+    avant: "      const vh = window.innerHeight, r = sec.getBoundingClientRect();\n      if (r.top > vh * 2.5 || r.bottom < -vh * 0.5) return;\n",
+    apres: "      if (!G.rang) tenir(); /* Correction du 15/10 (scripts/construire.mjs) : sur mobile, arrêt sur les cartes. */\n" +
+      "      const vh = window.innerHeight, r = sec.getBoundingClientRect();\n      if (r.top > vh * 2.5 || r.bottom < -vh * 0.5) return;\n" },
+  { quoi: "Cartes mobiles : élan arrêté net pendant l'arrêt sur les cartes (15/10)", fichiers: VF, n: 1,
+    avant: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) window.scrollTo({ top: yVerrou, behavior: \"instant\" }); if (!rafS) rafS = requestAnimationFrame(maj); };",
+    apres: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) { const yR = !G.rang && window.scrollY > yVerrou + 40 ? ySnap : yVerrou; if (!G.rang) retenir(); window.scrollTo({ top: yR, behavior: \"instant\" }); } if (!rafS) rafS = requestAnimationFrame(maj); };" },
+  // Dessin au crayon refait aussi quand les cartes changent de place (et pas seulement de taille) : hauteur du bloc au-dessus
+  // d'elles (plaque, en-tête, titre) comprise dans la clé, et ce bloc observé en plus de la planche.
+  { quoi: "Cartes : dessin refait quand les cartes changent de place (15/10)", fichiers: VF, n: 1,
+    avant: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",");\n',
+    apres: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",") + "x" + plaque.offsetHeight + "," + bloc.parentNode.offsetHeight; /* Correction du 15/10 : place des cartes comprise. */\n' },
+  { quoi: "Cartes : bloc des cartes observé (15/10)", fichiers: VF, n: 1,
+    avant: "}, 150); }); ro.observe(pin); }\n",
+    apres: "}, 150); }); ro.observe(pin); ro.observe(bloc.parentNode); }\n" },
   // Retournement 3D : chaque face est aussi montrée / cachée à 90° (en plus de backface-visibility), pour éviter que Safari iOS
   // ne montre brièvement la mauvaise face d'un calque 3D recomposé pendant un défilement rapide. Identique au pixel (revue du
   // 15/10 : 0 pixel différent sur 40 comparaisons sur mobile et 13 sur ordinateur).
