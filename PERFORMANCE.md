@@ -761,6 +761,8 @@ Corrections (`scripts/construire.mjs`, `scripts/optimisations.mjs`) : carte pass
 
 Ordinateur (1440 et 1100 px) : 0 % de pixels différents contre la version de l'adresse de test (0,01 % dans l'étude, sous le pixel).
 
+**Fermeture de la carte ouverte** (retour de Loan, 15/10 : « quand je les ferme, ça bug, c'est saccadé »). Filmée image par image (iPhone simulé, processeur ×4) : la grande carte, haute de tout son contenu, glissait vers la place de la petite en passant par-dessus les autres cartes, puis devenait petite d'un coup ; une image de 150 ms au passage. Remplacée par un fondu (0,25 s, la carte rétrécit à peine), puis la petite carte réapparaît à sa place d'un fondu (0,24 s) ; opacité et échelle seulement. La planche mobile n'a plus de calque propre (`will-change` retiré sur mobile, où elle ne bouge pas) : plus de calque recréé à l'ouverture et à la fermeture. Images de 17 à 83 ms pendant la fermeture (×4). Rotation, paiement depuis la carte ouverte, clavier et réouverture rapide revérifiés.
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).

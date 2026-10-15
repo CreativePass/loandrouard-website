@@ -89,11 +89,12 @@ const CARTES_CSS = `/* Corrections du 08 et du 15/10 (scripts/construire.mjs) : 
   ${MINI} .vf-deverrou::after { align-self: flex-end; margin-top: -40px; }
   /* Carte ouverte : elle quitte sa place (les autres ne bougent pas : rangées figées) et couvre l'écran, sur le papier sombre de la planche. */
   .vf > .vfk[data-grand] { z-index: 45; }
-  .vfk[data-grand] .vfk-cam { will-change: auto; }
+  .vfk-cam { will-change: auto; } /* sur mobile, la planche ne bouge pas : pas de calque (et la carte ouverte reste fixée à l'écran) */
   .vfk-c[data-grand] { position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overscroll-behavior: contain; padding: calc(env(safe-area-inset-top, 0px) + 72px) 16px calc(env(safe-area-inset-bottom, 0px) + 36px); perspective: none; }
   .vfk-c[data-grand]::before { content: ''; position: fixed; inset: 0; z-index: -1; background: linear-gradient(rgba(8,8,8,.4), rgba(8,8,8,.4)), #101010 url("${ENDUIT}") 50% 50% / 620px; opacity: 0; transition: opacity .45s ease; }
   .vfk-c[data-grand]::after { content: ''; flex: none; margin-top: auto; }
   .vfk-c[data-grand="on"]::before { opacity: 1; }
+  .vfk-c[data-grand="ferme"] { opacity: 0; transition: opacity .25s ease; } /* fermeture : tout s'efface d'un fondu, la petite carte réapparaît à sa place */
   .vfk-c[data-grand] > .vfk-ombre, .vfk-c[data-grand] .vfk-dos { display: none; }
   .vfk-c[data-grand] > .vfk-flip { flex: none; width: min(460px, 100%); margin-top: auto; transform: none !important; will-change: auto; }
   .vfk-c[data-grand] .vf-carte { transform: none !important; } /* vue de lecture à plat : pas d'inclinaison au toucher */
@@ -111,7 +112,7 @@ html.vfk-ouverte { overflow: hidden; }
 const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mobile, un toucher ouvre la petite carte en grand, par-dessus la page ;
        Close, Échap ou un toucher hors de la carte la referme. La carte glisse et grandit depuis sa place (translate / scale). */
     const petit = window.matchMedia("(max-width: 999px)"), racine = document.documentElement;
-    let grand = null, rGrand = null, tGrand = 0, cleGrand = "", remesurer = false, finAttente = null, clavier = false;
+    let grand = null, rGrand = null, tGrand = 0, remesurer = false, finAttente = null, clavier = false;
     const fermerBtn = document.createElement("button");
     fermerBtn.type = "button"; fermerBtn.className = "vfk-fermer"; fermerBtn.innerHTML = "<span>Close</span><i aria-hidden=\\"true\\"></i>";
     const poser = (a, de, vers) => { const s = de.width / Math.max(1, vers.width); a.style.transformOrigin = "50% 0";
@@ -120,7 +121,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     const ouvrirCarte = (k, auto) => {
       if (grand || !petit.matches || !k.vu) return;
       if (finAttente) { clearTimeout(tGrand); const f = finAttente; finAttente = null; f(); } /* une carte qui se refermait est rangée d'abord */
-      const a = k.front; clearTimeout(tGrand); rGrand = a.getBoundingClientRect(); grand = k; cleGrand = innerWidth + "x" + scrollY;
+      const a = k.front; clearTimeout(tGrand); k.c.style.transition = k.c.style.opacity = ""; rGrand = a.getBoundingClientRect(); grand = k;
       const rang = k.c.parentNode; rang.style.gridTemplateRows = getComputedStyle(rang).gridTemplateRows; /* rangées figées : les autres cartes ne remontent pas */
       sec.setAttribute("data-grand", ""); k.c.setAttribute("data-grand", ""); racine.classList.add("vfk-ouverte"); k.c.appendChild(fermerBtn); k.c.scrollTop = 0;
       if (!auto) fermerBtn.focus({ preventScroll: true });
@@ -130,15 +131,19 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
         a.style.transition = "translate .5s cubic-bezier(.2,.7,.2,1), scale .5s cubic-bezier(.2,.7,.2,1)"; a.style.translate = "0px 0px"; a.style.scale = "1"; });
       tGrand = setTimeout(() => { if (grand === k) nettoyer(a); }, 560);
     };
+    /* Fermeture (15/10, retour de Loan : « quand je les ferme, c'est saccadé ») : la grande carte ne glisse plus vers la place de la
+       petite (elle passait par-dessus les autres cartes puis changeait d'un coup) ; tout s'efface d'un fondu, en rétrécissant à peine,
+       puis la petite carte réapparaît à sa place d'un fondu. Opacité et échelle seulement : rien à redessiner pendant l'animation. */
     const fermerCarte = (immediat) => {
       const k = grand; if (!k) return; grand = null; clearTimeout(tGrand);
-      const a = k.front, fin = () => { nettoyer(a); k.c.removeAttribute("data-grand"); if (clavier) { clavier = false; k.front.focus({ preventScroll: true }); } fermerBtn.remove();
-        if (!grand) { k.c.parentNode.style.gridTemplateRows = ""; sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer) { remesurer = false; refaire(); cle = cleDims(); } } };
-      /* Largeur ou défilement changés pendant l'ouverture (rotation) : la place relevée à l'ouverture n'est plus la bonne. */
-      if (immediat === true || calme || !rGrand || cleGrand !== innerWidth + "x" + scrollY) { fin(); return; }
-      k.c.setAttribute("data-grand", "");
-      a.style.transition = "translate .4s cubic-bezier(.4,0,.2,1), scale .4s cubic-bezier(.4,0,.2,1)"; poser(a, rGrand, a.getBoundingClientRect());
-      finAttente = fin; tGrand = setTimeout(() => { finAttente = null; fin(); }, 420);
+      const a = k.front, fin = (fondu) => { nettoyer(a); k.c.removeAttribute("data-grand"); if (clavier) { clavier = false; k.front.focus({ preventScroll: true }); } fermerBtn.remove();
+        if (!grand) { k.c.parentNode.style.gridTemplateRows = ""; sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer) { remesurer = false; refaire(); cle = cleDims(); } }
+        if (fondu === true) { const c = k.c; c.style.transition = "none"; c.style.opacity = "0"; c.getBoundingClientRect(); c.style.transition = "opacity .24s ease"; c.style.opacity = "1";
+          setTimeout(() => { if (!c.hasAttribute("data-grand")) c.style.transition = c.style.opacity = ""; }, 280); } };
+      if (immediat === true || calme) { fin(); return; }
+      k.c.setAttribute("data-grand", "ferme");
+      a.style.transition = "scale .25s ease"; a.style.transformOrigin = "50% 40%"; a.style.scale = "0.96";
+      finAttente = fin; tGrand = setTimeout(() => { finAttente = null; fin(true); }, 260);
     };
     const onClicGrand = (e) => {
       if (grand) { if (e.target === grand.c || e.target.closest(".vfk-fermer")) { e.preventDefault(); if (e.detail === 0) clavier = true; fermerCarte(); } return; }
