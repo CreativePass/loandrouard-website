@@ -772,9 +772,11 @@ Ordinateur (1440 et 1100 px) : 0 % de pixels différents contre la version de l'
 | 393 × 852 | élan | oui | 220/359, 371/541, 553/723 (centrées : 129 px au-dessus et au-dessous) | ≈ 2,3 s, puis descente libre |
 | 393 × 852 | saut en bas de page | oui, à l'image suivante | idem | ≈ 2,6 s |
 | 393 × 852 | lent | à la place d'arrêt, le temps que la 3e finisse | idem | fin de la 3e + 0,5 s |
-| 375 × 553 | saut | oui | 105/274, 286/456, 468/638 (1re sous l'en-tête) | ≈ 2,6 s |
+| 375 × 553 | saut | oui | 105/274, 286/456, 468/638 (1re sous l'en-tête) | élan arrêté 0,3 s, puis descente permise jusqu'à la 3e entière ; bloquée là jusqu'à la fin |
 | 375 × 553 | élan court | oui, à la limite | 6/175, 187/357, 369/539 (3e en entier) | ≈ 2,3 s |
 | 393 × 852, mouvement réduit | élan | non (cartes déjà de face) | — | — |
+
+Revue contradictoire avant l'adresse de test (16/10, 3 relecteurs et 3 vérificateurs, Chromium) : 4 défauts mineurs confirmés et corrigés, 3 écartés. (1) Paysage et petit écran : page figée sur la 1re carte, la 3e hors de l'écran → élan arrêté 0,3 s seulement, puis glissé vers le bas permis jusqu'à la limite (`onTM`). (2) Retour de paiement : l'arrêt pouvait se déclencher entre le retournement de la carte payée et son ouverture automatique (saut de 141 à 308 px) → jamais d'arrêt après un retour de paiement. (3) Fenêtre passée sous 1000 px pendant le verrou ordinateur : un défilement renvoyait en haut de page (`ySnap` à 0) → `ySnap` utilisé seulement s'il a été posé. (4) À chaque fermeture d'une carte, tout le dessin était refait et les traits de construction se retraçaient 1,5 s sans raison : les rangées figées à l'ouverture prenaient la valeur arrondie de `getComputedStyle` (≈ 0,05 px de moins) → rangées figées à leur hauteur exacte ; 0 redessin à la fermeture (393 et 900 px). Revérifiés ensuite : scénarios ci-dessus, traits (en-tête −51 px, titre +51 px, carte ouverte), retour de paiement (single, pack + redimensionnement), parcours complets mobile / ordinateur / fenêtre étroite / mouvement réduit sans erreur.
 
 Ordinateur (1440 et 1100 px) : verrou d'origine inchangé, 3 cartes retournées, traits à 0–1 px, aucune erreur. Fenêtre étroite à la molette (900 px, mise en page mobile) : pas d'`overflow: hidden` (écran non tactile), traits à 0–1 px, aucune erreur.
 

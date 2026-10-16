@@ -123,7 +123,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       if (grand || !petit.matches || !k.vu) return;
       if (finAttente) { clearTimeout(tGrand); const f = finAttente; finAttente = null; f(); } /* une carte qui se refermait est rangée d'abord */
       const a = k.front; clearTimeout(tGrand); k.c.style.transition = k.c.style.opacity = ""; rGrand = a.getBoundingClientRect(); grand = k;
-      const rang = k.c.parentNode; rang.style.gridTemplateRows = getComputedStyle(rang).gridTemplateRows; /* rangées figées : les autres cartes ne remontent pas */
+      const rang = k.c.parentNode; rang.style.gridTemplateRows = C.map((x) => x.c.getBoundingClientRect().height + "px").join(" "); /* rangées figées à leur hauteur exacte : les autres cartes ne remontent pas (getComputedStyle arrondit, et le dessin était refait pour rien à la fermeture) */
       sec.setAttribute("data-grand", ""); k.c.setAttribute("data-grand", ""); racine.classList.add("vfk-ouverte"); k.c.appendChild(fermerBtn); k.c.scrollTop = 0;
       if (!auto) fermerBtn.focus({ preventScroll: true });
       if (calme) { k.c.setAttribute("data-grand", "on"); return; }
@@ -179,9 +179,12 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     const PAUSE = 500, tactile = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
     let tenue = false, tTenue = 0, ySnap = 0;
     const lacher = () => { clearTimeout(tTenue); tTenue = 0; racine.classList.remove("vfk-tenue"); };
-    const retenir = () => { if (!tactile) return; racine.classList.add("vfk-tenue"); clearTimeout(tTenue); tTenue = setTimeout(lacher, Math.max(0, finVerrou - performance.now()) + 50); };
+    const retenir = () => { if (!tactile) return; racine.classList.add("vfk-tenue"); clearTimeout(tTenue);
+      /* cartes trop hautes pour l'écran : élan arrêté (0,3 s), puis on peut descendre jusqu'à la dernière ; sinon immobile jusqu'à la fin */
+      tTenue = setTimeout(lacher, ySnap < yVerrou - 2 ? 300 : Math.max(0, finVerrou - performance.now()) + 50); };
     const tenir = () => {
-      if (tenue || calme || grand || window.__vfkPayee || !petit.matches) return;
+      if (window.__vfkPayee !== undefined) tenue = true; /* retour de paiement : pas d'arrêt, la carte payée s'ouvre d'elle-même */
+      if (tenue || calme || grand || !petit.matches) return;
       const vh = window.innerHeight, a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect();
       if (a.top > vh) return;
       const hd = document.querySelector(".vf > .ld-header"), hh = hd ? hd.offsetHeight : 0;
@@ -337,9 +340,12 @@ const CORRECTIONS = [
       "      const vh = window.innerHeight, r = sec.getBoundingClientRect();\n      if (r.top > vh * 2.5 || r.bottom < -vh * 0.5) return;\n" },
   { quoi: "Cartes mobiles : élan arrêté net pendant l'arrêt sur les cartes (15/10)", fichiers: VF, n: 1,
     avant: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) window.scrollTo({ top: yVerrou, behavior: \"instant\" }); if (!rafS) rafS = requestAnimationFrame(maj); };",
-    apres: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) { const yR = !G.rang && window.scrollY > yVerrou + 40 ? ySnap : yVerrou; if (!G.rang) retenir(); window.scrollTo({ top: yR, behavior: \"instant\" }); } if (!rafS) rafS = requestAnimationFrame(maj); };" },
+    apres: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) { const yR = !G.rang && ySnap && window.scrollY > yVerrou + 40 ? ySnap : yVerrou; if (!G.rang) retenir(); window.scrollTo({ top: yR, behavior: \"instant\" }); } if (!rafS) rafS = requestAnimationFrame(maj); };" },
   // Dessin au crayon refait aussi quand les cartes changent de place (et pas seulement de taille) : hauteur du bloc au-dessus
   // d'elles (plaque, en-tête, titre) comprise dans la clé, et ce bloc observé en plus de la planche.
+  { quoi: "Cartes mobiles : pendant l'arrêt, glissé vers le bas permis jusqu'à la limite (16/10)", fichiers: VF, n: 1,
+    avant: "    const onTM = (e) => { if (verrou() && e.touches[0].clientY < yTouche) e.preventDefault(); };\n",
+    apres: "    const onTM = (e) => { if (verrou() && e.touches[0].clientY < yTouche && (G.rang || window.scrollY >= yVerrou - 2)) e.preventDefault(); }; /* Correction du 16/10 : sur mobile, on peut descendre jusqu'à la dernière carte. */\n" },
   { quoi: "Cartes : dessin refait quand les cartes changent de place (15/10)", fichiers: VF, n: 1,
     avant: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",");\n',
     apres: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",") + "x" + plaque.offsetHeight + "," + bloc.parentNode.offsetHeight; /* Correction du 15/10 : place des cartes comprise. */\n' },
