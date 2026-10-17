@@ -108,13 +108,11 @@ const CARTES_CSS = `/* Corrections du 08 et du 15/10 (scripts/construire.mjs) : 
   .vfk-c[data-grand="on"] .vfk-fermer { opacity: 1; }
 }
 html.vfk-ouverte { overflow: hidden; }
-/* 17/10 (mobile) : arrêt sur les cartes par l'aimantation native du navigateur (scroll snap) vers un repère invisible (.vfk-cran), posée
-   seulement dans les 3 écrans qui précèdent les cartes (classe vfk-aimant, posée par le script) : un lancer qui le dépasserait s'y pose en
-   ralentissant (scroll-snap-stop). Un script qui ramenait la page se battait contre l'élan de Safari (secousses). */
-.vfk-cran { position: absolute; left: 0; top: 0; width: 1px; height: 1px; pointer-events: none; }
-html.vfk-aimant { scroll-snap-type: y proximity; }
-html.vfk-aimant .vfp-cran { scroll-snap-align: none; } /* l'aimantation du projecteur reste retirée */
-html.vfk-aimant .vfk-cran { scroll-snap-align: start; scroll-snap-stop: always; }
+/* 17/10 (mobile) : tant que les cartes n'ont pas été vues, la page se termine provisoirement juste sous elles (classe vfk-borne, hauteur
+   --vfk-borne, posées par le script) : un lancer, même très fort ou enchaîné, s'y arrête comme en bas de page, avec le freinage et le
+   rebond du navigateur ; la suite (bas de page) réapparaît dessous à la fin du retournement + 0,5 s. Ni aimantation ni script pendant le
+   défilement : un script qui ramenait la page se battait contre l'élan de Safari (secousses), l'aimantation sautait si l'on touchait l'écran. */
+html.vfk-borne .vf { max-height: var(--vfk-borne); overflow-y: clip; }
 `;
 const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mobile, un toucher ouvre la petite carte en grand, par-dessus la page ;
        Close, Échap ou un toucher hors de la carte la referme. La carte glisse et grandit depuis sa place (translate / scale). */
@@ -168,7 +166,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       if (petit.matches && (e.key === "Enter" || e.key === " ") && e.target && e.target.matches && e.target.matches(".vfk-c[data-vu] .vf-carte")) {
         const k = C.find((x) => x.front === e.target); if (k) { e.preventDefault(); clavier = true; ouvrirCarte(k); } }
     };
-    const onPetit = () => { if (!petit.matches) { fermerCarte(true); aimant(false); } };
+    const onPetit = () => { if (!petit.matches) { fermerCarte(true); libre(); } };
     /* Correction du 15/10 (retour de Loan : « quand je les ferme, les lignes sont décalées par rapport aux cartes ») : le dessin au
        crayon n'était refait que si la largeur, la hauteur d'écran ou celle d'une carte changeait. Si ce qui est au-dessus des cartes
        change de hauteur (en-tête, texte), les cartes bougeaient sans leurs traits. Sur mobile, leur place est revérifiée à la
@@ -178,67 +176,41 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     let tRecal = 0;
     const recaler = () => { if (!tRecal) tRecal = setTimeout(() => { tRecal = 0; if (derive()) { refaire(); cle = cleDims(); } }, 120); };
     /* Corrections du 15 et du 17/10 (retour de Loan : en défilant vite, on arrivait en bas de la page sans passer par les cartes ; puis
-       « le blocage n'est pas fluide, ça secoue en boucle ») : sur mobile, une fois par visite, la page s'arrête sur les cartes, centrées
-       sous l'en-tête (la première sous l'en-tête si elles ne tiennent pas), jusqu'à la fin de leur retournement + 0,5 s.
-       - Approche : dans les 3 écrans qui précèdent (6 si l'on défile vite), l'aimantation native (scroll snap) vers le repère .vfk-cran
-         est posée ; un lancer s'y pose en ralentissant, avec la courbe du navigateur. Safari raccourcit aussi l'élan des gestes commencés
-         dans cette zone, ce qui l'empêche de filer jusqu'en bas (où il n'aimante pas). Ailleurs dans la page, rien ne change.
-       - Arrêt : une fois posée, l'aimantation est retirée ; le glissé et la molette vers le bas sont seulement ignorés tant qu'on est sur
-         les cartes (on peut remonter). Aucun script ne déplace la page : l'ancien, qui la ramenait, se battait contre l'élan de Safari. */
-    const PAUSE = 500, PRES = 3, ZONE = 6, VITE = 1.2, cran = sec.querySelector(".vfk-cran");
-    let tenue = false, plein = true, suspendu = 0, doigt = false, yPrec = 0, tPrec = 0, vitesse = 0, tPose = 0;
-    const aimant = (on) => { racine.classList.toggle("vfk-aimant", !!on); };
-    /* Hauteur visible barre déployée (stable quand la barre de Safari se replie) : le repère ne bouge pas avec elle. */
+       « le blocage n'est pas fluide, ça secoue en boucle ») : sur mobile, une fois par visite, la page se termine provisoirement juste sous
+       les cartes (centrées sous l'en-tête ; si elles ne tiennent pas à l'écran, la dernière en entier en bas) jusqu'à la fin de leur
+       retournement + 0,5 s. L'arrêt est celui du bas de page : freinage et rebond du navigateur, quel que soit l'élan, sans script pendant
+       le défilement. On peut toujours remonter. Ensuite le bas de page réapparaît dessous, sans que rien ne bouge à l'écran. */
+    const PAUSE = 500, vf = sec.closest(".vf");
+    let tenue = false, finPage = 0, tLibre = 0;
+    const libre = () => { clearTimeout(tLibre); tLibre = 0; finPage = 0; racine.classList.remove("vfk-borne"); };
+    /* Hauteur visible barre déployée (stable quand la barre de Safari se replie). */
     const hautVue = () => (typeof hautVisible === "function" && hautVisible(racine)) || window.innerHeight;
-    /* Place du repère, relevée avec le dessin : cartes centrées dans la partie visible sous l'en-tête, ou première carte sous l'en-tête. */
-    const poserCran = () => {
-      if (!cran || !G || G.rang || !petit.matches) { aimant(false); return; }
-      const vh = hautVue(), hd = document.querySelector(".vf > .ld-header"), hh = hd ? hd.offsetHeight : 0;
-      const a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect(), dMil = (a.top + b.bottom - hh - vh) / 2, dHaut = a.top - hh - 14;
-      plein = dMil <= dHaut;
-      cran.style.top = Math.round(Math.min(dMil, dHaut) - sec.getBoundingClientRect().top) + "px";
+    /* Fin de page provisoire, relevée avec le dessin ; jamais au-dessus de l'écran (la page ne raccourcit pas sous le lecteur). */
+    const poserBorne = () => {
+      if (tenue || calme || !vf || !G || G.rang || !petit.matches || window.__vfkPayee !== undefined) { if (!tenue && finPage) libre(); return; }
+      const vh = hautVue(), hd = document.querySelector(".vf > .ld-header"), hh = hd ? hd.offsetHeight : 0, y = window.scrollY;
+      const a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect();
+      const fin = y + Math.max(Math.min((a.top + b.bottom - hh - vh) / 2, a.top - hh - 14) + vh, b.bottom + 14);
+      if (y + window.innerHeight > fin - 1) return;
+      finPage = Math.round(fin); racine.style.setProperty("--vfk-borne", Math.round(fin - (vf.getBoundingClientRect().top + y)) + "px"); racine.classList.add("vfk-borne");
     };
-    /* Arrivée sur le repère : les cartes pas encore parties partent en cascade ; le glissé et la molette vers le bas sont ignorés
-       jusqu'à la fin du retournement + 0,5 s (limite : le repère ; si les cartes ne tiennent pas à l'écran, assez bas pour voir la dernière). */
-    const arriver = (t) => {
-      tenue = true; aimant(false); clearTimeout(tPose);
-      if (C.every((k) => k.p >= 2.99)) return; /* déjà retournées (défilement lent) : rien à retenir */
-      const now = performance.now(), b = C[C.length - 1].c.getBoundingClientRect();
-      C.forEach((k, i) => { if (!k.t0) k.t0 = Math.max(now, i && C[i - 1].t0 ? C[i - 1].t0 + LAG / VIT * 1000 : 0); });
-      yVerrou = Math.max(0, Math.round(window.scrollY + t + (plein ? 0 : Math.max(0, b.bottom - t + 14 - window.innerHeight))));
-      finVerrou = C[C.length - 1].t0 + 3.8 / VIT * 1000 + PAUSE;
-      if (typeof armerVerrou === "function") armerVerrou();
-      lancer();
-    };
-    /* À chaque défilement (début de maj) : aimantation posée à l'approche si l'on défile vite, puis arrêt à l'arrivée sur le repère. */
+    /* À chaque défilement (début de maj) : arrivé en bas provisoire avant le départ de la dernière carte (petit écran), la cascade part ;
+       dès que la dernière carte est partie, la fin provisoire est retirée à la fin de son retournement + 0,5 s. */
     const tenir = () => {
-      if (tenue) return;
-      if (window.__vfkPayee !== undefined || calme || !cran || !petit.matches) { if (window.__vfkPayee !== undefined) tenue = true; aimant(false); return; }
-      if (grand) return;
-      const vh = window.innerHeight, t = cran.getBoundingClientRect().top, now = performance.now(), y = window.scrollY;
-      /* Vitesse de défilement (px/ms), lissée : entre 3 et 6 écrans, l'aimantation n'est posée que si l'on défile vite. */
-      if (tPrec && now > tPrec) vitesse = vitesse * 0.5 + 0.5 * Math.abs(y - yPrec) / Math.min(100, now - tPrec);
-      yPrec = y; tPrec = now;
-      if (now < suspendu) aimant(false); /* défilement par programme (sommaire, étude) : pas d'aimantation */
-      else if (t > -2 && t < vh * ZONE && (t < vh * PRES || vitesse > VITE)) aimant(true);
-      else if (t > vh * (ZONE + 0.5)) aimant(false);
-      clearTimeout(tPose);
-      if (t > 2) return;
-      if (t >= -2 || doigt) { arriver(t); return; } /* posée sur le repère, ou amenée par le doigt */
-      /* Au-delà, doigt levé : on attend que la page se pose (l'aimantation peut encore la ramener sur le repère). Posée au-delà
-         (élan qui a filé, par exemple jusqu'en bas) : pas d'arrêt, la page n'est jamais ramenée par script. */
-      tPose = setTimeout(() => { if (tenue) return; const t2 = cran.getBoundingClientRect().top; if (t2 > 2) return;
-        if (t2 >= -2) arriver(t2); else { tenue = true; aimant(false); } }, 180);
+      if (tenue || !finPage) return;
+      if (window.__vfkPayee !== undefined || calme || !petit.matches) { tenue = true; libre(); return; }
+      const d = C[C.length - 1], now = performance.now();
+      if (!d.t0 && window.scrollY + window.innerHeight >= finPage - 2) {
+        C.forEach((k, i) => { if (!k.t0) k.t0 = Math.max(now, i && C[i - 1].t0 ? C[i - 1].t0 + LAG / VIT * 1000 : 0); });
+        lancer();
+      }
+      if (!d.t0) return;
+      tenue = true; tLibre = setTimeout(libre, Math.max(0, d.t0 + 3.8 / VIT * 1000 + PAUSE - now));
     };
-    /* Défilements par programme (sommaire, repères de l'étude, liens internes) : l'aimantation est suspendue 2,5 s. */
-    const onNav = (e) => { const t = e.target; if (t && t.closest && t.closest('.vf-sommaire a, [data-go], a[href^="#"]')) { suspendu = performance.now() + 2500; aimant(false); } };
-    document.addEventListener("click", onNav, true);
-    const onDoigt = (e) => { doigt = e.type === "touchstart" || (e.touches && e.touches.length > 0); };
-    ["touchstart", "touchend", "touchcancel"].forEach((n) => window.addEventListener(n, onDoigt, { passive: true }));
     sec.addEventListener("click", onClicGrand);
     window.addEventListener("keydown", onToucheGrand, true);
     if (petit.addEventListener) petit.addEventListener("change", onPetit);
-    const offGrand = () => { fermerCarte(true); aimant(false); clearTimeout(tPose); document.removeEventListener("click", onNav, true); ["touchstart", "touchend", "touchcancel"].forEach((n) => window.removeEventListener(n, onDoigt)); clearTimeout(tRecal); sec.removeEventListener("click", onClicGrand); window.removeEventListener("keydown", onToucheGrand, true); if (petit.removeEventListener) petit.removeEventListener("change", onPetit); };
+    const offGrand = () => { fermerCarte(true); libre(); clearTimeout(tRecal); sec.removeEventListener("click", onClicGrand); window.removeEventListener("keydown", onToucheGrand, true); if (petit.removeEventListener) petit.removeEventListener("change", onPetit); };
 `;
 const CORRECTIONS = [
   {
@@ -338,7 +310,7 @@ const CORRECTIONS = [
   { quoi: "Cartes mobiles : styles des petites cartes et de la carte ouverte (08/10)", fichiers: VF, n: 1,
     avant: VFK_MOUV, apres: VFK_MOUV + CARTES_CSS },
   { quoi: "Cartes mobiles : ouverture en grand (08/10)", fichiers: VF, n: 1,
-    avant: VFK_REFAIRE, apres: CARTES_JS + VFK_REFAIRE.replace("const refaire = () => { ", 'const refaire = () => { if (sec.hasAttribute("data-grand")) { remesurer = true; return; } /* carte ouverte : mesure reportée à la fermeture */ ').replace("mesurer(); C.forEach(peindre);", "mesurer(); poserCran(); C.forEach(peindre);") },
+    avant: VFK_REFAIRE, apres: CARTES_JS + VFK_REFAIRE.replace("const refaire = () => { ", 'const refaire = () => { if (sec.hasAttribute("data-grand")) { remesurer = true; return; } /* carte ouverte : mesure reportée à la fermeture */ ').replace("mesurer(); C.forEach(peindre);", "mesurer(); poserBorne(); C.forEach(peindre);") },
   { quoi: "Cartes mobiles : arrêt de l'ouverture au démontage (08/10)", fichiers: VF, n: 1,
     avant: "    return () => { clearTimeout(tRo); if (ro) ro.disconnect(); ",
     apres: "    return () => { offGrand(); clearTimeout(tRo); if (ro) ro.disconnect(); " },
@@ -347,7 +319,7 @@ const CORRECTIONS = [
     apres: '      if (vu !== k.vu) { k.vu = vu; k.c.toggleAttribute("data-vu", vu); k.c.inert = !vu; k.flip.style.transformStyle = vu ? "flat" : ""; k.dos.style.visibility = vu ? "hidden" : ""; if (vu && window.__vfkPayee && k.front.querySelector(".vf-deverrou")) { window.__vfkPayee = false; setTimeout(() => ouvrirCarte(k, true), 400); } }\n' },
   { quoi: "Cartes mobiles : retour du paiement, carte payée à ouvrir (08/10)", fichiers: VF, n: 1,
     avant: '  allerFormules() {\n    const el = document.getElementById("formules");\n',
-    apres: '  allerFormules() {\n    if (document.querySelector("#formules .vfk-c[data-grand]")) return; /* Correction du 08/10 : paiement fait depuis la carte ouverte, elle montre déjà WhatsApp. */\n    window.__vfkPayee = true; /* Correction du 08/10 : sur mobile, la petite carte payée s\'ouvrira en grand une fois retournée. */\n    document.documentElement.classList.remove("vfk-aimant"); /* Correction du 17/10 : pas d\'arrêt sur les cartes au retour du paiement. */\n    const el = document.getElementById("formules");\n' },
+    apres: '  allerFormules() {\n    if (document.querySelector("#formules .vfk-c[data-grand]")) return; /* Correction du 08/10 : paiement fait depuis la carte ouverte, elle montre déjà WhatsApp. */\n    window.__vfkPayee = true; /* Correction du 08/10 : sur mobile, la petite carte payée s\'ouvrira en grand une fois retournée. */\n    document.documentElement.classList.remove("vfk-borne"); /* Correction du 17/10 : pas d\'arrêt sur les cartes au retour du paiement. */\n    const el = document.getElementById("formules");\n' },
   // Retournement sur mobile en défilement rapide (retour de Loan du 15/10 : « quand je scrolle super vite, c'est un peu buggé »).
   // Démontré dans Chromium (iPhone simulé, défilement à 3 000–8 000 px/s, images relevées une à une, revue du 15/10) :
   // la séquence, minutée dès l'entrée, se jouait hors de vue au-dessus de l'écran (en revenant : cartes à moitié retournées,
@@ -369,21 +341,8 @@ const CORRECTIONS = [
   // pas par les cartes ») : la place d'arrêt est vérifiée avant tout le reste, même quand un élan a sauté toute la planche d'un coup.
   { quoi: "Cartes mobiles : la page s'arrête sur les cartes le temps du retournement (15/10)", fichiers: VF, n: 1,
     avant: "      const vh = window.innerHeight, r = sec.getBoundingClientRect();\n      if (r.top > vh * 2.5 || r.bottom < -vh * 0.5) return;\n",
-    apres: "      if (!G.rang) tenir(); /* Correction du 15/10 (scripts/construire.mjs) : sur mobile, arrêt sur les cartes. */\n" +
+    apres: "      if (!G.rang) tenir(); /* Corrections du 15 et du 17/10 (scripts/construire.mjs) : sur mobile, arrêt sur les cartes. */\n" +
       "      const vh = window.innerHeight, r = sec.getBoundingClientRect();\n      if (r.top > vh * 2.5 || r.bottom < -vh * 0.5) return;\n" },
-  { quoi: "Cartes mobiles : pendant l'arrêt, glissé vers le bas permis jusqu'à la limite (16/10)", fichiers: VF, n: 1,
-    avant: "    const onTM = (e) => { if (verrou() && e.touches[0].clientY < yTouche) e.preventDefault(); };\n",
-    apres: "    const onTM = (e) => { if (verrou() && e.touches[0].clientY < yTouche && (G.rang || window.scrollY >= yVerrou - 2)) e.preventDefault(); }; /* Correction du 16/10 : sur mobile, on peut descendre jusqu'à la limite. */\n" },
-  { quoi: "Cartes mobiles : pendant l'arrêt, molette vers le bas permise jusqu'à la limite (17/10)", fichiers: VF, n: 1,
-    avant: "    const onWheel = (e) => { if (verrou() && e.deltaY > 0) e.preventDefault(); };\n",
-    apres: "    const onWheel = (e) => { if (verrou() && e.deltaY > 0 && (G.rang || window.scrollY >= yVerrou - 2)) e.preventDefault(); }; /* Correction du 17/10 : sur mobile, on peut descendre jusqu'à la limite. */\n" },
-  // Sur mobile, la page n'est jamais ramenée par script pendant l'arrêt (sur iPhone, ce retour se battait contre l'élan : secousses).
-  { quoi: "Cartes mobiles : pas de retour par script pendant l'arrêt (17/10)", fichiers: VF, n: 1,
-    avant: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) window.scrollTo",
-    apres: "const onScroll = () => { if (verrou() && yVerrou && G && G.rang && window.scrollY > yVerrou + 2) window.scrollTo" },
-  { quoi: "Cartes mobiles : repère d'arrêt (aimantation native) (17/10)", fichiers: VF, n: 1,
-    avant: '<span id="packages" class="vfk-ancre" aria-hidden="true"></span>\n',
-    apres: '<span id="packages" class="vfk-ancre" aria-hidden="true"></span>\n<i class="vfk-cran" aria-hidden="true"></i>\n' },
   // « See pricing » plus tôt (retour de Loan du 17/10 : « il faut qu'il s'affiche un petit peu plus rapidement ») : départ à 4,2 s au
   // lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s (lisible vers 5 s, à la fin de l'allumage du projecteur, au lieu de 6,3 s).
   { quoi: "See pricing affiché plus tôt (17/10)", fichiers: VF, n: 1,
