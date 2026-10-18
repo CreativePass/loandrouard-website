@@ -192,28 +192,40 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
        retournement + 0,5 s. L'arrêt est celui du bas de page : freinage et rebond du navigateur, quel que soit l'élan, sans script pendant
        le défilement. On peut toujours remonter. Ensuite le bas de page réapparaît dessous, sans que rien ne bouge à l'écran. */
     const PAUSE = 500, ZONE = 2, vf = sec.closest(".vf");
-    /* Ralentissement avant les cartes (18/10) : iPhone / iPad seulement (tous leurs navigateurs sont Safari). */
-    const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    let tenue = false, finPage = 0, tLibre = 0;
+    /* Ralentissement avant les cartes (18/10) : iPhone / iPad seulement (tous leurs navigateurs sont Safari ; Firefox en « site pour
+       ordinateur » ne change que l'agent utilisateur, d'où navigator.platform). */
+    const IOS = /iP(hone|ad|od)/.test(navigator.userAgent + " " + navigator.platform) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    /* Écran tactile en mise en page ordinateur (tablette en paysage) : même fin provisoire, au point de retournement de la planche ;
+       le verrou d'ordinateur n'y ramène plus la page (sur iPad, il se battait contre l'élan comme sur iPhone). */
+    const mqDoigt = window.matchMedia ? window.matchMedia("(any-pointer: coarse)") : null, doigtLarge = () => !!(mqDoigt && mqDoigt.matches);
+    let tenue = false, finPage = 0, tLibre = 0, yF = 0, desc = true;
     const libre = () => { clearTimeout(tLibre); tLibre = 0; finPage = 0; racine.classList.remove("vfk-borne", "vfk-frein"); };
     /* Hauteur visible barre déployée (stable quand la barre de Safari se replie). */
     const hautVue = () => (typeof hautVisible === "function" && hautVisible(racine)) || window.innerHeight;
     /* Fin de page provisoire, relevée avec le dessin ; jamais au-dessus de l'écran (la page ne raccourcit pas sous le lecteur). */
     const poserBorne = () => {
-      if (tenue || calme || !vf || !G || G.rang || !petit.matches || window.__vfkPayee !== undefined || !(window.CSS && CSS.supports && CSS.supports("overflow-y", "clip"))) { if (!tenue && finPage) libre(); return; }
+      if (tenue || calme || !vf || !G || (G.rang ? deja || !doigtLarge() : !petit.matches) || window.__vfkPayee !== undefined || !(window.CSS && CSS.supports && CSS.supports("overflow-y", "clip"))) { if (!tenue && finPage) libre(); return; }
       const vh = hautVue(), hd = document.querySelector(".vf > .ld-header"), hh = hd ? hd.offsetHeight : 0, y = window.scrollY;
-      const a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect();
-      const fin = y + Math.max(Math.min((a.top + b.bottom - hh - vh) / 2, a.top - hh - 14) + vh, b.bottom + 14);
+      let fin;
+      if (G.rang) fin = y + sec.getBoundingClientRect().top + Math.ceil((0.16 / RT) * course.offsetHeight) + 2 + window.innerHeight; /* point de retournement (yVerrou) */
+      else { const a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect();
+        fin = y + Math.max(Math.min((a.top + b.bottom - hh - vh) / 2, a.top - hh - 14) + vh, b.bottom + 14); }
       if (y + window.innerHeight > fin - 1) return;
       finPage = Math.round(fin); racine.style.setProperty("--vfk-sous", Math.max(0, Math.round(sec.getBoundingClientRect().bottom + y - fin)) + "px"); racine.classList.add("vfk-borne");
     };
     /* À chaque défilement (début de maj) : arrivé en bas provisoire avant le départ de la dernière carte (petit écran), la cascade part ;
        dès que la dernière carte est partie, la fin provisoire est retirée à la fin de son retournement + 0,5 s. */
     const tenir = () => {
-      if (IOS && finPage) { const y = window.scrollY, arret = racine.scrollHeight - window.innerHeight; racine.classList.toggle("vfk-frein", y > arret - ZONE * window.innerHeight && y < arret - 2); }
+      /* Freinage seulement en descendant (en remontant, la glissade reste normale). */
+      if (IOS && finPage) { const y = window.scrollY, arret = racine.scrollHeight - window.innerHeight; if (y !== yF) { desc = y > yF; yF = y; }
+        racine.classList.toggle("vfk-frein", desc && y > arret - ZONE * window.innerHeight && y < arret - 2); }
       if (tenue || !finPage) return;
-      if (window.__vfkPayee !== undefined || calme || !petit.matches) { tenue = true; libre(); return; }
+      if (window.__vfkPayee !== undefined || calme || (G.rang ? !doigtLarge() : !petit.matches)) { tenue = true; libre(); return; }
       const d = C[C.length - 1], now = performance.now();
+      if (G.rang) { /* planche d'ordinateur : arrivé au point de retournement, la donne part (maj) ; fin provisoire retirée à sa fin + 0,5 s */
+        if (deja || window.scrollY + window.innerHeight >= racine.scrollHeight - 2) {
+          tenue = true; tLibre = setTimeout(libre, (deja && finVerrou ? Math.max(0, finVerrou - now) : ((3.8 + (C.length - 1) * LAG) / VIT) * 1000 + 150) + PAUSE); }
+        return; }
       if (!d.t0 && window.scrollY + window.innerHeight >= racine.scrollHeight - 2) {
         C.forEach((k, i) => { if (!k.t0) k.t0 = Math.max(now, i && C[i - 1].t0 ? C[i - 1].t0 + LAG / VIT * 1000 : 0); });
         lancer();
@@ -358,8 +370,11 @@ const CORRECTIONS = [
   // pas par les cartes ») : la place d'arrêt est vérifiée avant tout le reste, même quand un élan a sauté toute la planche d'un coup.
   { quoi: "Cartes mobiles : la page s'arrête sur les cartes le temps du retournement (15/10)", fichiers: VF, n: 1,
     avant: "      const vh = window.innerHeight, r = sec.getBoundingClientRect();\n      if (r.top > vh * 2.5 || r.bottom < -vh * 0.5) return;\n",
-    apres: "      if (!G.rang) tenir(); /* Corrections du 15 et du 17/10 (scripts/construire.mjs) : sur mobile, arrêt sur les cartes. */\n" +
+    apres: "      tenir(); /* Corrections du 15, 17 et 18/10 (scripts/construire.mjs) : arrêt sur les cartes (mobile, et tablette en paysage). */\n" +
       "      const vh = window.innerHeight, r = sec.getBoundingClientRect();\n      if (r.top > vh * 2.5 || r.bottom < -vh * 0.5) return;\n" },
+  { quoi: "Verrou de la planche : jamais de retour par script sur écran tactile ni pendant la fin provisoire (18/10)", fichiers: VF, n: 1,
+    avant: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) window.scrollTo",
+    apres: "const onScroll = () => { if (verrou() && yVerrou && !finPage && !doigtLarge() && window.scrollY > yVerrou + 2) window.scrollTo" },
   // « See pricing » plus tôt (retour de Loan du 17/10 : « il faut qu'il s'affiche un petit peu plus rapidement ») : départ à 4,2 s au
   // lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s (lisible vers 5 s, à la fin de l'allumage du projecteur, au lieu de 6,3 s).
   { quoi: "See pricing affiché plus tôt (17/10)", fichiers: VF, n: 1,
