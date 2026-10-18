@@ -112,9 +112,18 @@ html.vfk-ouverte { overflow: hidden; }
    --vfk-sous, posées par le script ; coupe relative à la section des cartes, pour suivre la mise en page, rotation comprise) : un lancer, même très fort ou enchaîné, s'y arrête comme en bas de page, avec le freinage et le
    rebond du navigateur ; la suite (bas de page) réapparaît dessous à la fin du retournement + 0,5 s. Ni aimantation ni script pendant le
    défilement : un script qui ramenait la page se battait contre l'élan de Safari (secousses), l'aimantation sautait si l'on touchait l'écran. */
-html.vfk-borne .vf { overflow-y: clip; }
-html.vfk-borne .vf > footer { height: 0; }
-html.vfk-borne .vf > .vfk { margin-bottom: calc(-1 * var(--vfk-sous, 0px)); }
+@supports (overflow-y: clip) { /* navigateurs qui ne savent pas couper (Safari < 16) : pas d'arrêt plutôt qu'un bas de page qui déborderait */
+  html.vfk-borne .vf { overflow-y: clip; }
+  html.vfk-borne .vf > footer { height: 0; }
+  html.vfk-borne .vf > .vfk { margin-bottom: calc(-1 * var(--vfk-sous, 0px)); }
+}
+/* 18/10 (retour de Loan : « une courbe smooth », ralentir avant les cartes quand on va vite) : iPhone / iPad seulement (vfk-frein). Dans
+   les 2 écrans qui précèdent l'arrêt, un point d'aimantation existe en haut de page (le cran du projecteur, prévu par le design,
+   ≈ 1 300 px, jamais visé d'ici ; pas l'en-tête, collant, que Chrome suivrait) : Safari donne alors
+   à chaque lancer sa glissade courte (freinage ≈ 5 fois plus rapide, choisi au début du geste, rien à chaque image). Aucun point visé :
+   sur iPhone, un toucher pendant une glissade aimantée fait sauter la page. Chrome n'a pas de glissade courte, et sa glissade aimantée
+   commence par un bond d'une image (mesuré : 163 px au lieu de ≈ 50) : sur Android, l'arrêt reste celui du bas de page. */
+html.vfk-frein { scroll-snap-type: y proximity; }
 `;
 const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mobile, un toucher ouvre la petite carte en grand, par-dessus la page ;
        Close, Échap ou un toucher hors de la carte la referme. La carte glisse et grandit depuis sa place (translate / scale). */
@@ -182,14 +191,16 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
        les cartes (centrées sous l'en-tête ; si elles ne tiennent pas à l'écran, la dernière en entier en bas) jusqu'à la fin de leur
        retournement + 0,5 s. L'arrêt est celui du bas de page : freinage et rebond du navigateur, quel que soit l'élan, sans script pendant
        le défilement. On peut toujours remonter. Ensuite le bas de page réapparaît dessous, sans que rien ne bouge à l'écran. */
-    const PAUSE = 500, vf = sec.closest(".vf");
+    const PAUSE = 500, ZONE = 2, vf = sec.closest(".vf");
+    /* Ralentissement avant les cartes (18/10) : iPhone / iPad seulement (tous leurs navigateurs sont Safari). */
+    const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     let tenue = false, finPage = 0, tLibre = 0;
-    const libre = () => { clearTimeout(tLibre); tLibre = 0; finPage = 0; racine.classList.remove("vfk-borne"); };
+    const libre = () => { clearTimeout(tLibre); tLibre = 0; finPage = 0; racine.classList.remove("vfk-borne", "vfk-frein"); };
     /* Hauteur visible barre déployée (stable quand la barre de Safari se replie). */
     const hautVue = () => (typeof hautVisible === "function" && hautVisible(racine)) || window.innerHeight;
     /* Fin de page provisoire, relevée avec le dessin ; jamais au-dessus de l'écran (la page ne raccourcit pas sous le lecteur). */
     const poserBorne = () => {
-      if (tenue || calme || !vf || !G || G.rang || !petit.matches || window.__vfkPayee !== undefined) { if (!tenue && finPage) libre(); return; }
+      if (tenue || calme || !vf || !G || G.rang || !petit.matches || window.__vfkPayee !== undefined || !(window.CSS && CSS.supports && CSS.supports("overflow-y", "clip"))) { if (!tenue && finPage) libre(); return; }
       const vh = hautVue(), hd = document.querySelector(".vf > .ld-header"), hh = hd ? hd.offsetHeight : 0, y = window.scrollY;
       const a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect();
       const fin = y + Math.max(Math.min((a.top + b.bottom - hh - vh) / 2, a.top - hh - 14) + vh, b.bottom + 14);
@@ -199,6 +210,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     /* À chaque défilement (début de maj) : arrivé en bas provisoire avant le départ de la dernière carte (petit écran), la cascade part ;
        dès que la dernière carte est partie, la fin provisoire est retirée à la fin de son retournement + 0,5 s. */
     const tenir = () => {
+      if (IOS && finPage) { const y = window.scrollY, arret = racine.scrollHeight - window.innerHeight; racine.classList.toggle("vfk-frein", y > arret - ZONE * window.innerHeight && y < arret - 2); }
       if (tenue || !finPage) return;
       if (window.__vfkPayee !== undefined || calme || !petit.matches) { tenue = true; libre(); return; }
       const d = C[C.length - 1], now = performance.now();
@@ -324,7 +336,7 @@ const CORRECTIONS = [
     apres: '      if (vu !== k.vu) { k.vu = vu; k.c.toggleAttribute("data-vu", vu); k.c.inert = !vu; k.flip.style.transformStyle = vu ? "flat" : ""; k.dos.style.visibility = vu ? "hidden" : ""; if (vu && window.__vfkPayee && k.front.querySelector(".vf-deverrou")) { window.__vfkPayee = false; setTimeout(() => ouvrirCarte(k, true), 400); } }\n' },
   { quoi: "Cartes mobiles : retour du paiement, carte payée à ouvrir (08/10)", fichiers: VF, n: 1,
     avant: '  allerFormules() {\n    const el = document.getElementById("formules");\n',
-    apres: '  allerFormules() {\n    if (document.querySelector("#formules .vfk-c[data-grand]")) return; /* Correction du 08/10 : paiement fait depuis la carte ouverte, elle montre déjà WhatsApp. */\n    window.__vfkPayee = true; /* Correction du 08/10 : sur mobile, la petite carte payée s\'ouvrira en grand une fois retournée. */\n    document.documentElement.classList.remove("vfk-borne"); /* Correction du 17/10 : pas d\'arrêt sur les cartes au retour du paiement. */\n    const el = document.getElementById("formules");\n' },
+    apres: '  allerFormules() {\n    if (document.querySelector("#formules .vfk-c[data-grand]")) return; /* Correction du 08/10 : paiement fait depuis la carte ouverte, elle montre déjà WhatsApp. */\n    window.__vfkPayee = true; /* Correction du 08/10 : sur mobile, la petite carte payée s\'ouvrira en grand une fois retournée. */\n    document.documentElement.classList.remove("vfk-borne", "vfk-frein"); /* Correction du 17/10 : pas d\'arrêt sur les cartes au retour du paiement. */\n    const el = document.getElementById("formules");\n' },
   // Retournement sur mobile en défilement rapide (retour de Loan du 15/10 : « quand je scrolle super vite, c'est un peu buggé »).
   // Démontré dans Chromium (iPhone simulé, défilement à 3 000–8 000 px/s, images relevées une à une, revue du 15/10) :
   // la séquence, minutée dès l'entrée, se jouait hors de vue au-dessus de l'écran (en revenant : cartes à moitié retournées,
