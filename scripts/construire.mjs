@@ -108,11 +108,13 @@ const CARTES_CSS = `/* Corrections du 08 et du 15/10 (scripts/construire.mjs) : 
   .vfk-c[data-grand="on"] .vfk-fermer { opacity: 1; }
 }
 html.vfk-ouverte { overflow: hidden; }
-/* 17/10 (mobile) : tant que les cartes n'ont pas été vues, la page se termine provisoirement juste sous elles (classe vfk-borne, hauteur
-   --vfk-borne, posées par le script) : un lancer, même très fort ou enchaîné, s'y arrête comme en bas de page, avec le freinage et le
+/* 17/10 (mobile) : tant que les cartes n'ont pas été vues, la page se termine provisoirement juste sous elles (classe vfk-borne et
+   --vfk-sous, posées par le script ; coupe relative à la section des cartes, pour suivre la mise en page, rotation comprise) : un lancer, même très fort ou enchaîné, s'y arrête comme en bas de page, avec le freinage et le
    rebond du navigateur ; la suite (bas de page) réapparaît dessous à la fin du retournement + 0,5 s. Ni aimantation ni script pendant le
    défilement : un script qui ramenait la page se battait contre l'élan de Safari (secousses), l'aimantation sautait si l'on touchait l'écran. */
-html.vfk-borne .vf { max-height: var(--vfk-borne); overflow-y: clip; }
+html.vfk-borne .vf { overflow-y: clip; }
+html.vfk-borne .vf > footer { height: 0; }
+html.vfk-borne .vf > .vfk { margin-bottom: calc(-1 * var(--vfk-sous, 0px)); }
 `;
 const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mobile, un toucher ouvre la petite carte en grand, par-dessus la page ;
        Close, Échap ou un toucher hors de la carte la referme. La carte glisse et grandit depuis sa place (translate / scale). */
@@ -192,7 +194,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       const a = C[0].c.getBoundingClientRect(), b = C[C.length - 1].c.getBoundingClientRect();
       const fin = y + Math.max(Math.min((a.top + b.bottom - hh - vh) / 2, a.top - hh - 14) + vh, b.bottom + 14);
       if (y + window.innerHeight > fin - 1) return;
-      finPage = Math.round(fin); racine.style.setProperty("--vfk-borne", Math.round(fin - (vf.getBoundingClientRect().top + y)) + "px"); racine.classList.add("vfk-borne");
+      finPage = Math.round(fin); racine.style.setProperty("--vfk-sous", Math.max(0, Math.round(sec.getBoundingClientRect().bottom + y - fin)) + "px"); racine.classList.add("vfk-borne");
     };
     /* À chaque défilement (début de maj) : arrivé en bas provisoire avant le départ de la dernière carte (petit écran), la cascade part ;
        dès que la dernière carte est partie, la fin provisoire est retirée à la fin de son retournement + 0,5 s. */
@@ -200,17 +202,20 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       if (tenue || !finPage) return;
       if (window.__vfkPayee !== undefined || calme || !petit.matches) { tenue = true; libre(); return; }
       const d = C[C.length - 1], now = performance.now();
-      if (!d.t0 && window.scrollY + window.innerHeight >= finPage - 2) {
+      if (!d.t0 && window.scrollY + window.innerHeight >= racine.scrollHeight - 2) {
         C.forEach((k, i) => { if (!k.t0) k.t0 = Math.max(now, i && C[i - 1].t0 ? C[i - 1].t0 + LAG / VIT * 1000 : 0); });
         lancer();
       }
       if (!d.t0) return;
       tenue = true; tLibre = setTimeout(libre, Math.max(0, d.t0 + 3.8 / VIT * 1000 + PAUSE - now));
     };
+    /* Clavier : un élément caché sous la fin provisoire (liens du bas de page) qui prend le focus libère la page. */
+    const onFocBorne = (e) => { const t = e.target; if (finPage && t && t.getBoundingClientRect && t.getBoundingClientRect().top + window.scrollY > finPage) { tenue = true; libre(); } };
+    document.addEventListener("focusin", onFocBorne);
     sec.addEventListener("click", onClicGrand);
     window.addEventListener("keydown", onToucheGrand, true);
     if (petit.addEventListener) petit.addEventListener("change", onPetit);
-    const offGrand = () => { fermerCarte(true); libre(); clearTimeout(tRecal); sec.removeEventListener("click", onClicGrand); window.removeEventListener("keydown", onToucheGrand, true); if (petit.removeEventListener) petit.removeEventListener("change", onPetit); };
+    const offGrand = () => { fermerCarte(true); libre(); document.removeEventListener("focusin", onFocBorne); clearTimeout(tRecal); sec.removeEventListener("click", onClicGrand); window.removeEventListener("keydown", onToucheGrand, true); if (petit.removeEventListener) petit.removeEventListener("change", onPetit); };
 `;
 const CORRECTIONS = [
   {
