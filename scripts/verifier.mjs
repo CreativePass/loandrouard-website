@@ -169,22 +169,22 @@ for (const largeur of LARGEURS) {
       } else if (f === 0) fs.writeFileSync(base + "-site.png", PNG.sync.write(b));
       log(`${n ? "DIFF " : "ok   "} ${etiquette} : ${n} px (${pct} %)`);
     }
-    // En-tête : Home / The Journey / Press grisés et inatteignables au clavier.
-    const entete = await ps.evaluate(() => {
-      const noms = ["Home", "The Journey", "Press / Contact"];
+    // En-tête : Home / The Journey / Press (Accueil / L’histoire / Presse en français) grisés et inatteignables au clavier.
+    const NOMS = ["Home", "The Journey", "Press / Contact", "Accueil", "L’histoire", "Presse / Contact"];
+    const entete = await ps.evaluate((noms) => {
       const els = [...document.querySelectorAll("header a, header span, nav a, nav span")]
         .filter((e) => noms.includes(e.textContent.trim()));
       return els.map((e) => `${e.textContent.trim()}:${e.tagName}:${e.getAttribute("aria-disabled")}:${e.tabIndex}`);
-    });
+    }, NOMS);
     const focus = [];
     for (let i = 0; i < 25; i++) {
       await ps.keyboard.press("Tab");
       focus.push(await ps.evaluate(() => document.activeElement?.textContent?.trim().slice(0, 30)));
     }
-    if (entete.some((e) => !e.includes(":SPAN:true:-1")) || focus.some((t) => ["Home", "The Journey", "Press / Contact"].includes(t)))
+    if (entete.length !== 3 || entete.some((e) => !e.includes(":SPAN:true:-1")) || focus.some((t) => NOMS.includes(t)))
       journal.push(`en-tête : ${entete.join(" | ")} ; focus clavier : ${focus.join(" > ")}`);
-    const sponsors = await ps.evaluate(() => /Powered by/i.test(document.body.innerText));
-    if (!sponsors) journal.push("bloc « Powered by » absent");
+    const sponsors = await ps.evaluate(() => /Powered by|Avec le soutien de/i.test(document.body.innerText));
+    if (!sponsors) journal.push("bloc « Powered by » (« Avec le soutien de ») absent");
     for (const j of journal.filter((j) => !/js\.stripe\.com/.test(j))) log(`  ${nom} (${largeur}px) ${j}`);
     await pr.close(); await ps.close();
   }

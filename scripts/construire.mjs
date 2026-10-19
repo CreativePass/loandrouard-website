@@ -592,9 +592,11 @@ for (const f of textes) {
   if (/\.html$/.test(f)) {
     if (t.includes("loandrouard@gmail.com")) erreurs.push(`${nom} contient l'adresse provisoire loandrouard@gmail.com`);
     if (t.includes("À COMPLÉTER")) erreurs.push(`${nom} contient encore « À COMPLÉTER »`);
-    // Les liens d'en-tête Home / The Journey / Press doivent rester des <span> désactivés.
-    for (const m of t.matchAll(/<a\b[^>]*>\s*(Home|The Journey|Press[^<]*)\s*<\/a>/g))
-      erreurs.push(`${nom} : « ${m[1]} » est un lien actif`);
+    // Les liens d'en-tête Home / The Journey / Press (Accueil / L’histoire / Presse en français) doivent rester des <span>
+    // désactivés ; le texte d'un lien est lu bloc de langue par bloc de langue (sc-if de scripts/traduction-fr.mjs).
+    for (const m of t.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g))
+      for (const x of m[1].split(/<\/?sc-if\b[^>]*>/).map((s) => s.trim()))
+        if (/^(Home|The Journey|Press.*|Accueil|L’histoire|Presse.*)$/.test(x)) erreurs.push(`${nom} : « ${x} » est un lien actif`);
   }
 }
 
@@ -646,7 +648,8 @@ for (const f of ["Video Feedback.dc.html", "index.html", ...(ESSAI ? Object.keys
 // Références locales statiques (src / href / url()) qui pointeraient vers un fichier absent.
 for (const f of textes) {
   const t = fs.readFileSync(f, "utf8");
-  const refs = [...t.matchAll(/(?:src|href)="([^"#{}]+)"|url\(\s*['"]?([^'")#{}]+)['"]?\s*\)/g)]
+  // Liens dans la langue de la page (scripts/traduction-fr.mjs) : vérifiés sans leur suffixe ?lang=fr.
+  const refs = [...t.replaceAll('{{ suffixeLangue }}"', '"').matchAll(/(?:src|href)="([^"#{}]+)"|url\(\s*['"]?([^'")#{}]+)['"]?\s*\)/g)]
     .map((m) => m[1] || m[2]);
   for (const r of refs) {
     if (/^(https?:|mailto:|tel:|data:|blob:|\/\/|javascript:|%23)/.test(r) || r.includes("${")) continue;

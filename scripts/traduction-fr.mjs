@@ -9,6 +9,8 @@
 // Le pied de page (Sponsors.dc.html) et l'écran de chargement (chargement.js), communs à toutes les pages, suivent la
 // langue de la page : les pages légales en français (?lang=fr) les affichent donc aussi en français.
 
+import crypto from "node:crypto";
+
 const VF = ["Video Feedback.dc.html"];
 const LEGALES = ["CGV.dc.html", "Privacy.dc.html", "Legal.dc.html"];
 const PAGES_PUBLIEES = [...VF, ...LEGALES];
@@ -270,7 +272,7 @@ const PIED = [
 ];
 
 // Écran de chargement (chargement.js, toutes les pages) : mots et libellé en français sur ?lang=fr ; nouvelle version (cache d'un an).
-const CHARGEMENT = [
+const TEXTES_CHARGEMENT = [
   { quoi: "mots de l'écran de chargement", fichiers: ["chargement.js"], n: 1,
     avant: '  const MOTS = ["Wushu", "Discipline", "Precision", "Performance", "Vision", "Heritage", "Journey"];\n',
     apres: "  /* Version française (scripts/traduction-fr.mjs) : mots et libellé en français sur ?lang=fr. */\n" +
@@ -279,9 +281,14 @@ const CHARGEMENT = [
       '    : ["Wushu", "Discipline", "Precision", "Performance", "Vision", "Heritage", "Journey"];\n' },
   { quoi: "libellé de l'écran de chargement (lecteurs d'écran)", fichiers: ["chargement.js"], n: 1,
     avant: 'aria-label="Loading"', apres: 'aria-label="${FR ? "Chargement" : "Loading"}"' },
-  // Préfixe ajouté au numéro de version, quel qu'il soit (7p avec les optimisations, 7 sans).
+];
+// Préfixe ajouté au numéro de version, quel qu'il soit (7p avec les optimisations, 7 sans), tiré du contenu des corrections
+// ci-dessus : il change dès qu'elles changent (chargement.js est gardé un an en cache par les visiteurs).
+const V_CHARGEMENT = "fr" + crypto.createHash("sha256").update(JSON.stringify(TEXTES_CHARGEMENT)).digest("hex").slice(0, 4) + "-";
+const CHARGEMENT = [
+  ...TEXTES_CHARGEMENT,
   ...PAGES_PUBLIEES.map((f) => ({ quoi: "écran de chargement : nouvelle version (cache)", fichiers: [f], n: 1,
-    avant: "chargement.js?v=", apres: "chargement.js?v=fr" })),
+    avant: "chargement.js?v=", apres: "chargement.js?v=" + V_CHARGEMENT })),
 ];
 
 // Pages légales : en-tête comme sur Video Feedback (Home, The Journey, Press restent grisés) et lien Video Feedback dans la
