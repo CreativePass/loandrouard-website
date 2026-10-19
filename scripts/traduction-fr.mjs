@@ -20,11 +20,14 @@ const INSECABLE = (t) => t.replace(/ /g, NB);
 const LIRE_FR = '(() => { try { return new URLSearchParams(location.search).get("lang") === "fr"; } catch (e) { return false; } })()';
 
 // Textes de Video Feedback : [anglais, français, occurrences], entre deux balises, HTML compris (<br>, <em>, &nbsp;).
-const TEXTES = [
-  // En-tête (Home, The Journey et Press restent grisés et non cliquables).
+// En-tête (Home, The Journey et Press restent grisés et non cliquables), aussi sur les pages légales.
+const ENTETE = [
   ["Home", "Accueil", 1],
   ["The Journey", "L’histoire", 1],
   ["Press / Contact", "Presse / Contact", 1],
+];
+const TEXTES = [
+  ...ENTETE,
   // Projecteur.
   ["For everyone", "Pour tous", 1],
   ["From beginner", "De débutant", 1],
@@ -281,8 +284,10 @@ const CHARGEMENT = [
     avant: "chargement.js?v=", apres: "chargement.js?v=fr" })),
 ];
 
-// Pages légales : le lien Video Feedback de l'en-tête ouvre la page dans la langue choisie.
+// Pages légales : en-tête comme sur Video Feedback (Home, The Journey, Press restent grisés) et lien Video Feedback dans la
+// langue choisie. Ces pages changent de langue sans recharger : les blocs sc-if suivent.
 const LIENS_LEGALES = LEGALES.flatMap((f) => [
+  ...ENTETE.map(([en, t, n]) => ({ quoi: `en-tête : ${en}`, fichiers: [f], n, avant: `>${en}<`, apres: `>${SI(en, t)}<` })),
   { quoi: "lien Video Feedback dans la langue de la page", fichiers: [f], n: 1,
     avant: '<a class="ld-balaie" href="Video Feedback.dc.html" style="color:inherit;opacity:.64;text-decoration:none;border:0">',
     apres: '<a class="ld-balaie" href="Video Feedback.dc.html{{ suffixeLangue }}" style="color:inherit;opacity:.64;text-decoration:none;border:0">' },
