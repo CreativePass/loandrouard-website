@@ -90,7 +90,7 @@ const CARTES_CSS = `/* Corrections du 08 et du 15/10 (scripts/construire.mjs) : 
   /* Carte ouverte : elle quitte sa place (les autres ne bougent pas : rangées figées) et couvre l'écran, sur le papier sombre de la planche. */
   .vf > .vfk[data-grand] { z-index: 45; }
   .vfk-cam { will-change: auto; } /* sur mobile, la planche ne bouge pas : pas de calque (et la carte ouverte reste fixée à l'écran) */
-  .vfk-c[data-grand] { position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overscroll-behavior: contain; padding: calc(env(safe-area-inset-top, 0px) + 72px) 16px calc(env(safe-area-inset-bottom, 0px) + 36px); perspective: none; }
+  .vfk-c[data-grand] { position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overscroll-behavior: contain; padding: calc(env(safe-area-inset-top, 0px) + 72px) 16px calc(env(safe-area-inset-bottom, 0px) + 36px); perspective: none; container-type: normal; } /* 18/10 : plus de conteneur de taille (container-type de l'export), sinon Safari 16 à 18.3 et Chrome 105 à 128 y accrochent Close et le fond sombre, qui défileraient avec le texte de la carte */
   .vfk-c[data-grand]::before { content: ''; position: fixed; inset: 0; z-index: -1; background: linear-gradient(rgba(8,8,8,.4), rgba(8,8,8,.4)), #101010 url("${ENDUIT}") 50% 50% / 620px; opacity: 0; transition: opacity .45s ease; }
   .vfk-c[data-grand]::after { content: ''; flex: none; margin-top: auto; }
   .vfk-c[data-grand="on"]::before { opacity: 1; }
@@ -108,6 +108,7 @@ const CARTES_CSS = `/* Corrections du 08 et du 15/10 (scripts/construire.mjs) : 
   .vfk-c[data-grand="on"] .vfk-fermer { opacity: 1; }
 }
 html.vfk-ouverte { overflow: hidden; }
+html.vfk-ouverte.vfk-barre { scrollbar-gutter: stable; } /* 18/10 : la place de la barre de défilement classique (ordinateur, fenêtre étroite ; vfk-barre seulement si elle prend de la place) est gardée : la page derrière ne bouge pas et les traits ne sont pas redessinés à la fermeture */
 /* 17/10 (mobile) : tant que les cartes n'ont pas été vues, la page se termine provisoirement juste sous elles (classe vfk-borne et
    --vfk-sous, posées par le script ; coupe relative à la section des cartes, pour suivre la mise en page, rotation comprise) : un lancer, même très fort ou enchaîné, s'y arrête comme en bas de page, avec le freinage et le
    rebond du navigateur ; la suite (bas de page) réapparaît dessous à la fin du retournement + 0,5 s. Ni aimantation ni script pendant le
@@ -138,8 +139,8 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       if (grand || !petit.matches || !k.vu) return;
       if (finAttente) { clearTimeout(tGrand); const f = finAttente; finAttente = null; f(); } /* une carte qui se refermait est rangée d'abord */
       const a = k.front; clearTimeout(tGrand); k.c.style.transition = k.c.style.opacity = ""; rGrand = a.getBoundingClientRect(); grand = k;
-      const rang = k.c.parentNode; rang.style.gridTemplateRows = C.map((x) => x.c.getBoundingClientRect().height + "px").join(" "); /* rangées figées à leur hauteur exacte : les autres cartes ne remontent pas (getComputedStyle arrondit, et le dessin était refait pour rien à la fermeture) */
-      sec.setAttribute("data-grand", ""); k.c.setAttribute("data-grand", ""); racine.classList.add("vfk-ouverte"); k.c.appendChild(fermerBtn); k.c.scrollTop = 0;
+      const rang = k.c.parentNode; rang.style.gridTemplateRows = C.map((x) => x.c.getBoundingClientRect().height + "px").join(" "); const barre = window.innerWidth > racine.clientWidth; /* rangées figées à leur hauteur exacte : les autres cartes ne remontent pas (getComputedStyle arrondit, et le dessin était refait pour rien à la fermeture) */
+      sec.setAttribute("data-grand", ""); k.c.setAttribute("data-grand", ""); racine.classList.toggle("vfk-barre", barre); racine.classList.add("vfk-ouverte"); k.c.appendChild(fermerBtn); k.c.scrollTop = 0;
       if (!auto) fermerBtn.focus({ preventScroll: true });
       if (calme) { k.c.setAttribute("data-grand", "on"); return; }
       a.style.transition = "none"; poser(a, rGrand, a.getBoundingClientRect()); a.getBoundingClientRect();
@@ -153,7 +154,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     const fermerCarte = (immediat) => {
       const k = grand; if (!k) return; grand = null; clearTimeout(tGrand);
       const a = k.front, fin = (fondu) => { nettoyer(a); k.c.removeAttribute("data-grand"); if (clavier) { clavier = false; k.front.focus({ preventScroll: true }); } fermerBtn.remove();
-        if (!grand) { k.c.parentNode.style.gridTemplateRows = ""; sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte"); if (remesurer || derive()) { remesurer = false; refaire(); cle = cleDims(); } }
+        if (!grand) { k.c.parentNode.style.gridTemplateRows = ""; sec.removeAttribute("data-grand"); racine.classList.remove("vfk-ouverte", "vfk-barre"); if (remesurer || derive()) { remesurer = false; refaire(); cle = cleDims(); } }
         if (fondu === true) { const c = k.c; c.style.transition = "none"; c.style.opacity = "0"; c.getBoundingClientRect(); c.style.transition = "opacity .24s ease"; c.style.opacity = "1";
           setTimeout(() => { if (!c.hasAttribute("data-grand")) c.style.transition = c.style.opacity = ""; }, 280); } };
       if (immediat === true || calme) { fin(); return; }
