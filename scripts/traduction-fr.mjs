@@ -144,8 +144,8 @@ const TEXTES = [
   ["Secure payment · receipt by email · exchanges on WhatsApp · <a href=\"CGV.dc.html\" style=\"color:inherit;text-decoration:underline;text-underline-offset:3px\">Terms of sale</a>",
     "Paiement sécurisé · reçu par e-mail · échanges sur WhatsApp · <a href=\"CGV.dc.html?lang=fr\" style=\"color:inherit;text-decoration:underline;text-underline-offset:3px\">CGV</a>", 1],
   // Face « après paiement » (nom et délai de la formule : voir SCRIPT).
-  ["{{ formuleNom }} · unlocked", "{{ formuleNom }} · {{ formuleDebloque }}", 3],
-  ["Send your video<br>on WhatsApp", "Envoyez votre vidéo<br>sur WhatsApp", 3],
+  ["{{ formuleNom }} · unlocked", "{{ formuleNom }} · {{ formuleEtat }}", 3],
+  ["Send your video<br>on WhatsApp", "Votre vidéo<br>sur WhatsApp", 3],
   ["Open WhatsApp", "Ouvrir WhatsApp", 3],
   ["Or scan it with your phone", "Ou scannez-le avec votre téléphone", 3],
   ["Attach your video as a <em>document</em>, not from your gallery — the quality stays intact.", `Joignez votre vidéo comme <em>document</em>, et non depuis votre galerie${NB}: sa qualité reste intacte.`, 3],
@@ -192,14 +192,15 @@ const SCRIPT = [
     apres: '  { id: "hero", num: "I", nom: FR ? "Ouverture" : "Opening" },\n  { id: "what-is-it", num: "II", nom: FR ? "Qu\\u2019est-ce que c\\u2019est\\u202F?" : "What is It" },\n' +
       '  { id: "for-who", num: "III", nom: FR ? "Pour qui\\u202F?" : "For Who" },\n' +
       '  { id: "analysis", num: "IV", nom: FR ? "\\u00C0 quoi s\\u2019attendre" : "What to Expect" },\n  { id: "formules", num: "V", nom: FR ? "Tarifs" : "Pricing" },\n' },
-  // achat : la formule dans le message WhatsApp ; debloque : « … · débloqué(e) » (accord avec le nom).
+  // achat : la formule dans le message WhatsApp ; etat : « … · activé(e) » sur la carte payée (accord avec le nom ; « débloqué »
+  // passait sur deux lignes dans la carte du programme, sur ordinateur).
   { quoi: "noms et délais des formules", n: 1,
     avant: '  single: { nom: "Single feedback", prix: "49\\u00A0\\u20AC", delai: "4 to 6 days" },\n' +
       '  pack: { nom: "3\\u00D7 feedback pack", prix: "129\\u00A0\\u20AC", delai: "3 to 5 days" },\n' +
       '  prog: { nom: "Quarterly program", prix: "499\\u00A0\\u20AC", delai: "2 to 3 days" },\n',
-    apres: '  single: { nom: FR ? "Analyse unique" : "Single feedback", prix: "49\\u00A0\\u20AC", delai: FR ? "4 \\u00E0 6\\u00A0jours" : "4 to 6 days", achat: "l\\u2019Analyse unique", debloque: "d\\u00E9bloqu\\u00E9e" },\n' +
-      '  pack: { nom: FR ? "Pack 3 analyses" : "3\\u00D7 feedback pack", prix: "129\\u00A0\\u20AC", delai: FR ? "3 \\u00E0 5\\u00A0jours" : "3 to 5 days", achat: "le Pack 3 analyses", debloque: "d\\u00E9bloqu\\u00E9" },\n' +
-      '  prog: { nom: FR ? "Programme trimestriel" : "Quarterly program", prix: "499\\u00A0\\u20AC", delai: FR ? "2 \\u00E0 3\\u00A0jours" : "2 to 3 days", achat: "le Programme trimestriel", debloque: "d\\u00E9bloqu\\u00E9" },\n' },
+    apres: '  single: { nom: FR ? "Analyse unique" : "Single feedback", prix: "49\\u00A0\\u20AC", delai: FR ? "4 \\u00E0 6\\u00A0jours" : "4 to 6 days", achat: "l\\u2019Analyse unique", etat: "activ\\u00E9e" },\n' +
+      '  pack: { nom: FR ? "Pack 3 analyses" : "3\\u00D7 feedback pack", prix: "129\\u00A0\\u20AC", delai: FR ? "3 \\u00E0 5\\u00A0jours" : "3 to 5 days", achat: "le Pack 3 analyses", etat: "activ\\u00E9" },\n' +
+      '  prog: { nom: FR ? "Programme trimestriel" : "Quarterly program", prix: "499\\u00A0\\u20AC", delai: FR ? "2 \\u00E0 3\\u00A0jours" : "2 to 3 days", achat: "le Programme trimestriel", etat: "activ\\u00E9" },\n' },
   { quoi: "surtitre de l'étude écrit au défilement", n: 1,
     avant: 'num.textContent = i === 0 ? "Sample analysis" : ',
     apres: 'num.textContent = i === 0 ? (FR ? "Analyse type" : "Sample analysis") : ' },
@@ -220,7 +221,7 @@ const SCRIPT = [
   { quoi: "valeurs de langue du gabarit", n: 1,
     avant: "      vrai: true,\n",
     apres: "      vrai: true,\n" +
-      '      en: !FR, fr: FR, tr: TRAD, langue: FR ? "fr" : "en", suffixeLangue: FR ? "?lang=fr" : "", formuleDebloque: f.debloque,\n' +
+      '      en: !FR, fr: FR, tr: TRAD, langue: FR ? "fr" : "en", suffixeLangue: FR ? "?lang=fr" : "", formuleEtat: f.etat,\n' +
       "      /* EN / FR : la page est rechargée dans l'autre langue (中文 : à venir). */\n" +
       '      changerLangue: (code) => { if ((code !== "fr" && code !== "en") || code === (FR ? "fr" : "en")) return;\n' +
       '        try { const u = new URL(location.href); if (code === "fr") u.searchParams.set("lang", "fr"); else u.searchParams.delete("lang"); u.hash = ""; location.assign(u.href); } catch (e) {} },\n' },
