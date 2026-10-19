@@ -235,7 +235,7 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
       tenue = true; tLibre = setTimeout(libre, Math.max(0, d.t0 + 3.8 / VIT * 1000 + PAUSE - now));
     };
     /* Clavier : un élément caché sous la fin provisoire (liens du bas de page) qui prend le focus libère la page. */
-    const onFocBorne = (e) => { const t = e.target; if (finPage && t && t.getBoundingClientRect && t.getBoundingClientRect().top + window.scrollY > finPage) { tenue = true; libre(); } };
+    const onFocBorne = (e) => { const t = e.target; if (finPage && t && t.getBoundingClientRect && t.getBoundingClientRect().top + window.scrollY > finPage) { tenue = true; libre(); t.scrollIntoView({ block: "nearest" }); } }; /* le navigateur a voulu montrer l'élément pendant que la page était encore coupée : on le montre une fois la page rendue */
     document.addEventListener("focusin", onFocBorne);
     sec.addEventListener("click", onClicGrand);
     window.addEventListener("keydown", onToucheGrand, true);
