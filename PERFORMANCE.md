@@ -56,12 +56,12 @@ Scénarios : chargement (1re visite et avec cache, 5 essais, 4 pages), défileme
 
 | Identifiant | Ce qui change | Gain mesuré (seule) |
 |---|---|---|
-| `aimantation` | aimantation au cran retirée, ouverture au même endroit (**validé par Loan le 02/10, à reporter dans Claude Design**) | molette lente : 20 crans → +2 000 px (avant : bloquée) |
+| `aimantation` | aimantation au cran retirée (**validé par Loan le 02/10, à reporter dans Claude Design**) ; la page s'ouvre en haut, comme le prévoit le code d'origine | molette lente : 20 crans → +2 000 px (avant : bloquée) |
 | `defilement` | molette et glissé bloquants seulement pendant le verrou du retournement | réaction molette −26 %, glissé −16 % |
 | `sable` | `--flux` posé sur le nom seul | style au pied de page −82 %, fil principal −23 % |
 | `poussiere` | poussière du projecteur arrêtée hors écran | mobile, étude : fil principal 29 % → 2,5 % |
 | `parallaxe` | parallaxe ignorée hors écran | souris dans l'étude : −37 % |
-| `chargement` | feuille de l'écran de chargement laissée en place (inerte) | gel à l'apparition supprimé (0,1 s / 0,5 s) |
+| `chargement` | feuille de l'écran de chargement laissée en place (inerte) ; une ressource en échec ne le retient plus | gel à l'apparition supprimé (0,1 s / 0,5 s) ; plus d'attente de 20 s à 96 % quand Safari bloque la balise Cloudflare |
 | `doublons` | design system et en-tête exécutés une seule fois ; `header-flottant.js` placé avant le design system pour garder le même ordre de décision du ton de l'en-tête qu'en ligne | plus de recréation ; prête −8 % / −11 % |
 | `css` | lien redondant vers `styles.css` retiré | −9 requêtes par visite ; démarrage mobile −13 à −24 % |
 | `react` | React servi par le site (accord de Loan), préchargé ; `support.js` le charge toujours avec son empreinte (SRI) | prête −11 % (Video Feedback, ordinateur), −2 à −5 % ailleurs ; un serveur tiers de moins |
@@ -172,6 +172,645 @@ Lighthouse ne connaît pas l'écran de chargement. Deux effets en découlent, pr
 - un décalage de mise en page (CLS ~0,12 à 0,25), survenu sous l'écran de chargement donc invisible, apparaît au hasard d'un essai (AVANT : Legal ordinateur 0,114, Privacy mobile 0,247 ; APRÈS : Privacy ordinateur 0,117).
 
 Le LCP mesuré par l'outil sur Video Feedback (ordinateur) n'est pas fiable : l'élément le plus grand est la texture de grain plein écran, que le navigateur ne signale pas à chaque essai. Quand il le signale, il arrive plus tôt APRÈS (476 à 676 ms, au premier affichage) qu'AVANT (772 à 1 188 ms, photo du projecteur).
+
+## Retour de Loan après publication (03/10)
+
+La version publiée le 03/10 a été retirée le jour même (retour à la version Cloudflare `19d3f7be`, accord de Loan) après son test sur iPhone et ordinateur. Diagnostic sur la branche, version stable comparée à la version corrigée :
+
+| Point | Cause | Correction |
+|---|---|---|
+| 1. Chargement bloqué à 96 % | Cloudflare insère sa balise Web Analytics (active depuis le 06/09) ; quand Safari ou un bloqueur la refuse, aucune trace n'en reste et l'écran attend sa limite de 20 s. Déjà présent avant les optimisations. | `chargement.js` : une ressource en échec compte comme terminée (22 s → 3 s, simulé). |
+| 2. Arrivée au projecteur | Le code d'origine remonte en haut (`enHaut`), mais l'aimantation pouvait l'emmener au cran pendant le chargement (course, selon la vitesse de chargement) ; l'optimisation l'y forçait. | Seule l'aimantation est retirée : arrivée en haut, 8 tailles, avec et sans cache. |
+| 4. En-tête mobile sur le titre | Conséquence du point 2 : au cran, le titre passe sous l'en-tête transparent (identique dans la version stable à cette position). | Corrigé par le point 2. |
+| 5. « Your routine… » brutal | Conséquence du point 2 : arrivée en cours de page = mode `vfp-vite` (séquence d'ouverture ramenée à 0,5 s) et titre affiché sans son entrée. L'entrée au défilement est identique à la version stable (mesurée image par image). | Corrigé par le point 2. |
+| 3. Retour de la lumière saccadé | Identique dans la version stable : à chaque image, composition des trois faisceaux masqués et agrandis (les masquer double la cadence) et redessin du halo plein écran. | Non corrigé : demande de changer la façon de dessiner la lumière (décision de Loan). |
+| 6, 7. Ligne rose, fonds manquants, plantage sur iPhone | Non reproduits (pas de Safari ici). Surface des calques identique dans les trois versions à chaque position (171 Mpx en haut, 349 Mpx dans l'éblouissement, mobile). | Repris le 04/10 : voir « Safari / iPhone ». |
+
+## Safari / iPhone (04/10)
+
+Les captures de Loan, prises sur un vrai iPhone (Safari) et sur Mac (Safari, capture 5), font foi. Chromium simulé n'est qu'un repère.
+- Corrections : `scripts/safari.mjs`, mêmes garde-fous que les optimisations.
+- Banc local : `scripts/banc.mjs`. Vérification de l'en-tête : `scripts/verif-entete.mjs`.
+- Diagnostic temporaire : `optimise/diag.js`, présent **uniquement sur l'adresse de test**.
+
+### Constats sur les captures
+
+| Capture | Défaut | Cause | Statut |
+|---|---|---|---|
+| 1, 5 | Bande grise en haut ; en-tête sur 3 lignes (iPhone) | `--hauteur-header` vaut 68 px fixes (design system), alors que l'en-tête mesure 134 px sur iPhone et ~96 px dans Safari sur Mac. Son `margin-bottom: -68px` laisse alors un vide au-dessus de la scène, où l'on voit `.vf-nuit`. Reproduit dans Chromium : la scène commence à 66 px | Démontré, corrigé (`entete`) |
+| 2 | « VIDEO FEEDBACK » sur la navigation | Même cause : le titre est à 68 + 5svh = 111 px, sous un en-tête de 134 px. « Your routine… » et les cartes de la vitrine passent aussi dessous | Démontré, corrigé (`entete`) |
+| 2 | État blanc | État voulu (éblouissement : papier, Loan en contre-jour), sauf le chevauchement ci-dessus | — |
+| 2 | Bande sombre en bas | La scène fait 100svh et s'arrête là où commence la barre Safari déployée. Barre repliée, l'écart montre le fond de la page | Hypothèse, à mesurer sur l'iPhone (diagnostic : svh, lvh, dvh, écart) |
+| 1 | Ligne magenta rgb(251,3,247), ~6 px physiques | Largeur exacte du bouton « See pricing », 24 px au-dessus = marge du `filter: blur(8px)` de son animation d'entrée. Le site ne contient aucun magenta (tout est gris). Même signature que le bug WebKit 27 des flous logiciels ([vitepress#5462](https://github.com/vuejs/vitepress/pull/5462)) | Fortement étayé ; contournement `will-change: filter` testé en variante (`filtre`) seulement |
+| 3 | Page blanche | Blanc pur #FFFFFF, que le site ne peint jamais. Champ d'adresse remis à zéro, barre de progression : Safari recharge une page dont le processus s'est arrêté | Probable, à confirmer par le fil d'Ariane du diagnostic |
+| 4 | « A problem repeatedly occurred » (aussi en production) | Arrêt répété du processus. Hypothèse prioritaire, **non démontrée** : mémoire graphique (jetsam) | À établir sur l'iPhone : phase et calques actifs au moment de l'arrêt, comparaison des versions |
+
+### Corrections et candidats (`scripts/safari.mjs`)
+
+| Identifiant | Statut | Effet mesuré (Chromium local) |
+|---|---|---|
+| `entete` | Retenue (choix de Loan : corriger le calcul, design inchangé) | Bande en haut 66 px → 0 à 375–402 px (31 → 0 à 430). Texte, titre et cartes juste sous l'en-tête au lieu de 40–46 px dessous. « See pricing » entièrement à l'écran. Ordinateur inchangé dans Chromium (en-tête de 68 px) |
+| `textures` | Retenue (avec `compact`, validée sur l'iPhone le 08/10) | Rendu : écart de pixels au niveau du témoin (actuel contre actuel), écart moyen < 1 niveau sur 255 (ordinateur et mobile, P de 0 à 0,8). Dessin pendant la traversée du projecteur : 10,9–11,2 s → 3,8 s (ordinateur), 9,5 → 3,1 s (mobile). Script par image −30 à −50 %. Surface des calques ±10 % |
+| `filtre` (`will-change: filter`) | Variante de test seulement (`?v=filtre`) | Peut ajouter des calques : gardée seulement si la ligne magenta disparaît sur iPhone sans coût mesuré |
+| `lvh`, `dvh` | Variantes de test seulement | Choix après les valeurs mesurées sur l'iPhone |
+| `nuit` (fond fixe caché sous une scène opaque) | Variante de test seulement | Sans effet sur le dessin dans Chromium (fond animé par le compositeur) ; effet mémoire à mesurer sur l'iPhone |
+| `compact` (textures dans un petit cadre agrandi) | **Retenue le 08/10** : arrêts 3 sur 3 → 0 sur 3 sur l'iPhone | Image identique ; mémoire graphique Safari 490 → 215 Mo (voir « Correction candidate `compact` ») |
+| `affiche` (`will-change: filter` sur « See pricing ») | **Retenue le 08/10** : ligne rose disparue sur l'iPhone, aucun arrêt de plus | Seul élément touché, image identique |
+| `sousblanc` (lumière masquée sous le blanc) | Écartée le 08/10 : 3 arrêts sur 3 avec la correction | — |
+
+**Lumière en textures** (`scripts/textures.mjs`) : faisceaux, stries, cœur, rayons, halo, brume, éclat, sol, flaque et ombre sont calculés une fois en PNG (370 Ko au total), à partir des règles CSS de l'export relues telles quelles (interpolation prémultipliée, suréchantillonnage 3×3). La page déplace ces images par `transform` et `opacity`.
+- **Avant** : le halo plein écran est redessiné à chaque image (353 fois sur la traversée, 428 en mobile) ; le calque des rayons, de 3 232 px de côté, est redessiné 116 fois (218 en mobile) ; la scène l'est 100 fois (194).
+- **Après** : aucun redessin de ces calques. Il reste Loan (photos dont l'opacité change), redessiné ~60 fois.
+- Les masques coniques des faisceaux et des rayons disparaissent.
+- `construire.mjs` refuse les textures si les règles CSS de l'export ont changé depuis leur calcul.
+
+**Vitrine (« See pricing »)**, ordinateur : le coût vient des cartes, dont les reflets sont redessinés à chaque image pendant que le faisceau pivote (dessin 9,5 → 8,9 s avec les textures). C'est inhérent à l'effet. À reprendre seulement si le banc sur Safari réel le montre lent.
+
+**Écarté (mesuré)** : `fig`, une couche par photo de Loan pour éviter son redessin. Le redessin disparaît, mais le dessin reste à 3,9 s et les images lentes passent de 14 à 29 % (Chromium).
+
+### Adresse de test et banc sur appareil
+
+`npm run publier:essai` construit avec `ESSAI=1` et publie sur `loandrouard-essai`. Une construction normale échoue si le diagnostic ou les pages de comparaison s'y trouvent.
+- Pages :
+  - `/` : proposition (corrections retenues) ;
+  - `actuel.html` : version `c9bb055` ;
+  - `textures.html` : actuel + textures seulement ;
+  - `corrige.html` : validation du 08/10 (entete, textures, compact) ;
+  - `avant.html` : page publiée sans `lvh` ni `camera` (contenu du 08/10 inclus : en-tête, pied de page, petites cartes), pour comparer le yin-yang et le bas d'écran ; ce n'est pas la page du plantage du 08/10.
+- Paramètres :
+  - `?diag=1` : panneau ;
+  - `?auto=1` : parcours 1 (lent, rapide, descente complète, remontée) et parcours 2 (See pricing, cartes, Back to Loan, reprise), deux fois chacun ;
+  - `?banc=1` : enchaîne actuel → textures → proposition → proposition+filtre → proposition+nuit, puis affiche un tableau (durée d'images p95 et % > 25 ms par phase, plantage et phase, arrivée en haut, écart en bas) ;
+  - `?v=` : variantes ;
+  - `?sans=` : retire un groupe de calques, pour isoler une cause.
+- Fil d'Ariane (`localStorage`) : après un arrêt brutal du processus, la page suivante affiche la version, la phase, les derniers états et les calques visibles juste avant l'arrêt. Testé dans Chromium par un plantage provoqué (`Page.crash`).
+
+```
+ESSAI=1 node scripts/construire.mjs
+node scripts/banc.mjs captures bureau|mobile actuel,textures      # équivalence au pixel (témoin actuel/actuel)
+node scripts/banc.mjs trace bureau|mobile actuel,textures 2       # dessin, script, redessins par calque (BANC_PEINTS=1)
+BANC_GESTE=vitrine node scripts/banc.mjs trace bureau actuel,textures
+node scripts/banc.mjs parcours bureau|mobile actuel,textures,proposition
+node scripts/banc.mjs calques mobile actuel,textures
+node scripts/verif-entete.mjs                                      # en-tête à 375–1440 px
+node scripts/verif-serie.mjs                                       # séries bornées et resultats.html (arrêts provoqués)
+node scripts/verif-retraits.mjs                                    # retraits ?sans= : géométrie inchangée, éléments retirés
+node scripts/banc.mjs captures mobile proposition,corrige           # image identique avec la correction « sousblanc » (+ jonction, étude)
+```
+
+### 1er tour sur l'iPhone de Loan (04/10, iOS Safari 27.0, 393×852, DPR 3)
+
+Sources : banc automatique sur 5 versions, captures en manuel, vidéo de 115 s (2 arrêts) examinée image par image. Classement : **démontré**, **fortement étayé**, **plausible**, **non démontré**.
+
+| Constat | Classement |
+|---|---|
+| Correction `entete` efficace sur l'iPhone : en-tête 134 = jeton 134, plus de bande en haut, titre et texte sous la navigation | Démontré |
+| Arrivée en haut à chaque ouverture (arrivée 0) | Démontré |
+| Bande sombre du bas = écart de 40 px : hauteur visible 695 (barre déployée) ou 735 (repliée), svh 695, lvh 735, dvh suit la hauteur visible | Démontré |
+| Page blanche = rechargement après l'arrêt du processus de la page (blanc pur, « Interruption détectée » au rechargement) | Démontré |
+| Arrêts toujours pendant un défilement rapide, 6 sur 7 pendant ou juste après la traversée du projecteur blanc ou de l'étude, souvent à leur jonction | Démontré (constat) |
+| Ligne rose : bug de Safari 27 sur le flou de repos de « See pricing » (dessin logiciel). Présente au repos, absente pendant l'animation d'entrée, revient après la vitrine, texte du bouton plus flou à ces moments | Fortement étayé |
+| Cause de l'arrêt : mémoire graphique | Plausible (non démontré) |
+| Cause de l'arrêt : défaut de Safari 27 | Plausible (non démontré) |
+| Textures, `nuit`, `filtre` : effet sur la stabilité | Non démontré (1 passe chacune ; 4 arrêts sur 5) |
+| Gain de fluidité des textures sur l'appareil | Non démontré (statistiques perdues à chaque arrêt dans la v1 du diagnostic) |
+
+Autres observations :
+- Version `nuit` (seule terminée) :
+  - durées d'images : projecteur à 17 ms au p95 (0–4 % d'images au-delà de 25 ms) ;
+  - étude 70 ms / 67 %, planche 89 ms / 36 %.
+- « ResizeObserver loop » : 9 à 15 fois par session sur l'iPhone, jamais dans Chromium.
+- Page sans styles (environ 15 s) après « A problem repeatedly occurred » puis rechargement : à n'examiner que si elle réapparaît ou si des ressources sont en échec.
+- Rectification : l'écart de 24 px entre la ligne rose et le bouton ne vient pas du flou de 8 px de l'animation, puisque la ligne apparaît au repos.
+
+### Diagnostic v2 et test d'endurance (phase 2)
+
+**Diagnostic v2** (`optimise/diag.js`). Principe : ne pas fausser la mesure.
+- Durées d'images en histogrammes, en mémoire.
+- Relevé d'état toutes les 200 ms en mémoire, écrit dans `localStorage` une fois par seconde seulement. Le relevé contient : position, phase, P, parties de la page réellement à l'écran (`H` projecteur, `E` étude, `N` étude noire, `K` planche, `F` pied, `M` paiement), caméras de l'étude en couche séparée (`w`), vitesse, calques actifs du projecteur quand il est à l'écran.
+- Statistiques recopiées à chaque écriture, donc conservées après un arrêt.
+- « ResizeObserver loop » compté à part ; liste des ressources en échec ; fin de l'écran de chargement (instant, feuilles non appliquées).
+- Panneau rafraîchi une fois par seconde.
+- `?nodiag=1` désactive tout, pour mesurer le surcoût.
+- **Surcoût mesuré** (Chromium, traversée du projecteur en 14 s, sans diagnostic / avec diagnostic / avec diagnostic et panneau) :
+  - ordinateur (2 passes alternées) : script 914–1 021 / 943–1 024 / 976–1 136 ms ; images > 25 ms 16–17 / 15–21 / 17 % ; le panneau ajoute 20 à 60 ms de mise en page en 14 s ;
+  - mobile (×4 plus lent, 1 passe) : script 4 894 / 4 718 / 4 441 ms ; dessin 3 090 / 2 949 / 3 149 ms ; images > 25 ms 21 / 18 / 14 %.
+
+  Les écarts restent dans le bruit d'une passe à l'autre, sans surcoût systématique. Sur l'iPhone, la passe « sans panneau » du test d'endurance sert de contrôle indicatif.
+
+**Endurance** (`/?stress=1`) :
+- 60 s d'allers-retours rapides (3,5 hauteurs d'écran par seconde) entre l'éblouissement (P 0,7) et l'étude.
+- Versions : actuel, proposition, proposition+nuit, 3 passes chacune en ordre alterné (carré latin).
+- Chaque passe sur une page neuve, partie du haut, après 3 s de pause.
+- Une passe « sans panneau », hors comparaison, contrôle l'effet du panneau.
+- Les versions aux résultats proches passeront à 5 passes. Les retraits `?sans=` seront choisis d'après les données du diagnostic et de l'iPhone.
+
+### Phase 3 : test de 2 h, protocole borné, lecture des résultats (05/10)
+
+**Ce qui s'est passé sur l'iPhone (démontré, en relisant le code).** Le test d'endurance a tourné environ 2 h sans jamais afficher le tableau final. Ce n'était pas la faute de Loan : `serie()` contenait un bug.
+- Quand la **dernière** page de la série (le témoin, sans panneau) s'arrêtait, l'arrêt était compté en mémoire, mais l'élément courant n'était pas recalculé et l'état n'était pas enregistré.
+- La même page relançait donc la passe, sans limite de tentatives ni de durée.
+- Un seul essai réussi du témoin aurait affiché le tableau final : il n'y en a eu aucun.
+- Autre défaut : un rechargement plus de 180 s après un arrêt relançait la passe en silence, sans compter l'arrêt.
+
+Les résultats des 9 premières passes (`ld-diag-serie`) et les 10 derniers arrêts (`ld-diag-incidents`) sont restés dans le navigateur de l'iPhone. Côté Worker, rien n'est conservé : pas de journalisation.
+
+**Protocole borné** (`optimise/diag.js`, séries au format `v: 2`) :
+- avant chaque passe, un marqueur « en cours » (indice, heure, identifiant de la page) est enregistré ;
+- au chargement suivant, une passe restée « en cours » est comptée **une fois** comme arrêt, **quel que soit le délai**, puis la série passe à la suivante. Elle n'est jamais relancée ;
+- le type d'arrêt est tiré du dernier état de cette passe :
+  - `brutal` : la page était en cours, donc arrêt du processus ;
+  - `arrière-plan` : la page était cachée ;
+  - `fermée` : rechargement ou fermeture ordinaire ;
+- le délai de rechargement est noté ;
+- l'état est enregistré dès le chargement, avant toute autre action ;
+- fin garantie :
+  - liste épuisée ;
+  - 25 min ;
+  - plus de 2 chargements par page de la liste ;
+  - bouton « Arrêter le test » (en bas à gauche, sur chaque page de série) : il interrompt la passe et affiche le tableau partiel ;
+- une série de l'ancien format, comme celle du test de 2 h, n'est ni relancée ni modifiée ;
+- `duree=` (en secondes) raccourcit les allers-retours, pour les vérifications locales seulement ;
+- inchangé : mesures, variantes, panneau, ordre des passes.
+
+**`resultats.html`** (adresse de test seulement, `optimise/resultats.html`) :
+- page autonome, sans le site ni le diagnostic, en **lecture seule** ;
+- elle affiche les clés `ld-diag…` **seulement**, jamais les autres clés du site comme celle du paiement : la série, les derniers arrêts et le dernier état ;
+- le texte brut se copie d'un toucher (« Copier tout »).
+
+**Vérification locale** (Chromium, `node scripts/verif-serie.mjs`, après `ESSAI=1 node scripts/construire.mjs`). Arrêts brutaux provoqués par `Page.crash`, sur une série courte de 2 pages (`duree=4`). Les 9 cas passent :
+
+| Cas | Résultat |
+|---|---|
+| a. Sans arrêt | Terminée, 2 passes ok, 2 chargements |
+| b. Arrêt sur la **dernière** page (le cas du test de 2 h) | Terminée, arrêt « brutal » compté une fois, passe non relancée, 3 chargements |
+| c. Arrêt pendant chaque passe | Terminée, 2 arrêts, 4 chargements (= 2 × N) |
+| c2. Arrêt de chaque page 0,7 s après son ouverture | Terminée par la limite de chargements (5) |
+| d. Rechargement 4 min après l'arrêt | Arrêt compté (délai 242 s), série poursuivie et terminée |
+| e. Bouton « Arrêter le test » | Tableau partiel, plus aucune navigation |
+| f. Plus de 25 min | Fin « durée », résultats partiels |
+| g. Ancienne série (format du 05/10) | Rien de lancé, série et arrêts intacts |
+| h. `resultats.html` | Résumé correct, copie complète, stockage identique avant et après, clé de paiement ni lue ni copiée |
+| i. Tri `?stress=sans` | 8 pages (4 versions × 2, ordre alterné), chaque page ouverte porte la variante et les retraits attendus, 8 chargements |
+| j. Contrôle du bouton `?banc=bouton` | 4 pages en ordre ABBA, images comptées au repos et dans la vitrine, 4 chargements |
+
+### Résultats du test de 2 h (récupérés le 06/10 avec `resultats.html`)
+
+Le test a démarré le 05/10 à 09:13 UTC (17:13 à l'heure du téléphone de Loan, UTC+8) sur son iPhone (iOS Safari 27.0, hauteur visible 695, lvh 735).
+- Les **9 passes** se sont toutes arrêtées en 3 minutes.
+- Le **témoin** s'est ensuite arrêté en boucle jusqu'à 10:45 UTC (18:45 heure du téléphone), soit environ 1 h 30. Il y a eu 10 arrêts rien que dans ses 9 dernières minutes, entre 7 et 45 s chacun.
+
+| Passe | Version | Arrêt après | Étape | Dernier relevé enregistré (y, phase, à l'écran, vitesse) |
+|---|---|---|---|---|
+| p1 | actuel | 7 s | aller 1 | 3279, blanc, H, +2353 px/s |
+| p1 | proposition | 9 s | aller 2 | 3908, blanc, H, +2341 |
+| p1 | proposition+nuit | 11 s | retour 1 | 5425, étude, HE, −1951 |
+| p2 | proposition | 9 s | aller 2 | 4186, blanc, H, +2353 |
+| p2 | proposition+nuit | 16 s | aller 2 | 4385, blanc, H, +2365 |
+| p2 | actuel | 6 s | aller 1 | 3764, blanc, H, +2554 |
+| p3 | proposition+nuit | 10 s | retour 1 | 5685, étude, E, −1088 |
+| p3 | actuel | 4 s | descente | 40, ouverture, H, +197 |
+| p3 | proposition | 6 s | aller 1 | 3466, blanc, H, +2353 |
+
+| Constat | Classement |
+|---|---|
+| Le test d'endurance arrête toutes les versions en quelques secondes : actuel 3 sur 3, proposition 3 sur 3, nuit 3 sur 3, témoin sans un seul essai réussi en 1 h 30 | Démontré |
+| Ni les textures ni « nuit » n'empêchent l'arrêt, dans ce test | Démontré |
+| L'arrêt existe sans aucune correction Safari (actuel), donc avant nos changements | Démontré |
+| Arrêt dès les premiers allers-retours, sur une page neuve chaque fois : pic soudain plutôt qu'usure progressive | Fortement étayé |
+| Position exacte de l'arrêt dans la zone blanc ↔ étude | Non démontrée : le dernier relevé est écrit une fois par seconde, soit jusqu'à environ 2 400 px avant l'arrêt |
+| Dans 2 des 10 derniers arrêts du témoin, plus aucune image pendant 0,4 à 0,6 s à la jonction (y figé à 4 880) juste avant l'arrêt | Démontré pour ces 2 cas (constat) |
+| L'étude est la partie la plus lourde sur l'iPhone : p50 25 à 42 ms, 48 à 88 % d'images au-delà de 25 ms | Démontré |
+| Gain de fluidité des textures sur l'iPhone | Non démontré : les passes s'arrêtent trop tôt |
+| Nature de l'arrêt (mémoire ou défaut de Safari) | Plausible pour les deux |
+
+Au 1er tour (04/10), deux arrêts ont eu lieu ailleurs : sur la planche des formules, et en remontant dans le texte du projecteur. La jonction n'est donc pas le seul endroit possible.
+
+**Ligne rose** : paire de captures de Loan, même appareil et même moment.
+- Version normale : ligne magenta de la largeur exacte du bouton, et « See pricing » beaucoup plus flou que prévu (le flou de repos du design est de 0,35 px).
+- Version `filtre` : pas de ligne, et un flou conforme.
+
+Classement : **fortement étayé**. Les vidéos ont été filmées dans le navigateur intégré d'une application (hauteur visible 647, lvh 768). Les tests suivants se font dans Safari.
+
+### Phase 4 : tri des retraits et correctif ciblé de la ligne rose
+
+**Retraits ajoutés au diagnostic** (adresse de test, affichage seulement) :
+- `?sans=etude` : les deux caméras de l'étude (`.vfa-cam` : photos, tracés, ombres floues) ;
+- `?sans=lumiere` : tous les calques de lumière du projecteur (faisceaux, rayons, halo, brume, éclat, exposition, blanc, rémanence, poussière, sol, flaque, ombre). La figure et les textes restent.
+
+**Même parcours de défilement** (`node scripts/verif-retraits.mjs`, Chromium, formats iPhone 393×852 et ordinateur 1440×900) :
+- mesures comparées : position et hauteur de l'étude, hauteur de la page, hauteur de la scène, bornes du test de stress `yA` et `yB`, à la page chargée puis aux 4 bornes d'un parcours de stress raccourci ;
+- résultat : **identiques à la référence, à 0 px près**, pour `etude`, `lumiere` et `etude,lumiere` ;
+- `.vfa-cam` est en position absolue dans une scène de hauteur fixe, donc hors du flux ; les calques de lumière aussi ;
+- captures : `mesures/retraits/`.
+
+**Tri** `?stress=sans` :
+- 4 versions × 2 passes, ordre alterné, sans témoin : `proposition`, `-etude`, `-lumiere`, `-etude-lumiere` ;
+- protocole borné : 10 min au plus, limite de 25 min.
+
+Ces 2 passes servent de **tri**, pas de démonstration de cause.
+
+| Résultat du tri | Interprétation provisoire |
+|---|---|
+| `-etude` tient, `-lumiere` s'arrête | Piste prioritaire : les caméras de l'étude |
+| `-lumiere` tient, `-etude` s'arrête | Piste prioritaire : les calques de lumière du projecteur |
+| Seule `-etude-lumiere` tient | Piste prioritaire : leur présence simultanée |
+| Tout s'arrête | Rien ne se distingue ; découpage suivant choisi d'après les résultats |
+
+**Confirmation** : si une variante se distingue nettement, on fait 3 passes de plus de la référence et de cette variante seulement, en ordre alterné (`?stress=1&versions=proposition,proposition-etude&passes=3`). Le résultat n'est dit « fortement étayé » qu'après cette confirmation.
+
+**`?v=affiche`** : `will-change: filter` sur le seul bouton « See pricing », vérifié dans Chromium (aucun autre élément touché).
+
+**Validation visuelle (06/10, iPhone de Loan).** Deux captures prises au même moment, sans toucher :
+- `?diag=1` : ligne magenta, bouton beaucoup trop flou ;
+- `?diag=1&v=affiche` : pas de ligne, bouton au flou prévu de 0,35 px.
+
+Cette paire concorde avec la paire `filtre` du 05/10 : la validation visuelle est **démontrée sur cet appareil**. Les captures ont été prises dans le navigateur intégré d'une application (hauteur visible 647), qui utilise le même moteur que Safari.
+
+**Contrôle avant de garder le correctif** : parcours `?banc=bouton`, à la place du banc d'abord prévu.
+- Le banc fait défiler vite. Ces défilements arrêtaient souvent la page, avec ou sans correctif (4 sur 5 au 1er tour), ce qui aurait rendu la comparaison illisible.
+- Le parcours `bouton` ne défile jamais vite. Il alterne `proposition` et `proposition+affiche` en ordre ABBA.
+- Pour chaque page : 9 s de repos en haut de page (images comptées au repos, bouton à l'écran), le parcours « See pricing » 2 fois, puis une descente et une remontée lentes dans le projecteur.
+- Le correctif n'est gardé dans `scripts/safari.mjs` qu'à deux conditions : aucun arrêt de plus, et pas de dégradation nette des durées d'images (repos et ouverture, texte, vitrine).
+
+**Mesures indicatives dans Chromium** (format iPhone, processeur ralenti 4 fois). Ce n'est pas WebKit : elles ne remplacent pas le contrôle sur l'iPhone.
+- **Calques** (`banc.mjs calques`) :
+  - P 0, P 0,75, P 0,8 et vitrine : identiques ;
+  - de P 0,2 à P 0,7 : +3 calques, dont 1 dessiné, et +0,1 Mpx CSS, soit environ +1,1 Mpx à l'écran sur 180 à 309 (+0,4 %).
+- **Traversée du projecteur** (`banc.mjs trace`, 2 passes alternées, sans / avec) :
+  - images p95 : 33 / 33 ms ;
+  - au-delà de 25 ms : 16–17 / 14–18 % ;
+  - composition : 9,7–10,2 / 9,7–10,0 s ;
+  - rastérisation : 3,2–3,6 / 3,3–3,5 s.
+
+  Pas d'écart au-delà du bruit d'une passe à l'autre.
+- Si la ligne disparaît sur l'iPhone, c'est d'abord une **validation visuelle**.
+- Avant de garder le correctif dans `scripts/safari.mjs`, il faut vérifier qu'il n'aggrave ni la stabilité ni la charge de composition, car il crée une couche de plus :
+  - banc borné et alterné `?banc=1&liste=proposition,proposition+affiche,proposition,proposition+affiche` ;
+  - arrêts et durées d'images là où le bouton est à l'écran ;
+  - nombre de calques dans Chromium, à titre indicatif.
+
+### Résultat du tri `?stress=sans` (06/10, iPhone de Loan)
+
+Conditions : 8 pages, 11 chargements, 7,7 min, dans le navigateur intégré d'une application (hauteur visible 647, lvh 768). Ce n'est pas Safari lui-même.
+
+| Version | p1 | p2 |
+|---|---|---|
+| proposition (référence) | ARRÊT brutal, 21 s, retour 4 | ok, 10 allers-retours, étude 250 ms / 95 % |
+| -etude | ARRÊT brutal, 10 s, retour 2 | ARRÊT brutal, 16 s, retour 3 |
+| -lumiere | ok, 19 allers-retours | ok, 11 allers-retours, étude 250 ms / 100 % |
+| -etude-lumiere | ok, 20 allers-retours | ok, 19 allers-retours |
+
+- **Par facteur** : avec la lumière, 3 arrêts sur 4 pages ; sans la lumière, 0 sur 4. Retirer les caméras de l'étude n'empêche pas l'arrêt (2 sur 2).
+- **Moment des 3 arrêts** : au retour de l'étude vers le projecteur blanc, quand le projecteur réapparaît (HE, défilement vers le haut, calques BRXEWM actifs).
+- **Interprétation provisoire** (tri de 2 passes, pas une démonstration) : piste prioritaire, les calques de lumière du projecteur.
+- **Confirmation à faire** : référence et `-lumiere`, 3 passes chacune, en ordre alterné, dans Safari, où la référence s'arrêtait 9 fois sur 9 le 05/10 :
+
+  `?stress=1&versions=proposition,proposition-lumiere&passes=3`
+- **ResizeObserver** : 0 dans les 4 pages sans lumière, contre 14 à 15 avec. Ce constat est lié à la lumière ou au projecteur (priorité basse).
+- **Étude, à titre indicatif** : p95 de 39 à 55 ms sans les caméras, contre 104 à 250 ms avec.
+
+**Données d'analyse de l'iPhone** (recherches de Loan, 06/10) :
+- « Web » : un seul rapport, `com.apple.WebKit.Networking.diskwrites_resource` du 23/09 ;
+- « Safar » : un seul rapport, `ExcUserFault_MobileSafari` du 24/09 ;
+- aucun JetsamEvent depuis le 02/10.
+
+Aucun rapport n'a donc été laissé par des dizaines d'arrêts entre le 04 et le 06/10.
+- Un plantage classique du processus de la page, qui laisse un rapport, devient peu probable.
+- Une fermeture de la page par Safari lui-même, pour excès de mémoire, ne laisse pas de rapport. C'est l'hypothèse la plus cohérente avec le tri : plausible et renforcée, mais pas démontrée.
+
+### Confirmation de la piste « lumière » (07/10, Safari, hauteur visible 695)
+
+`?stress=1&versions=proposition,proposition-lumiere&passes=3` : 6 pages, 10 chargements, 11,7 min.
+
+| Version | Arrêts | Détail |
+|---|---|---|
+| proposition | 3 sur 3 | Tous à 9 s : retour 1 (étude, E), retour 1 (étude, E), aller 1 (blanc, H) |
+| -lumiere | 1 sur 3 | Arrêt à 38 s (retour 10, étude E, caméras en couche séparée) ; 2 passes au bout, 19 allers-retours chacune |
+
+- **Avec le tri du 06/10** : avec la lumière, 6 arrêts sur 7 pages (plus 9 sur 9 le 05/10) ; sans la lumière, 1 sur 7, et tardif.
+- **La lumière du projecteur, facteur majeur de l'arrêt** : fortement étayé (tri puis confirmation, règle convenue avec Loan).
+- **La lumière, seule cause** : non démontré. L'arrêt restant a eu lieu dans l'étude, caméras à l'écran. Hypothèse plausible : mémoire cumulée de la lumière et des caméras (sans les deux : 0 arrêt sur 2).
+- **Protocole borné sur l'iPhone** : la page p3 de la référence a été rechargée 457 s après son arrêt, l'arrêt a été compté une fois, sans relance. Le protocole fonctionne : démontré.
+
+### Découpage de la lumière (phase 5)
+
+Deux familles de nature différente :
+- `?sans=mobiles` : les lumières qui se déplacent, c'est-à-dire celles que la proposition a transformées en textures (faisceaux, rayons, halo, brume, éclat, sol, flaque, ombre) ;
+- `?sans=effets` : les effets plein écran, que les textures n'ont pas touchés (exposition `color-dodge`, blanc, rémanence floue, poussière).
+
+« actuel » (lumières en CSS) et « proposition » (lumières en textures) s'arrêtent autant l'un que l'autre. Les `effets`, identiques dans les deux, sont donc la première piste, à vérifier.
+
+**Contrôles** :
+- géométrie identique à 0 px pour les deux retraits, aux formats iPhone et ordinateur (`verif-retraits.mjs`) ;
+- captures dans `mesures/retraits/`. Au point P 0,7, l'écran blanc vient des lumières mobiles (halo, éclat), pas du calque `blanc`.
+
+**Tri** : `?stress=lumiere`, soit `proposition`, `-mobiles` et `-effets`, 2 passes chacune en ordre alterné, puis confirmation de la variante qui se distingue.
+
+### Résultats du 07/10 (Safari) : tri de la lumière et contrôle de la vitrine
+
+**Tri** `?stress=lumiere` : 6 pages, 4,9 min.
+
+| Version | Arrêts | Détail |
+|---|---|---|
+| proposition | 2 sur 2 | 8 s (retour 1, étude E) ; 18 s (retour 3, jonction HE) |
+| -mobiles | 0 sur 2 | 20 et 17 allers-retours |
+| -effets | 2 sur 2 | 11 s et 11 s (aller 2, blanc) |
+
+- **Interprétation provisoire** (tri de 2 passes) : la piste prioritaire est celle des **lumières mobiles**.
+- L'indice qui désignait les effets plein écran (« actuel » et « proposition » s'arrêtent autant l'un que l'autre) est **contredit**. Les lumières mobiles pèsent donc aussi bien en dégradés CSS qu'en textures.
+- **Confirmation** : `?stress=1&versions=proposition,proposition-mobiles&passes=3`.
+- **ResizeObserver** : 0 sans les effets, 16 sans les mobiles. Les avertissements viennent de la famille des effets (exposition, blanc, rémanence, poussière). Constat, priorité basse.
+
+**Contrôle de la vitrine** `?banc=bouton` : 4 pages, 3,5 min, sans défilement rapide.
+
+| Version | p1 | p2 |
+|---|---|---|
+| proposition | ARRÊT brutal à 24 s, « P2 See pricing », en haut, à l'arrêt | ok |
+| +affiche | ok | ARRÊT brutal à 12 s, « P2 See pricing », en haut, à l'arrêt |
+
+- **Fait nouveau** (démontré, constat) : la page peut s'arrêter **sans défilement rapide**, à l'ouverture de la vitrine des formules. Les derniers relevés indiquent y = 0, phase ouverture, projecteur seul à l'écran, 0 px/s.
+- **Règle de décision `affiche`** : elle est remplie.
+  - Arrêts : 1 sur 2 avec, 1 sur 2 sans, donc aucun de plus.
+  - Images au repos et à l'ouverture : 17–19 / 17–18 ms ; texte : 17 / 17 ms ; vitrine : 43–64 / 57 ms. Pas de dégradation nette.
+- **`affiche` est retenu**. Il n'entrera dans `scripts/safari.mjs` (`SAFARI_IDS`) qu'à la fin de l'enquête sur les arrêts, pour garder une référence identique d'un test à l'autre.
+
+**Préparé pour la suite** (adresse de test) :
+- `?banc=bouton&variante=proposition-mobiles` : la vitrine avec et sans lumières mobiles, en ordre ABBA ;
+- `?sans=sol` (sol, flaque, ombre) et `?stress=mobiles` : référence, `-faisceaux`, `-rayons`, `-halo` (halo, brume, éclat) et `-sol`, 2 passes chacune. Ce tri ne sera lancé que si la confirmation des mobiles tient ;
+- géométrie identique à 0 px pour `faisceaux`, `rayons`, `halo` et `sol`, aux formats iPhone et ordinateur (`node scripts/verif-retraits.mjs faisceaux,rayons,halo,sol`).
+
+### Découpage des lumières mobiles (08/10, Safari) et correction « sousblanc »
+
+**Tri** `?stress=mobiles` : 10 pages, 20 chargements, 9,1 min. **10 arrêts sur 10** : référence, `-faisceaux`, `-rayons`, `-halo` et `-sol`, chacun 2 sur 2.
+- Aucune famille seule n'empêche l'arrêt ; sans toutes les lumières mobiles, plus d'arrêt (0 sur 2, le 07/10).
+- C'est la **somme** des calques qui compte (fortement étayé pour la famille, plausible pour le mécanisme mémoire).
+- Comme convenu avec Loan, on passe à une correction de toute la famille, sans autre test de recherche.
+
+**Ce que montre le code** (`initProjecteur`, `maj()`) :
+- À partir de P ≥ 0,8 (phase blanc, jonction, étude), le blanc papier `.vfp-blanc` est strictement opaque et couvre toute la scène (`overflow: hidden`).
+- Sous lui restaient actifs, invisibles mais composités : tout `.vfp-lumiere` (faisceaux, sol, flaque, ombre, poussière, halo, lampe, rayons), la brume, l'exposition `color-dodge` et l'éclat, tous à pleine intensité.
+- Le code d'origine libère déjà les calques **éteints** (« libère la mémoire graphique (sinon tuiles manquantes au retour vers le haut) »), mais pas les calques **recouverts**.
+- Les arrêts relevés surviennent presque tous dans ces états : la lumière invisible s'y ajoute aux caméras de l'étude.
+
+**Correction candidate `sousblanc`** (`scripts/safari.mjs`, une ligne de `maj()` remplacée, à l'occurrence exacte) :
+- quand `blanc` est à l'opacité 1, la brume, les rayons, l'exposition et l'éclat passent en `visibility: hidden`, et le conteneur `.vfp-lumiere` aussi ;
+- tout revient dans la même image dès que le blanc repasse sous 1. Le projecteur couvre alors l'écran et l'étude n'est plus visible.
+- Statut : candidat (pas dans `SAFARI_IDS`). Page de comparaison `corrige.html` = proposition + `sousblanc`.
+
+**Preuves locales (Chromium)** :
+- **Image identique** (`banc.mjs captures`, animations figées, polices chinoises de Google Fonts bloquées sur toutes les pages, car leur arrivée variable faussait la comparaison) :
+  - de P 0 à 0,8 et à la jonction : **0 pixel de différence**, formats iPhone et ordinateur ;
+  - dans l'étude : écarts au même endroit que le témoin proposition/proposition (photo animée de l'étude), 0,5 / 0,65 % (iPhone) et 0,6 / 1,5 % (ordinateur) ;
+  - le projecteur n'y montre que 85 à 90 px de blanc, identique dans les deux versions.
+- **Visibilité** : lumière et brume masquées au blanc, à la jonction et dans l'étude, rétablies au retour à P 0,7.
+- **Mémoire graphique** (`banc.mjs calques mobile`, calques dessinés et surface à l'écran) :
+
+| Position | proposition | corrige |
+|---|---|---|
+| P 0 à 0,75, vitrine | identique | identique |
+| P 0,8 (blanc) | 41 calques, 312 Mpx | 26 calques, 213 Mpx (−32 %) |
+| jonction | 64 calques, 378 Mpx | 49 calques, 279 Mpx (−26 %) |
+| étude | 63 calques, 375 Mpx | 48 calques, 276 Mpx (−26 %) |
+
+**Validation sur l'iPhone** : `?banc=valide`, une seule série de 10 pages, environ 12 min.
+- Endurance : proposition et corrige, 3 passes chacune, ordre alterné.
+- Vitrine « See pricing » : 2 passes chacune, ordre ABBA.
+
+Critère fixé à l'avance :
+- **endurance** : validée si `corrige` s'arrête au plus 1 fois sur 3 et la référence au moins 2 fois sur 3 ;
+- **vitrine** : pas d'arrêt de plus (information seulement, cette correction ne vise pas la vitrine).
+
+Si la correction est validée, elle entre dans `SAFARI_IDS` avec `affiche`, puis mise en ligne avec l'accord de Loan.
+
+**Résultat de la validation** (08/10, Safari, iPhone ; 10 pages, 19 chargements, 3,4 min) :
+
+| Version | Endurance | Vitrine |
+|---|---|---|
+| proposition | 3 arrêts sur 3 (7, 8, 10 s ; étude) | 2 sur 2 (12 et 15 s, pendant « See pricing ») |
+| corrige | 3 arrêts sur 3 (6, 10, 6 s ; blanc, projecteur seul, calques `WM`) | 1 sur 2 (19 s, « Back to Loan ») |
+
+- La correction agit comme prévu : sous le blanc, seuls le blanc et la rémanence restent actifs. **L'arrêt survient quand même**, aussi vite.
+- **L'hypothèse « lumière cachée sous le blanc » est réfutée** (démontré). `sousblanc` n'est pas retenu ; il reste dans `safari.mjs` comme candidat écarté.
+- **Ce qui reste établi** : sans aucune lumière mobile, plus d'arrêt ; un seul groupe retiré ne suffit pas. Le problème vient des lumières mobiles **visibles** (montée de l'éblouissement ; haut de page avec la vitrine ouverte), par leur somme. Le mécanisme précis (mémoire, ou autre limite de Safari) n'est pas démontré.
+
+**Mesure réelle dans Safari** (choix de Loan) : inspecteur web du Mac, iPhone branché, onglet Calques.
+- Poses fixes : `?pose=75` (P 0,75), `?pose=jonction` (bas du projecteur à mi-écran), `?pose=vitrine` (See pricing ouvert 9 s après le chargement).
+- Chaque pose se combine avec `?sans=` ou `?v=`. La page se place puis ne bouge plus, sans panneau : la mesure n'est pas faussée.
+- Vérifié localement (`verif-serie.mjs`, cas o).
+- **Ensuite** : une lumière allégée sur iPhone, ciblée sur les calques les plus lourds selon la mesure. Captures avant/après pour Loan, puis un seul test de validation.
+
+### Mesure réelle dans Safari (08/10, iPhone de Loan, `?pose=75`, inspecteur web du Mac)
+
+Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
+
+| Calque | Mémoire |
+|---|---|
+| 3 × `img.vfp-faisceau` | 3 × 45 Mo |
+| 2 × `img.vfp-tex` (halo, éclat) | 2 × 45 Mo |
+| `img.vfp-tex` (brume) | 29,9 Mo |
+| `div.vfp-mur` (vitrine, invisible hors vitrine) | 26,9 Mo |
+| `#document`, `html` | 21,7 Mo chacun |
+| `img.vfp-rayons` | 18,9 Mo |
+| `div.vfp-cartes` | 13,4 Mo |
+| `i.vfp-coeur` | 12,6 Mo |
+| `.vf-nuit`, `u`, `canvas.vfp-poussiere` (7 450 dessins), `.vfp-grain` | 12,3 Mo chacun |
+| sol, flaque, ombre | 3 × 9 Mo |
+
+- **Les lumières mobiles pèsent environ 300 Mo sur 490**. Retirer une seule famille (au plus 135 Mo) ne suffisait pas ; les retirer toutes, si. C'est cohérent avec les tris.
+- **Démontré par la mesure** : Safari dessine chaque texture à la taille de son cadre (1000 × 1000 px CSS, soit 3000 × 3000 px à l'écran, 45 Mo), alors que l'image ne fait que 512 px.
+
+### Correction candidate `compact` (textures compactes)
+
+**Principe** : chaque texture est posée dans un petit cadre, au moins égal à sa résolution une fois multiplié par 3, puis agrandie par `transform: scale()`.
+- Faisceaux, sol, flaque, ombre et rayons : un conteneur garde la classe, le cadre et les transformations du code. L'image, à l'intérieur, fait 200 × 200 px (×5), 400 × 400 px (×2,5 ou ×3) ou 200 × 40 px (×5).
+- Halo et éclat : cadre de 200 px, échelle `r/100` au lieu de `r/500`.
+- Brume : cadre de 36 vmax, `scale(5)`.
+- Même géométrie, même image source. Visée : la mémoire de ces calques divisée par environ 25.
+- Page de test : `corrige.html` (proposition + `compact`). `sousblanc` est écarté.
+
+**Vérifications locales (Chromium)** :
+- **Image** (`banc.mjs captures`) : 0 % de pixels visiblement différents à toutes les étapes, au format iPhone comme sur ordinateur. Écart maximal : 3 nuances sur 255, en moyenne < 0,05. Dans l'étude, les écarts sont ceux du témoin (photo animée).
+- **Calques** (indicatif ; Chromium n'alloue pas comme Safari) : surface −21 à −25 %.
+- **Erreurs** : aucune pendant un parcours complet, vitrine comprise. Les 7 images compactes sont chargées.
+
+**Mesure de contrôle dans Safari** (08/10, iPhone de Loan, `corrige.html?pose=75`, même méthode) : **214,61 Mo** pour 94 calques, contre 489,55 Mo pour 100 calques avant, soit **−56 %**. C'est conforme à l'estimation (environ 210 Mo).
+
+| Lumières | Avant | Après |
+|---|---|---|
+| Stries | 45 Mo | 7,2 Mo |
+| Rayons | 18,9 Mo | 7,2 Mo |
+| Brume | 29,9 Mo | 3,15 Mo |
+| Faisceau et cœur | 2 × 45 Mo | 2 × 1,8 Mo |
+| Halo et éclat | 2 × 45 Mo | 2 × 1,8 Mo |
+| Sol, flaque, ombre | 3 × 9 Mo | 3 × 0,36 Mo |
+| **Total des lumières** | **≈ 300 Mo** | **≈ 26 Mo** |
+
+- Les conteneurs (`div.vfp-*.vfp-compact`) occupent 0 o.
+- **La baisse de mémoire est démontrée** dans Safari sur l'iPhone.
+- Restent lourds, en réserve, avec une correction invisible possible :
+  - `div.vfp-mur` : 26,9 Mo, invisible hors de la vitrine ;
+  - `div.vfp-cartes` : 13,4 Mo ;
+  - `i.vfp-coeur` : 12,6 Mo ;
+  - `#document` et `html` : 21,7 Mo chacun.
+
+**Validation sur l'iPhone** (08/10, Safari, `?banc=valide`) : même protocole et même critère, fixé d'avance, que pour `sousblanc`.
+- `corrige` = proposition + `compact`.
+- Ordre alterné.
+
+| Version | Endurance (allers-retours rapides) | Vitrine (See pricing) |
+|---|---|---|
+| proposition (sans `compact`) | 3 arrêts sur 3 | 0 sur 2 |
+| corrige (avec `compact`) | **0 arrêt sur 3** (20, 19 et 20 allers-retours, passes menées à leur terme) | 0 sur 2 |
+
+- **Critère rempli** : `corrige` s'arrête 0 fois sur 3, la référence 3 fois sur 3. Aucun arrêt de plus dans la vitrine.
+- **Démontré** : la baisse de mémoire graphique, de 490 à 215 Mo (mesure Safari ci-dessus).
+- **Fortement étayé** : `compact` supprime les arrêts du test d'endurance (3 passes de chaque côté, avec et sans la correction, en alternance). Le mécanisme est cohérent avec la mesure : les arrêts cessent quand la mémoire des lumières passe de 300 à 26 Mo.
+- **Non démontré** : l'absence totale d'arrêt dans tous les usages réels (autres iPhone, autres versions d'iOS, onglets ouverts).
+- **`compact` et `affiche` sont retenus** : ils entrent dans `SAFARI_IDS` (page publiée). `affiche` y prend la forme d'une correction de `safari.mjs` (`.vfp-affiche { will-change: filter; }`), la même règle que la variante `?v=affiche` essayée sur l'iPhone.
+- Contrôles locaux de la page publiée (Chromium) :
+  - image identique au pixel à `corrige.html` (iPhone et ordinateur, de P 0 à l'étude) ;
+  - 7 textures compactes chargées ;
+  - `will-change: filter` sur le seul bouton ;
+  - arrivée en haut ;
+  - en-tête à sa hauteur réelle ;
+  - vitrine et Pricing jusqu'au lien Stripe, sans paiement ;
+  - aucune erreur JavaScript.
+- **Mise en ligne** : avec l'accord de Loan, après un dernier coup d'œil sur l'adresse de test (voir `MISE-EN-LIGNE.md`). Les calques encore lourds (`vfp-mur`, `vfp-cartes`, `vfp-coeur`) restent en réserve, à reprendre seulement si des arrêts réapparaissent.
+
+## Retour de Loan du 08/10 (iPhone, adresse de test)
+
+« Le reste est beaucoup mieux. » Restent : bande noire en bas quand Safari replie sa barre, séparation du yin-yang « particulièrement lente », un plantage (« A problem repeatedly occurred », vers 15 h 18). Corrections dans `scripts/safari.mjs` (`lvh`, `camera`, retenues dans `SAFARI_IDS`) ; les demandes de mise en page (en-tête, pied de page, cartes) sont des corrections de contenu (`scripts/construire.mjs`, voir `MISE-EN-LIGNE.md`).
+
+**Bande noire en bas** (capture de l'étude, barre repliée) : cause démontrée le 04/10 (svh 695, lvh 735 sur son iPhone : les scènes épinglées font 100svh, l'écran barre repliée 100lvh). Correction `lvh` : les deux scènes prennent 100lvh, et tout ce qui est posé contre leur bas (See pricing, « Feedback », indice de défilement, règle des frames, texte mobile et son fond, « On the carpet ») remonte de 100lvh − 100svh. La composition (Loan, lumière, vitrine, cadrage de l'étude, diagonale du yin-yang) reste calculée sur 100svh (`hautVisible()`), comme avant : seul le fond s'étend sous la barre. Barre déployée, rien ne bouge à l'écran ; barre repliée, la scène va jusqu'en bas.
+- Première version (sans `hautVisible()`) écartée avant publication : avec l'écart relevé sur l'iPhone de Loan le 08/10 (121 px), Loan et son sol descendaient de 60 à 90 px, derrière « See pricing » (simulation à 393 × 647 avec des scènes de 768 px).
+- Contrôle local (barre simulée : scènes plus hautes que la zone visible de 40 et de 121 px) : voir « Vérification avant l'adresse de test (09–10/10) » ci-dessous.
+- Ordinateur et Chromium : lvh = svh, aucun changement (0 pixel de différence à 1440 px).
+
+**Lenteur du yin-yang** : `BANC_GESTE=bascule BANC_PLAGE=6.95,7.4 BANC_DUREE=3000 BANC_PEINTS=1 node scripts/banc.mjs trace mobile avant,proposition` (Chromium, iPhone 393×852, DPR 3, processeur ×4, séparation des moitiés).
+- Cause (démontrée dans Chromium par le suivi des invalidations) : après le recadrage (u 6,2 → 6,8), la caméra de l'étude rejoint sa cible par un amorti compté en **images** (8 % par image). Plus le téléphone est lent, plus elle met de temps à arriver ; pendant tout ce temps, chaque micro-mouvement change l'échelle, donc l'épaisseur des traits (`--k`) et la mise en page du texte SVG, et **les deux caméras** (photo, dessin, corrections en or et leurs ombres floues, négatif inversé) sont redessinées à chaque image.
+- Correction `camera` : même amorti, compté en **temps** (identique à 60 images/s) ; en mouvement, `--k` n'est réécrit que s'il change de plus de 2 % ; valeur exacte 220 ms après l'arrêt (déjà le moment où la caméra se redessine nette).
+
+| Séparation (u 6,95 → 7,4, 3 s) | avant | proposition |
+|---|---|---|
+| Images affichées | 43 | 94 |
+| Image médiane / p95 | 67 / 117 ms | 33 / 67 ms |
+| Images > 25 ms | 100 % | 61 % |
+| Rastérisation | 8,3 s | 3,3 s |
+| Redessins des caméras | 85 + 78 | 57 + 20 |
+
+- Bascule complète (u 6,1 → 8,5 en 8 s, outil de travail) : 140 → 227 images, rastérisation 10,4–11,7 → 6,0–6,1 s.
+- Image : identique au repos (ordinateur 1440 px : 0 % à P 0–0,75, jonction, planche ; 0,01 à 0,1 % dans l'étude, anticrénelage d'un cadrage arrêté à un résidu sous le pixel près). Chromium ne dit rien de Safari : à confirmer sur l'iPhone (`avant.html` contre `/`).
+- Reste coûteux, laissé tel quel : le recadrage réel (u 6,2 → 6,9, la caméra bouge vraiment) et le passage photo → croquis (u 8 → 8,45, opacité des deux photos de la caméra noire).
+
+### Vérification avant l'adresse de test (09–10/10)
+
+**Revue adversariale** (4 relecteurs, un sceptique par domaine, essais dans Chromium) : 18 constats ; retenus et corrigés :
+- `lvh` : la composition calculée sur 100lvh faisait descendre Loan derrière « See pricing » et le dessin de l'étude sous son texte → `hautVisible()` (déjà dans `d849bb0`) ; la diagonale du yin-yang part du bas réel de la scène (sinon, barre repliée, un triangle noir de la hauteur de la barre apparaissait d'un coup) ; toile de poussière à 100svh (sinon étirée de 19 %) ;
+- cartes mobiles : mesure du trait de crayon reportée pendant l'ouverture (rotation), paiement fait depuis la carte ouverte (la page ne remonte plus de 90 px, pas de réouverture surprise), clavier (Tab reste dans la carte, Échap rend le focus), carte qui se ferme rangée avant d'en ouvrir une autre, carte ouverte à plat ;
+- pages légales : plus de bande unie en haut (section remontée derrière l'en-tête de 82–99 px, texte immobile), sommaire jamais plus large que l'écran à 320 px ; en-tête de Video Feedback sur 2 lignes jusqu'à 320 px ; pied de page à 3 colonnes dès 770 px même avec une barre de défilement ;
+- construction : contrôle que le JavaScript de chaque page compile (une correction d'ajout appliquée deux fois cassait toute la page avec « Construction OK »).
+- Écartés : chiffres de `camera` différents entre deux passes du banc (commentaire aligné sur le tableau) ; inclinaison au toucher (déjà dans l'export ; la carte ouverte est quand même mise à plat).
+
+**Barre de Safari simulée** (svh et lvh figés ; construction du 10/10 contre `avant.html`, mêmes corrections sans `lvh` ni `camera`) :
+
+| Mesure (393 px, svh 647 / lvh 768) | avant.html | proposition |
+|---|---|---|
+| Pied de Loan / flaque de lumière (ouverture) | 511 / 497–529 | 511 / 497–529 |
+| « See pricing » | 513–610 | 513–610 |
+| Toile de poussière | 393 × 647 | 393 × 647 |
+| Étude, dessin (étapes 0 et 4) | 76–444 / −134–547 | 76–444 / −134–547 |
+| Étude, texte | 244–569 | 244–569 |
+| Diagonale à u 6,401, barre repliée | bord à 647 (bande noire dessous) | bord à 768, 0 px² de noir |
+| Pause et fin de la diagonale | 252,8–394,2 / −141,5–0 | identiques |
+
+- Écart de 40 px (svh 695 / lvh 735) : positions identiques à `avant.html` également.
+- Barre repliée simulée (zone visible 768) : `avant.html` montre la bande sombre en bas (comme la capture de Loan) ; la proposition va jusqu'en bas.
+- Ordinateur 1440 px, `avant.html` contre proposition : 0 % de pixels différents (0,01 % dans l'étude, sous le pixel).
+- Cartes (scripts de la revue rejoués) : traits justes après rotation, paiement depuis la carte ouverte sans saut, Tab bouclé dans la carte, aucune couche restée en place, aucune erreur JavaScript.
+
+**Cartes en petit sur mobile** : la planche mobile passe de 2 864 à 804 px de haut (calque `.vfk-cam`, qui porte `will-change: transform`, environ 3,5 fois plus petit).
+
+**Plantage** : cause non établie. Résultats du diagnostic relus sur l'iPhone de Loan le 09/10 (`resultats.html`) :
+- **le plantage du 08/10 vers 15 h 18 n'a pas été enregistré** : les 10 derniers arrêts gardés datent des tests d'endurance des 05–06/10 (phases blanc et étude, avant `compact`) ; dernière visite gardée : 08/10 à 19 h 11, page cachée après 1 s ;
+- causes possibles de l'absence (non démontrées) : page relue plus de 3 min après l'arrêt, page passée « cachée » juste avant, ou arrêt pendant la première seconde du chargement (première trace écrite au bout d'1 s) ;
+- **diagnostic renforcé le 09/10** (`optimise/diag.js`, adresse de test seulement) : trace écrite dès le chargement, fenêtre de détection 3 → 30 min, date complète et délai de relecture de chaque arrêt (affichés par `resultats.html`) ;
+- fait nouveau : sur son iPhone, hauteurs relevées le 08/10 au soir **svh 647, lvh 768** (contre 695 / 735 le 04/10, autre disposition de la barre de Safari) : l'écart couvert par `lvh` est de 121 px.
+
+## Retour de Loan du 15/10 : retournement des cartes en défilement très rapide
+
+« Quand je scrolle super vite, c'est un peu buggé ; à vitesse modérée, ça va. » Enquête (2 agents, Chromium, iPhone simulé 393 × 695, DPR 3, processeur ×4 et ×1, défilements à 750, 3 000 et 8 000 px/s, lancers à inertie, gestes tactiles ; images filmées une à une et état des cartes relevé à chaque image ; scripts dans le dossier de travail de la conversation).
+
+| Constat | Statut | Cause |
+|---|---|---|
+| En revenant vite, cartes vues à moitié retournées, de dos ou seulement esquissées | Démontré | La cascade (2 s) est minutée dès l'entrée ; à 3 000 px/s, les cartes sortent par le haut en 0,1–0,4 s et s'animent hors de vue |
+| Rembobinage visible : cartes déjà retournées qui se retournent à l'envers, se vident puis rejouent | Démontré | Remise à zéro dès que le haut d'une carte passe d'un pixel sous l'écran, puis rembobinage amorti sous les yeux (aussi au seul redéploiement de la barre de Safari, simulé) |
+| Carte vide restant en bas de l'écran | Démontré | Même seuil, plus la bande morte entre 0,85 et 1 hauteur d'écran |
+| Cartes vides pendant un passage très rapide | Démontré, inhérent | La séquence n'a pas le temps de se jouer ; inchangé (sinon il faudrait changer le dessin) |
+| Mauvaise face d'un calque 3D recomposé (Safari iOS) | Plausible | Non reproductible dans Chromium |
+| Revers sans son motif en lancer rapide | Plausible (réseau lent) | Images du revers en chargement différé |
+
+Corrections (`scripts/construire.mjs`, `scripts/optimisations.mjs`) : carte passée au-dessus de l'écran finie hors de vue ; remise à zéro seulement quand la première carte est à plus de 1,5 hauteur d'écran sous le bord, toutes ensemble et d'un coup ; cascade comptée depuis la carte précédente (cartes empilées) ; faces montrées / cachées à 90° en plus de `backface-visibility` (identique au pixel) ; revers chargés quand la planche approche (3 écrans).
+
+| Passage (cartes empilées, construction du 15/10) | Rembobinage vu | Revers vu au retour | État au retour |
+|---|---|---|---|
+| Lancer à 8 000 px/s puis retour à 5 000 px/s | 0 | 0 | de face (p 3,00) |
+| 3 000 px/s aller-retour | 0 | 0 | de face |
+| Aller-retour juste sous l'écran (3 000 px/s) | 0 | 0 | de face, pas de relance |
+| 750 px/s (témoin) | 0 | séquence normale | de face ; rejouée après un vrai retour dans l'étude, comme avant |
+
+Ordinateur (1440 et 1100 px) : 0 % de pixels différents contre la version de l'adresse de test (0,01 % dans l'étude, sous le pixel).
+
+**Fermeture de la carte ouverte** (retour de Loan, 15/10 : « quand je les ferme, ça bug, c'est saccadé »). Filmée image par image (iPhone simulé, processeur ×4) : la grande carte, haute de tout son contenu, glissait vers la place de la petite en passant par-dessus les autres cartes, puis devenait petite d'un coup ; une image de 150 ms au passage. Remplacée par un fondu (0,25 s, la carte rétrécit à peine), puis la petite carte réapparaît à sa place d'un fondu (0,24 s) ; opacité et échelle seulement. La planche mobile n'a plus de calque propre (`will-change` retiré sur mobile, où elle ne bouge pas) : plus de calque recréé à l'ouverture et à la fermeture. Images de 17 à 83 ms pendant la fermeture (×4). Rotation, paiement depuis la carte ouverte, clavier et réouverture rapide revérifiés.
+
+**Traits décalés sous les cartes** (retour de Loan, 15/10, capture iPhone 393 px : tous les traits de crayon 51 px plus bas que les cartes, après la fermeture d'une carte). Cause démontrée (Chromium, iPhone simulé) : le dessin n'était refait que si la largeur, la hauteur d'écran ou la hauteur d'une carte changeait. Quand ce qui est au-dessus des cartes change de hauteur (hauteur de l'en-tête, qui règle la marge du haut ; titre ou plaque qui passent sur une ligne de plus ou de moins), les cartes bougent et leurs traits restent : en-tête réduit de 51 px → traits 50–52 px sous les trois cartes, identique à la capture. Le déclencheur exact sur l'iPhone n'est pas reproductible ici (Safari). Corrections : hauteur du bloc des cartes et de la plaque comprises dans la clé du redessin, bloc observé en plus de la planche ; sur mobile, place des cartes revérifiée à la fermeture d'une carte et à chaque défilement (dessin refait si elles ont bougé de plus de 1,5 px). Vérifié : en-tête −51 px, titre +51 px, en-tête changé pendant qu'une carte est ouverte puis fermeture, cartes déplacées sans changement de taille (rattrapé au premier défilement) → 0–1 px d'écart. Au redessin, les traits de construction se retracent (1,6 s), comme après une rotation.
+
+**Arrêt sur les cartes, 1re version (15–16/10, remplacée le 17/10, voir plus bas)** (retour de Loan, 15/10 : « si on scrolle vite, on arrive tout en bas et on ne passe pas par les cartes »). Sur ordinateur, la page était déjà retenue pendant le retournement ; rien sur mobile. Sur mobile, une fois par visite : la page s'arrête quand les cartes sont centrées sous l'en-tête (sur petit écran où elles ne tiennent pas, quand la première arrive sous l'en-tête, et on peut encore descendre jusqu'à voir la dernière en entier) ; les cartes pas encore parties partent en cascade ; on peut remonter mais pas descendre jusqu'à la fin du retournement + 0,5 s. Un élan qui dépasse est arrêté net (`html.vfk-tenue`, `overflow: hidden`, seulement sur écran tactile) et la page revient sur les cartes (sur la première si elle a nettement dépassé), immobile jusqu'à la fin. Vérifié (iPhone simulé, coups de doigt avec élan, saut direct en bas de page, défilement lent) :
+
+| Écran | Geste | Arrêt | Cartes à l'arrêt (haut/bas, en-tête 91 px) | Libérée après |
+|---|---|---|---|---|
+| 393 × 852 | élan | oui | 220/359, 371/541, 553/723 (centrées : 129 px au-dessus et au-dessous) | ≈ 2,3 s, puis descente libre |
+| 393 × 852 | saut en bas de page | oui, à l'image suivante | idem | ≈ 2,6 s |
+| 393 × 852 | lent | à la place d'arrêt, le temps que la 3e finisse | idem | fin de la 3e + 0,5 s |
+| 375 × 553 | saut | oui | 105/274, 286/456, 468/638 (1re sous l'en-tête) | élan arrêté 0,3 s, puis descente permise jusqu'à la 3e entière ; bloquée là jusqu'à la fin |
+| 375 × 553 | élan court | oui, à la limite | 6/175, 187/357, 369/539 (3e en entier) | ≈ 2,3 s |
+| 393 × 852, mouvement réduit | élan | non (cartes déjà de face) | — | — |
+
+Revue contradictoire avant l'adresse de test (16/10, 3 relecteurs et 3 vérificateurs, Chromium) : 4 défauts mineurs confirmés et corrigés, 3 écartés. (1) Paysage et petit écran : page figée sur la 1re carte, la 3e hors de l'écran → élan arrêté 0,3 s seulement, puis glissé vers le bas permis jusqu'à la limite (`onTM`). (2) Retour de paiement : l'arrêt pouvait se déclencher entre le retournement de la carte payée et son ouverture automatique (saut de 141 à 308 px) → jamais d'arrêt après un retour de paiement. (3) Fenêtre passée sous 1000 px pendant le verrou ordinateur : un défilement renvoyait en haut de page (`ySnap` à 0) → `ySnap` utilisé seulement s'il a été posé. (4) À chaque fermeture d'une carte, tout le dessin était refait et les traits de construction se retraçaient 1,5 s sans raison : les rangées figées à l'ouverture prenaient la valeur arrondie de `getComputedStyle` (≈ 0,05 px de moins) → rangées figées à leur hauteur exacte ; 0 redessin à la fermeture (393 et 900 px). Revérifiés ensuite : scénarios ci-dessus, traits (en-tête −51 px, titre +51 px, carte ouverte), retour de paiement (single, pack + redimensionnement), parcours complets mobile / ordinateur / fenêtre étroite / mouvement réduit sans erreur.
+
+Ordinateur (1440 et 1100 px) : verrou d'origine inchangé, 3 cartes retournées, traits à 0–1 px, aucune erreur. Fenêtre étroite à la molette (900 px, mise en page mobile) : pas d'`overflow: hidden` (écran non tactile), traits à 0–1 px, aucune erreur.
+
+**Arrêt sur les cartes, version du 17/10 : fin de page provisoire** (retour de Loan, 17/10, vidéo d'écran de l'iPhone : « le blocage n'est pas fluide, ça secoue en boucle puis de moins en moins »). Vidéo analysée image par image (382 images, 120 i/s, décalage vertical mesuré entre images successives) : après le lancer, l'élan natif de Safari continue de descendre (+33, +32, +30 … +16 … +8 … +1 px par image) et le script de la 1re version ramène la page vers le haut toutes les 5 à 9 images (−85, −61, −88, −86, −60, −37, −21 px) : il se battait contre l'élan, que ni `scrollTo` ni `overflow: hidden` n'arrêtent dans Safari.
+
+Solution retenue : tant que les cartes n'ont pas été vues, la page **se termine provisoirement juste sous les cartes**. `html.vfk-borne` coupe la page juste sous les cartes : bas de page de hauteur nulle, marge basse négative de la section des cartes (`--vfk-sous`) et `overflow-y: clip` sur `.vf` (le bloc qui contient toute la page). La coupe est relative à la section des cartes : elle suit la mise en page (rotation comprise). Tout lancer, même très fort ou enchaîné, s'arrête comme en bas de page, avec le freinage et le rebond du navigateur ; on peut toujours remonter. Dès que la dernière carte est partie (en défilant, ou à l'arrivée en bas provisoire), la borne est retirée à la fin de son retournement + 0,5 s : le bas de page réapparaît dessous, sans que rien ne bouge à l'écran. Aucun script pendant le défilement (une comparaison par image dans `maj`), deux changements de style en tout (pose au chargement, retrait). Arrêt : cartes centrées sous l'en-tête ; si elles ne tiennent pas à l'écran (iPhone SE, paysage), dernière carte entière en bas. La borne n'est jamais posée sous le lecteur. Retour de paiement, mouvement réduit, ordinateur : pas de borne ; verrou ordinateur et gestionnaires d'origine inchangés.
+
+Pistes écartées, d'après le code source de WebKit (`main` et branches safari-7616 à 7625) et de Chromium 141, et des essais :
+- Aimantation native (`scroll-snap-type` + `scroll-snap-stop: always` sur un repère) : Safari pose bien un lancer sur le repère, mais (1) tant que des points existent au début d'un geste, il raccourcit l'élan d'environ 5 fois sur toute la page (`UIScrollViewDecelerationRateFast`, bug WebKit 243582) ; (2) **un toucher qui interrompt un élan aimanté place la page instantanément sur le repère** (`_scrollViewDidInterruptDecelerating` → `_createVisibleContentRectUpdate` → `setContentOffset:… animated:NO`), et ce toucher n'est pas transmis à la page (`isInterruptingMomentumScrollingWithEvent`) : en lançant plusieurs fois de suite, la page aurait sauté d'un coup ; (3) pas d'aimantation si l'élan vise le bas de page ; (4) `mandatory` : retour lent à rebours ou saut en fin d'élan. Chrome : un lancer fort passe le repère.
+- Retenue par script (glissé ignoré, `scrollTo`) : impossible pendant un élan dans Safari (secousses), et les touchers qui relancent un élan ne parviennent pas à la page.
+
+Vérifié dans Chromium avec de vrais lancers (`chrome.gpuBenchmarking.swipe`, élan compris) : 393 × 852, lancers de 6 000 à 9 000 px/s, 2 à 5 de suite, depuis 3 à 10 écrans au-dessus → arrêt exact en bas provisoire, **0 changement de sens**, cartes retournées à l'écran, page libérée ≈ 2,5 s après l'arrivée puis défilement libre ; lancer doux → s'arrête de lui-même avant ; 375 × 553 et 430 × 932 : idem. Arrêt (saut direct en bas provisoire) : 393 × 852 cartes 220/359, 371/541, 553/723 (centrées) ; 375 × 553 dernière carte 369/539 entière ; 375 × 667, 430 × 932 centrées ; 852 × 393 dernière carte entière ; libérée après le retournement dans tous les cas. Glissé lent : pause de ≈ 0,3 s en bas provisoire le temps que la 3e carte finisse. Molette (900 px) : arrêt net puis libre. Traits, retour de paiement (single, pack + redimensionnement, programme), ordinateur 1440 / 1100 px, parcours complets mobile / ordinateur / fenêtre étroite / mouvement réduit : sans erreur. Le rebond d'iOS lui-même ne se simule pas ici : à confirmer sur l'iPhone de Loan.
+
+Revue contradictoire de cette version (18/10, 2 relecteurs et 2 vérificateurs, code de WebKit relu) : 3 défauts confirmés et corrigés, 1 écarté (logo du bas de page chargé à la libération : sans effet visible). (1) et (2) Rotation pendant que la fin provisoire est posée : Safari refait la mise en page de la rotation avant tout script (`WebPage::dynamicViewportSizeUpdate`) puis borne la position à la hauteur du document ; avec une hauteur fixe calculée pour l'ancien format, le lecteur pouvait être renvoyé ≈ 10 000 px plus haut, et l'arrêt se faisait hors écran → coupe relative à la section des cartes (ci-dessus), arrivée détectée sur la vraie fin du document. Rotation simulée à la manière de Safari : lecteur gardé près des cartes (127 à 357 px, contre 10 128). (3) Clavier (Tab, fenêtre de moins de 1000 px) : focus sur les liens cachés du bas de page → un élément caché sous la fin provisoire qui prend le focus libère la page. Revérifiés ensuite : arrêt et vrais lancers, petits écrans, paysage, molette, traits, retour de paiement, ordinateur, parcours complets sans erreur.
+
+**Freinage avant les cartes, iPhone / iPad (18/10)** (retour de Loan : « ça s'arrête bien, ça ne secoue pas, mais il n'y a pas la courbe smooth » ; ralentir légèrement quand on arrive vite). Sur iPhone, la glissade après un lancer appartient à Safari ; il en a deux : normale et courte (`UIScrollViewDecelerationRateFast`, choisie au début de chaque geste quand des points d'aimantation existent). Dans les 2 écrans qui précèdent l'arrêt, `html.vfk-frein` pose `scroll-snap-type: y proximity` ; le seul point est le cran du projecteur (`.vfp-cran`, ≈ 1 300 px, prévu par le design, jamais visé d'ici) : chaque lancer commencé dans la zone freine environ 5 fois plus tôt, puis la page s'arrête sur la fin provisoire. Aucun point visé (sur iPhone, un toucher pendant une glissade aimantée fait sauter la page sur le point) ; pas l'en-tête comme point (collant : Chrome le prend à sa position à l'écran et ramenait la page de 55 px, mesuré). La zone suit la vraie fin du document ; classe retirée à l'arrivée et à la libération. Une comparaison par image dans `maj`, rien d'autre.
+
+Chrome / Android : pas de glissade courte. La glissade aimantée de Chrome a été essayée (repère à la fin provisoire) : elle pose bien un lancer modéré en douceur (70 → 50 → 27 → 21 → 17 … → 3 px par image), mais au moment où elle prend le relais, la page fait un bond d'une image (mesuré sur une page légère : … 51 50 49 25 **163** 73 67 … px par image, contre … 49 24 48 47 … sans elle) : écartée. Sur Android, l'arrêt reste celui du bas de page. La fin provisoire n'est posée que si le navigateur connaît `overflow-y: clip` (Safari ≥ 16, Chrome ≥ 90, Firefox ≥ 81) ; sinon, pas d'arrêt plutôt qu'un bas de page qui déborderait.
+
+Vérifié dans Chromium (vrais lancers, agent utilisateur iPhone puis Android) : zone de freinage posée ≈ 1,6–2 écrans avant l'arrêt et retirée à l'arrivée, arrêt exact, 0 changement de sens, à 393 × 852, 430 × 932 et 375 × 553 ; Android inchangé. Le freinage lui-même (propre à Safari) ne se simule pas ici : à juger sur l'iPhone de Loan. Réglage possible : longueur de la zone (`ZONE`, en hauteurs d'écran).
+
+**Les autres navigateurs (18–19/10)** (demande de Loan : « pas tout le monde n'a Safari »). Audit de toutes les corrections de la branche, navigateur par navigateur (2 relecteurs, vérification contradictoire, code de WebKit, Chromium et Firefox iOS relu) ; 5 défauts confirmés, corrigés et vérifiés :
+- *Tablette en paysage* (iPad ≥ 1 000 px, iPad Pro 12,9″ en portrait, tablettes Android, PC tactiles) : la mise en page ordinateur gardait le verrou d'origine, qui ramène la page par script pendant l'élan du doigt (mesuré : 12 retours et un saut de −364 px en un lancer, la secousse filmée sur iPhone le 17/10). Sur écran tactile (`any-pointer: coarse`), plus aucun retour par script : la fin provisoire est posée au point de retournement de la mise en page ordinateur, puis retirée après le retournement. Souris et pavé tactile : verrou d'origine inchangé. Vérifié : iPad 1180 × 820, lancers jusqu'à 7 000 px/s, arrêt exact, 0 changement de sens.
+- *Freinage seulement en descendant* : Safari choisit la glissade courte au début du geste, quel que soit le sens ; en remontant dans les 2 écrans avant les cartes, chaque lancer était ≈ 5 fois plus court. La classe `vfk-frein` suit maintenant le sens du dernier mouvement.
+- *Firefox iOS en « site pour ordinateur »* : reconnu comme iPhone (`navigator.platform`), donc freiné comme Safari et Chrome iOS.
+- *Carte ouverte, Close et fond sombre* : sur Safari 16 à 18.3 (tous les navigateurs d'iPhone de ces versions, applis Instagram / Facebook comprises) et Chrome 105 à 128 (Samsung Internet 20 à 27, vieux Android), `container-type` de l'export faisait de la carte ouverte le repère de ses éléments fixes : Close et le fond défilaient avec le texte et sortaient de l'écran. La carte ouverte n'est plus un conteneur (`container-type: normal`, aucune règle de l'export n'en dépend). Vérifié sur le moteur ancien reproduit : Close reste à 16 px du haut.
+- *Ordinateur, fenêtre étroite avec barre de défilement classique* (Windows, Linux, souris sur Mac) : ouvrir une carte retirait la barre, la page derrière changeait de largeur et tous les traits étaient redessinés à la fermeture. La place de la barre est gardée (`scrollbar-gutter: stable`, classe `vfk-barre` posée seulement si la barre prend de la place) : 0 redessin.
+- Écarté : rien d'autre ne dépend du navigateur ; sans `overflow: clip` (Safari < 16), pas de fin provisoire, donc ni arrêt ni secousse.
+
+Vérification finale (19/10, 2 relecteurs et 2 vérificateurs, Chromium 141 seul : Firefox et WebKit ne se téléchargent pas ici, refus du proxy) : 96 vrais lancers (iPhone, Android, iPad, tablette Android, 8 tailles, jusqu'à 9 000 px/s, enchaînés) → arrêt sur les cartes sans les dépasser, 0 changement de sens, 0 saut d'image, page libérée 0,7 à 0,9 s après la dernière carte, freinage seulement iPhone / iPad en descente, 0 erreur, aucun redessin ni boucle pendant les lancers. Les deux corrections de la carte ouverte : captures identiques au pixel près, `vfk-barre` retirée par tous les chemins de fermeture. Deux défauts mineurs confirmés :
+- *Clavier* : en descendant à la touche Tab, le premier lien du bas de page prenait le focus hors de l'écran (le navigateur le montre pendant que la page est encore coupée). Corrigé : il est montré après la libération (`scrollIntoView({ block: "nearest" })`) ; visible en 900 × 800, iPhone et iPad.
+- *Fenêtre redimensionnée juste au-dessus des cartes* (surtout une fenêtre d'ordinateur dont on réduit la hauteur) : l'arrêt reste celui de l'ancienne taille, la première carte peut être en partie cachée pendant son retournement. Pas pire qu'avant (main va directement en bas de page) ; non corrigé, car la correction testée ajoute un écouteur et un retour par script à la libération (risque de saccade) pour un cas rare. Les rotations de téléphone gardent le contenu en place (ancrage des navigateurs) et ne sont pas concernées.
+
+**« See pricing » plus tôt** (retour de Loan, 17/10) : départ de l'apparition à 4,2 s au lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s : lisible vers 5 s, à la fin de l'allumage du projecteur, au lieu de ≈ 6,3 s (ordinateur et mobile).
 
 ## Vérifications
 

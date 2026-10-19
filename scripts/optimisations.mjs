@@ -55,16 +55,13 @@ const TOUTES = [
     apres: "finVerrou = t0 + ((3.8 + (C.length - 1) * LAG) / VIT) * 1000 + 150; armerVerrou(); }" },
 
   // Aimantation (validée par Loan le 02/10, à reporter dans Claude Design) : scroll-snap « proximity » ramenait la
-  // page au cran du projecteur après chaque cran de molette (molette lente bloquée, mesuré). L'aimantation est
-  // retirée ; la page s'ouvre toujours au cran, comme avant (l'aimantation l'y plaçait pendant l'écran de chargement).
+  // page au cran du projecteur après chaque cran de molette (molette lente bloquée, mesuré). Seule l'aimantation est
+  // retirée : la page s'ouvre en haut, comme le prévoit le code d'origine (enHaut → scrollTo(0, 0)). L'aimantation
+  // l'emmenait parfois au cran pendant le chargement (course, selon le navigateur et la largeur) ; l'ouverture au cran
+  // un temps forcée ici déclenchait le mode « vite » (séquence d'ouverture écourtée) et plaçait le titre sous l'en-tête
+  // sur mobile (retour de Loan, 03/10).
   { id: "aimantation", quoi: "Aimantation au cran du projecteur retirée", fichiers: VF, n: 1,
     avant: "html { scroll-snap-type: y proximity; }", apres: "/* Aimantation retirée (scripts/optimisations.mjs, validé par Loan le 02/10) : la molette n'est plus ramenée au cran. */" },
-  { id: "aimantation", quoi: "Ouverture au cran du projecteur", fichiers: VF, n: 1,
-    avant: 'if (cran && cran.__t !== Math.round(s0 + tenue * 0.5)) { cran.__t = Math.round(s0 + tenue * 0.5); cran.style.top = cran.__t + "px"; }',
-    apres: 'if (cran && cran.__t !== Math.round(s0 + tenue * 0.5)) { const ouvrir = cran.__t === undefined && window.scrollY < 2 && !!document.getElementById("ld-chargement"); cran.__t = Math.round(s0 + tenue * 0.5); cran.style.top = cran.__t + "px"; if (ouvrir) window.scrollTo(0, cran.getBoundingClientRect().top + window.scrollY); ' + OPTIM + "ouverture au cran, comme le faisait l'aimantation retirée. */ }" },
-  { id: "aimantation", quoi: "Ouverture au cran du projecteur (montage, chargement)", fichiers: VF, n: 1,
-    avant: "    const enHaut = () => window.scrollTo(0, 0);",
-    apres: '    const enHaut = () => { const c = document.querySelector(".vfp-cran"); window.scrollTo(0, c && c.__t ? c.getBoundingClientRect().top + window.scrollY : 0); }; ' + OPTIM + "ouverture au cran du projecteur. */" },
 
   // Poussière du projecteur : la boucle d'animation s'arrête quand le projecteur est hors écran.
   { id: "poussiere", quoi: "Poussière du projecteur : boucle arrêtée hors écran", fichiers: VF, n: 1,
@@ -113,8 +110,17 @@ const TOUTES = [
   // de toute la page au moment où elle apparaît. La feuille reste, inerte (elle ne vise que l'écran retiré).
   { id: "chargement", quoi: "Écran de chargement : feuille de style laissée en place", fichiers: ["chargement.js"], n: 1,
     avant: "    el.remove(); st.remove();", apres: "    el.remove(); " + OPTIM + "la feuille, inerte, reste en place. */" },
+  // Ressource en échec (ex. balise Cloudflare Web Analytics bloquée par Safari ou un bloqueur) : elle n'arrivera jamais.
+  // Safari ne laisse alors aucune trace (Resource Timing) : l'écran restait à 96 % jusqu'à sa limite de 20 s (retour
+  // de Loan, 03/10). Un échec compte désormais comme terminé.
+  { id: "chargement", quoi: "Écran de chargement : une ressource en échec ne bloque plus", fichiers: ["chargement.js"], n: 1,
+    avant: "  const recu = u => /^(blob|data):/.test(u) || performance.getEntriesByName(abs(u)).length > 0;",
+    apres: "  const echecs = new Set(); " + OPTIM + "une ressource en échec n'arrivera jamais (Safari n'en garde aucune trace). */\n" +
+      "  addEventListener(\"error\", e => { const t = e.target; if (t && t !== window && (t.src || t.href)) echecs.add(abs(t.src || t.href)); }, true);\n" +
+      "  const recu = u => /^(blob|data):/.test(u) || echecs.has(abs(u)) || performance.getEntriesByName(abs(u)).length > 0;" },
+  // Version 7p : le contenu a encore changé depuis la 7o publiée le 03/10 (cache d'un an chez les visiteurs).
   ...PAGES_PUBLIEES.map((f) => ({ id: "chargement", quoi: "Écran de chargement : nouvelle version (cache)", fichiers: [f], n: 1,
-    avant: "chargement.js?v=7", apres: "chargement.js?v=7o" })),
+    avant: "chargement.js?v=7", apres: "chargement.js?v=7p" })),
 
   // Scripts exécutés deux fois (par la page, puis par le moteur) : une seule installation suffit.
   { id: "doublons", quoi: "Header flottant installé une seule fois", fichiers: ["header-flottant.js"], n: 1,
@@ -143,6 +149,13 @@ const TOUTES = [
   // (aucun octet économisé) et l'actuel : −0,8 Mo au premier chargement, aucune apparition tardive mesurée.
   ...IMAGES_DIFFEREES.map(([f, avant, n]) => ({ id: "images", quoi: 'Image loin sous la ligne de flottaison : loading="lazy"', fichiers: [f], n,
     avant, apres: avant.replace("<img ", '<img loading="lazy" ') })),
+  // Revers des cartes chargés dès que la planche approche (3 écrans) : en défilement rapide, le seuil du chargement différé du
+  // navigateur arrivait trop tard et le revers se posait sans son motif (revue du 15/10, réseau lent simulé).
+  { id: "images", quoi: "Revers des cartes chargés à l'approche de la planche", fichiers: VF, n: 1,
+    avant: '    window.addEventListener("load", refaire);\n',
+    apres: '    window.addEventListener("load", refaire);\n' +
+      '    ' + OPTIM + "revers des cartes chargés dès que la planche approche (3 écrans). */\n" +
+      '    if (window.IntersectionObserver) { const io = new IntersectionObserver((es) => { if (!es.some((e) => e.isIntersecting)) return; io.disconnect(); sec.querySelectorAll(".vfk-dos img[loading]").forEach((im) => { im.loading = "eager"; }); }, { rootMargin: "0px 0px 300% 0px" }); io.observe(sec); }\n' },
 ];
 
 // Fichiers ajoutés ou remplacés dans public/ (construire.mjs les contrôle avant de les copier) :

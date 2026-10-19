@@ -1,0 +1,17 @@
+// ADRESSE DE TEST : https://loandrouard-essai.loandrouard-website.workers.dev — jamais loandrouard.com.
+// Aucune route ni domaine : seulement l'adresse workers.dev. Construction avec ESSAI=1 (diagnostic temporaire et
+// pages de comparaison actuel.html / textures.html). Déploiement : npm run publier:essai (accord de Loan).
+{
+  "name": "loandrouard-essai",
+  "main": "worker/essai.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "services": [{ "binding": "API", "service": "loan-api" }],
+  "workers_dev": true,
+  "preview_urls": false
+}
