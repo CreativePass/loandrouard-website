@@ -6,6 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
 import { SAFARI, SAFARI_IDS, SAFARI_TOUTES, VARIANTES_ESSAI, fichiersSafari, controleTextures } from "./safari.mjs";
+import { TRADUCTION } from "./traduction-fr.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
@@ -277,6 +278,9 @@ const CORRECTIONS = [
     apres: '<div class="vf-tier">\n<b>Also included</b>\n<div class="vf-pt"><i></i><span>Targeted exercises after each video</span></div>' },
   { quoi: "Programme : « In the program » en or", fichiers: VF, n: 1,
     avant: ".vf-tier--prog { color: #E3D5B8; }", apres: ".vf-tier--prog { color: #C6A05E; }" },
+  // Carte payée (19/10, demandé par Loan avec la version française) : la consigne de tournage, évidente, devient l'invitation à envoyer.
+  { quoi: "Carte payée : « Send your videos for analysis. » (19/10)", fichiers: VF, n: 3,
+    avant: "<span>Film the whole routine, front on, full body in frame.</span>", apres: "<span>Send your videos for analysis.</span>" },
   { quoi: "Styles : lien Terms of sale cliquable, délai sous les cartes, fond noir en haut de page", fichiers: VF, n: 1,
     avant: ".vfk-note[data-on] { opacity: 1; }",
     apres: ".vfk-note[data-on] { opacity: 1; }\n" +
@@ -489,16 +493,17 @@ function corriger(t, c, f, bavard = true) {
   return t;
 }
 
-// Corrections de contenu, optimisations de performance (scripts/optimisations.mjs), puis corrections Safari retenues
-// (scripts/safari.mjs).
-for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI]) {
+// Corrections de contenu, optimisations de performance (scripts/optimisations.mjs), corrections Safari retenues
+// (scripts/safari.mjs), puis version française (scripts/traduction-fr.mjs, appliquée au texte final, sans un message par texte).
+for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI, ...TRADUCTION]) {
   for (const f of c.fichiers) {
     const p = path.join(PUBLIC, f);
     if (!fs.existsSync(p)) continue;
-    const t = fs.readFileSync(p, "utf8"), u = corriger(t, c, f);
+    const t = fs.readFileSync(p, "utf8"), u = corriger(t, c, f, !TRADUCTION.includes(c));
     if (u !== t) fs.writeFileSync(p, u);
   }
 }
+console.log(`Version française : ${TRADUCTION.length} remplacements (scripts/traduction-fr.mjs)`);
 
 // Adresse de test : pages de comparaison, construites depuis l'export avec les mêmes corrections de contenu et
 // optimisations que la page publiée, plus seulement les corrections Safari indiquées (scripts/safari.mjs).
@@ -587,16 +592,18 @@ for (const f of textes) {
   if (/\.html$/.test(f)) {
     if (t.includes("loandrouard@gmail.com")) erreurs.push(`${nom} contient l'adresse provisoire loandrouard@gmail.com`);
     if (t.includes("À COMPLÉTER")) erreurs.push(`${nom} contient encore « À COMPLÉTER »`);
-    // Les liens d'en-tête Home / The Journey / Press doivent rester des <span> désactivés.
-    for (const m of t.matchAll(/<a\b[^>]*>\s*(Home|The Journey|Press[^<]*)\s*<\/a>/g))
-      erreurs.push(`${nom} : « ${m[1]} » est un lien actif`);
+    // Les liens d'en-tête Home / The Journey / Press (Accueil / L’histoire / Presse en français) doivent rester des <span>
+    // désactivés ; le texte d'un lien est lu bloc de langue par bloc de langue (sc-if de scripts/traduction-fr.mjs).
+    for (const m of t.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g))
+      for (const x of m[1].split(/<\/?sc-if\b[^>]*>/).map((s) => s.trim()))
+        if (/^(Home|The Journey|Press.*|Accueil|L’histoire|Presse.*)$/.test(x)) erreurs.push(`${nom} : « ${x} » est un lien actif`);
   }
 }
 
 // Les corrections ne doivent pas déséquilibrer la structure de la page (balises ouvertes / fermées).
 const solde = (t) => ["div", "sc-if", "article", "section"].map((b) =>
   (t.match(new RegExp("<" + b + "\\b", "g")) || []).length - t.split("</" + b + ">").length + 1).join(",");
-for (const f of new Set([...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI].flatMap((c) => c.fichiers))) {
+for (const f of new Set([...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI, ...TRADUCTION].flatMap((c) => c.fichiers))) {
   const avantC = solde(fs.readFileSync(path.join(RACINE, f), "utf8")), apresC = solde(fs.readFileSync(path.join(PUBLIC, f), "utf8"));
   if (avantC !== apresC) erreurs.push(`${f} : les corrections déséquilibrent les balises (${avantC} → ${apresC})`);
 }
@@ -641,7 +648,8 @@ for (const f of ["Video Feedback.dc.html", "index.html", ...(ESSAI ? Object.keys
 // Références locales statiques (src / href / url()) qui pointeraient vers un fichier absent.
 for (const f of textes) {
   const t = fs.readFileSync(f, "utf8");
-  const refs = [...t.matchAll(/(?:src|href)="([^"#{}]+)"|url\(\s*['"]?([^'")#{}]+)['"]?\s*\)/g)]
+  // Liens dans la langue de la page (scripts/traduction-fr.mjs) : vérifiés sans leur suffixe ?lang=fr.
+  const refs = [...t.replaceAll('{{ suffixeLangue }}"', '"').matchAll(/(?:src|href)="([^"#{}]+)"|url\(\s*['"]?([^'")#{}]+)['"]?\s*\)/g)]
     .map((m) => m[1] || m[2]);
   for (const r of refs) {
     if (/^(https?:|mailto:|tel:|data:|blob:|\/\/|javascript:|%23)/.test(r) || r.includes("${")) continue;
