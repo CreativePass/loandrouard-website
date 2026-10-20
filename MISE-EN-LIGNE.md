@@ -29,6 +29,7 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
     - 18/10 (retour de Loan) : arrêt validé ; sur iPhone / iPad, freinage avant les cartes (glissade courte de Safari dans les 2 écrans qui précèdent), Android inchangé ; fin provisoire seulement si le navigateur connaît `overflow-y: clip`.
     - 18–19/10 (« pas tout le monde n'a Safari ») : arrêt aussi sur tablette en paysage (sans retour par script au doigt), freinage seulement en descendant, Firefox iOS reconnu, Close et fond fixes sur Safari 16 à 18.3 et Chrome 105 à 128, place de la barre de défilement gardée sur ordinateur (`PERFORMANCE.md`, « Les autres navigateurs »).
   - 19/10, demandé par Loan avec la version française : sur la carte payée, la consigne « Film the whole routine, front on, full body in frame. » devient « Send your videos for analysis. » (3 cartes).
+  - 20/10, demandé par Loan : CGV § 15, médiateur **CM2C** (49 rue de Ponthieu, 75008 Paris, 01 89 47 00 14, `cm2c.net/declarer-un-litige.php`, `litiges@cm2c.net`) au lieu de MED CONSO DEV ; texte français repris de la mention fournie par CM2C (espace professionnel de Loan, compte valable jusqu'au 20/10/2029), traduit en anglais ; CGV « Version du 20 octobre 2026 ».
 - **Version française de Video Feedback** (19/10, traductions validées par Loan ; `scripts/traduction-fr.mjs`, appliqué après toutes les autres corrections) :
   - adresse `?lang=fr` ou bouton FR de l'en-tête (qui recharge la page ; EN la ramène en anglais, 中文 reste inactif). L'anglais reste la version par défaut, inchangée (mêmes textes, captures identiques) ;
   - chaque texte anglais reste tel quel dans un bloc `<sc-if value="{{ en }}">`, le français est posé à côté (comme les pages légales) ; textes écrits par le script (sommaire, noms et délais des formules, message WhatsApp, surtitre de l'étude, bouton Fermer de la carte ouverte) et attributs lus par les lecteurs d'écran (`tr[…]`) aussi ;
@@ -107,8 +108,8 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
 - [x] Achat test réel Single 49 € (01/10, paiement intégré) : payé, facture avec mémo, libellé « LOAN DROUARD », `/whatsapp` → accès débloqué
 - [x] Remboursement de l'achat test (01/10) : `/whatsapp` → 402 « remboursée », la carte se referme (droit « PaymentIntents : lecture » présent)
 - [ ] Achat test de l'abonnement, puis résiliation et remboursement
-- [x] Demande d'adhésion MED CONSO DEV envoyée (01/10) — convention à signer à réception
-- [ ] Convention MED CONSO DEV signée (https://www.medconsodev.eu/demande-adhesion-pro.php)
+- [x] Demande d'adhésion MED CONSO DEV envoyée (01/10) — remplacée par CM2C
+- [x] Médiateur : adhésion CM2C (compte valable jusqu'au 20/10/2029) ; CGV § 15 mises à jour et en ligne le 20/10 avec l'accord de Loan (version Cloudflare `89176a38`, 132 fichiers servis identiques à `public/`, seul `CGV.dc.html` a changé)
 - [x] `contact@loandrouard.com` : redirection OVH vers `loandrouard@gmail.com` (offre « redirect », sans boîte) ; adresse remise sur CGV, Privacy et Legal et republiée le 02/10
 - [x] Produits Stripe renommés en anglais (02/10) : « Loan Drouard — Single feedback / 3× feedback pack / Quarterly program », descriptions en anglais (affichées au paiement et sur les factures)
 - [x] Corrections des cartes du 02/10 : appliquées par `construire.mjs`, vérifiées en local (captures 1440 / 390 px, clic sur « Terms of sale », maintien du défilement) et publiées le 02/10 avec l’accord de Loan ; pages en ligne identiques à `public/`
