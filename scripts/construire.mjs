@@ -24,6 +24,8 @@ const PAGES = [
 ];
 const SCRIPTS = ["support.js", "chargement.js", "header-flottant.js", "poussiere-or.js", "blueprint.js"];
 const DOSSIERS = ["_ds", "assets"];
+// Icône du site (silhouette envoyée par Loan le 20/10, recadrée en carré) : lue d'office par les navigateurs à la racine.
+const ICONES = ["favicon.ico", "apple-touch-icon.png"];
 const EXCLUS = ["assets/photos/press-hd"]; // photos HD de Press, pas encore publique
 const IGNORES = [".DS_Store", "Thumbs.db"];
 
@@ -470,7 +472,7 @@ function copier(src, dst) {
 fs.rmSync(PUBLIC, { recursive: true, force: true });
 fs.mkdirSync(PUBLIC);
 
-for (const f of [...PAGES, ...SCRIPTS, ...DOSSIERS]) {
+for (const f of [...PAGES, ...SCRIPTS, ...ICONES, ...DOSSIERS]) {
   const src = path.join(RACINE, f);
   if (!fs.existsSync(src)) erreurs.push(`Fichier manquant dans l'export : ${f}`);
   else copier(src, path.join(PUBLIC, f));
