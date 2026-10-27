@@ -21,17 +21,17 @@ const INSECABLE = (t) => t.replace(/ /g, NB);
 // Langue lue dans l'adresse, avant tout affichage (page et écran de chargement).
 const LIRE_FR = '(() => { try { return new URLSearchParams(location.search).get("lang") === "fr"; } catch (e) { return false; } })()';
 
-// Bouton des cartes (retour de Loan du 27/10 : « Pay » va trop droit au but). Trois essais à comparer, choisis au moment de
-// construire : BOUTON=select (par défaut), choose ou start (ex. BOUTON=choose npm run construire). Texte [anglais, français].
+// Bouton des cartes (retour de Loan du 27/10 : « Pay » va trop droit au but). Essais choisis au moment de construire :
+// BOUTON=choose (par défaut) ou start (ex. BOUTON=start npm run construire). Texte [anglais, français].
+// « Select · 49 € » / « Choisir · 49 € », essayé le 27/10, écarté par Loan.
 const BOUTONS = {
-  select: (prix) => [`Select · ${prix}`, `Choisir · ${prix}`],
   choose: () => ["Choose this package", "Choisir cette formule"],
   start: () => ["Get started", "Commencer"],
 };
-export const BOUTON = BOUTONS[process.env.BOUTON] ? process.env.BOUTON : "select";
+export const BOUTON = BOUTONS[process.env.BOUTON] ? process.env.BOUTON : "choose";
 export const PRIX_BOUTON = ["49", "129", "499"].map((p) => p + NB + "€");
 export const texteBouton = (prix) => BOUTONS[BOUTON](prix);
-// Même texte sur les trois formules (choose, start) : une seule entrée, 6 occurrences (vitrine et planche II).
+// Même texte sur les trois formules : une seule entrée, 6 occurrences (vitrine et planche II) ; sinon une par prix.
 const TEXTES_BOUTON = (() => { const l = PRIX_BOUTON.map(texteBouton);
   return l.every(([en]) => en === l[0][0]) ? [[...l[0], 6]] : l.map(([en, fr]) => [en, fr, 2]); })();
 
