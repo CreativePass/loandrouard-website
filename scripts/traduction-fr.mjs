@@ -21,6 +21,20 @@ const INSECABLE = (t) => t.replace(/ /g, NB);
 // Langue lue dans l'adresse, avant tout affichage (page et écran de chargement).
 const LIRE_FR = '(() => { try { return new URLSearchParams(location.search).get("lang") === "fr"; } catch (e) { return false; } })()';
 
+// Bouton des cartes (retour de Loan du 27/10 : « Pay » va trop droit au but). Trois essais à comparer, choisis au moment de
+// construire : BOUTON=select (par défaut), choose ou start (ex. BOUTON=choose npm run construire). Texte [anglais, français].
+const BOUTONS = {
+  select: (prix) => [`Select · ${prix}`, `Choisir · ${prix}`],
+  choose: () => ["Choose this package", "Choisir cette formule"],
+  start: () => ["Get started", "Commencer"],
+};
+export const BOUTON = BOUTONS[process.env.BOUTON] ? process.env.BOUTON : "select";
+export const PRIX_BOUTON = ["49", "129", "499"].map((p) => p + NB + "€");
+export const texteBouton = (prix) => BOUTONS[BOUTON](prix);
+// Même texte sur les trois formules (choose, start) : une seule entrée, 6 occurrences (vitrine et planche II).
+const TEXTES_BOUTON = (() => { const l = PRIX_BOUTON.map(texteBouton);
+  return l.every(([en]) => en === l[0][0]) ? [[...l[0], 6]] : l.map(([en, fr]) => [en, fr, 2]); })();
+
 // Textes de Video Feedback : [anglais, français, occurrences], entre deux balises, HTML compris (<br>, <em>, &nbsp;).
 // En-tête (Home, The Journey et Press restent grisés et non cliquables), aussi sur les pages légales.
 const ENTETE = [
@@ -39,7 +53,7 @@ const TEXTES = [
   ["broken down", "décortiqué", 1],
   ["move by move", "geste par geste", 1],
   ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer.", 1],
-  ["See pricing", "Voir les tarifs", 1],
+  ["See the options", "Voir les formules", 1], // 27/10 : « See pricing » / « Voir les tarifs » auparavant (scripts/construire.mjs)
   ["Three packages · from 49&nbsp;€", "Trois formules · dès 49&nbsp;€", 1],
   ["Scroll for everything included", "Faites défiler pour tout le détail", 1],
   ["Back to Loan", "Retour à Loan", 1],
@@ -51,9 +65,9 @@ const TEXTES = [
   ["49&nbsp;€ · one full analysis", "49&nbsp;€ · analyse complète", 2],
   ["129&nbsp;€ · 3 full analyses", "129&nbsp;€ · trois analyses", 2],
   ["499&nbsp;€ · weekly coaching", "499&nbsp;€ · coaching hebdo", 2],
-  ["Pay 49&nbsp;€", "Payer 49&nbsp;€", 2],
-  ["Pay 129&nbsp;€", "Payer 129&nbsp;€", 2],
-  ["Pay 499&nbsp;€", "Payer 499&nbsp;€", 2],
+  // Bouton des cartes (27/10, « Pay » remplacé dans scripts/construire.mjs) : texte de l'essai choisi (BOUTON, ci-dessus).
+  ...TEXTES_BOUTON,
+  ["See full details", "Voir tous les détails", 3], // 27/10 : sous les cartes de la vitrine
   ["Spots left", "Places restantes", 4],
   ["Written or voice feedback", "Retour écrit ou vocal", 4],
   ["Three analyses, progress tracked between them", "Trois analyses, avec le suivi de vos progrès de l’une à l’autre", 1],

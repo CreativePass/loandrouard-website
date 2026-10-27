@@ -6,7 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
 import { SAFARI, SAFARI_IDS, SAFARI_TOUTES, VARIANTES_ESSAI, fichiersSafari, controleTextures } from "./safari.mjs";
-import { TRADUCTION } from "./traduction-fr.mjs";
+import { TRADUCTION, PRIX_BOUTON, texteBouton } from "./traduction-fr.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
@@ -245,6 +245,121 @@ const CARTES_JS = `    /* Correction du 08/10 (scripts/construire.mjs) : sur mob
     if (petit.addEventListener) petit.addEventListener("change", onPetit);
     const offGrand = () => { fermerCarte(true); libre(); document.removeEventListener("focusin", onFocBorne); clearTimeout(tRecal); sec.removeEventListener("click", onClicGrand); window.removeEventListener("keydown", onToucheGrand, true); if (petit.removeEventListener) petit.removeEventListener("change", onPetit); };
 `;
+// --- Retour de Loan du 27/10 -------------------------------------------------------------------------------------
+// Textes ajoutés : français dans scripts/traduction-fr.mjs. Tailles « à la mesure de l'écran » : clamp(minimum, part de la
+// largeur, maximum), pour que les textes grandissent avec les très grands écrans au lieu d'y paraître minuscules.
+const SOMMAIRE_STYLE_FIN = "@media (prefers-reduced-motion: reduce) { .vf-sommaire a, .vf-sommaire a::before { transition: none; } }\n";
+// Home, The Journey et Press / Contact : pages en construction. Un petit ruban doré en biais sur le mot (« Coming soon »,
+// « Bientôt » si la page est en français : attribut lang de <html>), posé sur le haut du mot, qui reste lisible et grisé dessous.
+const BIENTOT_CSS = (nav) => `/* Correction du 27/10 (scripts/construire.mjs) : pages en construction, ruban « Coming soon » / « Bientôt » sur le mot. */
+${nav} > span[aria-disabled="true"] { position: relative; display: inline-block; white-space: nowrap; }
+@supports (color: color-mix(in srgb, red 50%, transparent)) { ${nav} > span[aria-disabled="true"] { opacity: 1 !important; color: color-mix(in srgb, currentColor 28%, transparent) !important; } }
+${nav} > span[aria-disabled="true"]::after { content: "Coming soon"; position: absolute; left: 50%; top: 0; z-index: 1; padding: .36em .75em .3em; transform: translate(-50%, -78%) rotate(-6deg); background: linear-gradient(100deg, #93703C, #CFAE72 40%, #E9D5A8 52%, #B48D52 70%, #93703C); color: #16130E; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: max(8.5px, .6em); line-height: 1; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.35); pointer-events: none; }
+html[lang="fr"] ${nav} > span[aria-disabled="true"]::after { content: "Bientôt"; }
+/* Menu mobile : liens un peu plus espacés, ruban plus petit, au-dessus du mot et calé à droite comme lui. */
+@media (max-width: 1040px) { ${nav} { gap: 26px !important; } ${nav} > span[aria-disabled="true"]::after { left: auto; right: -.2em; font-size: 7.5px; transform: translateY(-92%) rotate(-5deg); } }
+`;
+// En-tête et sommaire plus lisibles sur ordinateur (au-delà de 1 040 px ; en dessous, menu mobile inchangé).
+const ENTETE_GRAND_CSS = (entete, nav) => `/* Correction du 27/10 (scripts/construire.mjs) : sur ordinateur, en-tête plus lisible, à la mesure de l'écran. */
+@media (min-width: 1041px) {
+  ${entete} > div:first-child > span { font-size: clamp(21px, .4vw + 16px, 26px) !important; }
+  ${nav} { font-size: clamp(13.5px, .3vw + 10px, 17px) !important; gap: clamp(28px, 2.2vw, 46px) !important; }
+  ${entete} .ld-langues { font-size: clamp(14px, .25vw + 10.5px, 17px); }
+}
+`;
+const VF_CSS_27 = BIENTOT_CSS(".vf-entete > nav:not(.vf-sommaire)") + ENTETE_GRAND_CSS(".vf-entete", ".vf-entete > nav:not(.vf-sommaire)") +
+  `@media (min-width: 1041px) {
+  .vf-sommaire { font-size: clamp(12.5px, .25vw + 9px, 15.5px); }
+  .vf-sommaire:hover a, .vf-sommaire[data-ouvert] a, .vf-sommaire a[data-actif="oui"] { max-height: 2.4em; }
+  .vf-sommaire:has(a:focus-visible) a { max-height: 2.4em; }
+}
+/* « The plan » et « The result » plus visibles face à « On paper. » et « On the carpet. ». */
+.vfa-mot-l { font-size: clamp(15px, 1.2vw + 4px, 26px); }
+.vfa-yin .vfa-mot-l { color: rgba(246,245,241,.8); } .vfa-yang .vfa-mot-l { color: rgba(246,245,241,.88); }
+/* Netteté sur grand écran (caméra de l'étude, voir le script) : grain du crayon et lueur des corrections en or suivent la taille
+   de pose de la feuille (--b), pour rester identiques à l'écran. */
+.vfa-svg--trait { -webkit-mask-size: calc(192px * var(--b, 1)) calc(192px * var(--b, 1)); mask-size: calc(192px * var(--b, 1)) calc(192px * var(--b, 1)); }
+.vfa-svg--or { filter: drop-shadow(0 0 calc(3px * var(--b, 1)) rgba(222,190,125,.85)) drop-shadow(0 0 calc(14px * var(--b, 1)) rgba(169,129,74,.55)); }
+/* « See full details » sous chaque carte de la vitrine (sur mobile, en haut à droite de la carte compacte, sur deux lignes). */
+.vfp-details { position: absolute; z-index: 3; left: 50%; top: calc(100% + 16px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 9px; padding: 7px 2px 6px; border: 0; border-bottom: 1px solid rgba(246,245,241,.32); background: none; color: rgba(246,245,241,.74); font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: clamp(11px, .2vw + 8.5px, 13.5px); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: color .3s ease, border-color .3s ease; -webkit-tap-highlight-color: transparent; }
+.vfp-details::after { content: ""; width: .45em; height: .45em; margin-top: -.3em; border: solid currentColor; border-width: 0 1px 1px 0; transform: rotate(45deg); }
+.vfp-details:hover, .vfp-details:focus-visible { color: #F6F5F1; border-bottom-color: #A9814A; outline: none; }
+/* « See the options » / « Voir les formules » : tient dans l'écran jusqu'à 320 px (inchangé à partir de 390 px). */
+@media (max-width: 899px) { .vfp-affiche { padding-left: min(40px, 9.8vw); padding-right: min(40px, 9.8vw); } .vfp-affiche-mot { font-size: min(26px, 7vw); } }
+@media (max-width: 899px) { .vfp-details { display: block; left: auto; right: 22px; top: 20px; transform: none; max-width: 11.8em; padding: 4px 0 5px; line-height: 1.55; white-space: normal; text-wrap: balance; text-align: right; }
+  .vfp-details::after { display: inline-block; margin: 0 0 0 .55em; vertical-align: .3em; }
+  .vfp-c .vf-prix { flex-basis: 100%; } /* le prix toujours sous le nom : le lien occupe la droite du nom */ }
+`;
+// Bouton des cartes : texte de l'essai choisi (BOUTON, scripts/traduction-fr.mjs), à la place de « Pay 49 € ».
+const BOUTON_FORMULE = PRIX_BOUTON.map((prix) => [`Pay ${prix}`, texteBouton(prix)[0]]);
+const DETAILS = '<button type="button" class="vfp-details" onClick="{{ voirDetails }}">See full details</button>';
+// Descente animée jusqu'aux cartes de la planche II (bouton « See full details »).
+const DESCENTE_JS = `  /* Correction du 27/10 (scripts/construire.mjs) : « See full details », sous les cartes de la vitrine, descend jusqu'aux cartes
+     de la planche II à vitesse régulière (ECRANS_S hauteurs d'écran par seconde, élan au départ, freinage à l'arrivée) : le
+     projecteur, l'étude et le yin-yang s'animent au passage, sans effet d'accélération. Un geste du visiteur (molette, doigt,
+     clic, touche) arrête la descente là où elle est ; il peut ensuite remonter ou descendre librement. */
+  descendreFormules() {
+    const el = document.getElementById("formules");
+    if (!el) return;
+    if (this._finDescente) this._finDescente();
+    const ECRANS_S = 2.4, ELAN = 0.9, FREIN = 1.4;
+    const y0 = window.scrollY, vh = window.innerHeight, max = document.documentElement.scrollHeight - vh;
+    let y1;
+    if (window.matchMedia("(max-width: 999px)").matches) {
+      /* Mobile : cartes centrées sous l'en-tête (la première en haut si elles ne tiennent pas), comme l'arrêt sur les cartes. */
+      const c = el.querySelectorAll(".vfk-c"), hd = document.querySelector(".vf > .ld-header"), hh = hd ? hd.offsetHeight : 0;
+      if (!c.length) return;
+      const a = c[0].getBoundingClientRect(), b = c[c.length - 1].getBoundingClientRect();
+      y1 = y0 + Math.min((a.top + b.bottom - hh - vh) / 2, a.top - hh - 14);
+    } else {
+      /* Ordinateur : au déclenchement du retournement des cartes, comme le lien « Pricing » du sommaire. */
+      y1 = el.getBoundingClientRect().top + y0;
+      const co = el.querySelector(".vfk-course");
+      if (co && co.offsetHeight > 0) y1 += Math.ceil((0.16 / RT) * co.offsetHeight) + 2;
+    }
+    y1 = Math.round(Math.max(0, Math.min(y1, max)));
+    const d = y1 - y0;
+    if (Math.abs(d) < 2) return;
+    if (d < 0 || calmeMQ()) { window.scrollTo({ top: y1, behavior: d < 0 && !calmeMQ() ? "smooth" : "instant" }); return; }
+    /* Vitesse en croisière v (px/s), atteinte et quittée en douceur (demi-cosinus) ; trajet court : pas de croisière. */
+    let v = ECRANS_S * vh, ta = ELAN, tf = FREIN, tc = d / v - (ta + tf) / 2;
+    if (tc < 0) { tc = 0; v = 2 * d / (ta + tf); }
+    const T = ta + tc + tf, PI = Math.PI;
+    const pos = (t) => t < ta ? v * (t / 2 - ta / (2 * PI) * Math.sin(PI * t / ta))
+      : t < ta + tc ? v * (ta / 2 + t - ta)
+      : v * (ta / 2 + tc + (t - ta - tc) / 2 + tf / (2 * PI) * Math.sin(PI * (t - ta - tc) / tf));
+    const GESTES = ["wheel", "touchstart", "pointerdown", "keydown"];
+    let raf = 0;
+    const fin = () => { cancelAnimationFrame(raf); GESTES.forEach((g) => window.removeEventListener(g, fin, true)); if (this._finDescente === fin) this._finDescente = null; };
+    GESTES.forEach((g) => window.addEventListener(g, fin, { capture: true, passive: true }));
+    this._finDescente = fin;
+    const t0 = performance.now();
+    const pas = (now) => { const t = Math.max(0, (now - t0) / 1000);
+      window.scrollTo({ top: t >= T ? y1 : Math.round(y0 + pos(t)), behavior: "instant" });
+      if (t < T) raf = requestAnimationFrame(pas); else fin(); };
+    raf = requestAnimationFrame(pas);
+  }
+
+`;
+// Netteté de l'étude sur grand écran (retour de Loan du 27/10, photos d'un très grand écran : textes « pixelisés »).
+const ETUDE_NETTE_DECL = `    /* Correction du 27/10 (scripts/construire.mjs) : sur un très grand écran, la caméra agrandit la feuille (1200 × 800) jusqu'à
+       4,4 fois (2560 px de large). Safari peint un calque à sa taille propre puis l'agrandit : textes et traits de l'étude
+       devenaient flous et crénelés. À l'arrêt, la feuille est donc posée à sa taille d'affichage (B = zoom de la caméra) et la
+       caméra ne l'agrandit plus : tout est redessiné net, quel que soit le navigateur. En mouvement, rien ne change (B reste celui
+       du dernier arrêt) ; si la caméra recule bien en dessous de B, la feuille reprend sa taille d'origine (mémoire graphique).
+       Zoom de 1,15 ou moins (téléphones) : B = 1, comme avant. */
+    let B = 1, tB = 0, camS = 1, camX = 0, camY = 0;
+    const poserB = (b) => { B = b; const w = (SW * b).toFixed(2) + "px", h = (SH * b).toFixed(2) + "px";
+      [cam, cam2].forEach((c) => { c.style.width = w; c.style.height = h; c.style.setProperty("--b", b.toFixed(4)); }); };
+    const nette = () => { const b = camS > 1.15 ? Math.min(camS, 5) : 1; if (Math.abs(b / B - 1) < 0.01) return; poserB(b);
+      cam.style.transform = cam2.style.transform = "translate3d(" + camX.toFixed(2) + "px," + camY.toFixed(2) + "px,0) scale(" + (camS / B).toFixed(4) + ")"; };
+`;
+const ETUDE_TR_AVANT = '      const tr = "translate3d(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px,0) scale(" + s.toFixed(4) + ")", k = Math.pow(s, -0.65).toFixed(4);\n';
+const ETUDE_TR_APRES = "      /* Correction du 27/10 : feuille posée à B fois sa taille, agrandie de s / B ; redessinée nette 0,2 s après le dernier mouvement. */\n" +
+  "      if (B > 1 && s < B * 0.75) poserB(1);\n" +
+  "      camS = s; camX = tx; camY = ty; clearTimeout(tB); tB = setTimeout(nette, 200);\n" +
+  ETUDE_TR_AVANT.replace('scale(" + s.toFixed(4) + ")"', 'scale(" + (s / B).toFixed(4) + ")"');
+
 const CORRECTIONS = [
   {
     quoi: "Crédits photo des mentions légales (01/10)",
@@ -436,6 +551,34 @@ const CORRECTIONS = [
       "}\n" +
       "@media (min-width: 770px) { .ld-familles { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } } /* jamais Meta | China puis Global, même avec une barre de défilement */\n" +
       "</style>\n</helmet>" },
+  // Retour de Loan du 27/10 (constantes plus haut : BIENTOT_CSS, VF_CSS_27, DESCENTE_JS, ETUDE_NETTE_DECL…).
+  { quoi: "Styles du 27/10 : ruban Coming soon, en-tête et sommaire, The plan / The result, netteté de l'étude, See full details", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_27 + SOMMAIRE_STYLE_FIN },
+  ...LEGALES.map((f) => ({ quoi: "Pages légales : ruban Coming soon et en-tête plus lisible (27/10)", fichiers: [f], n: 1,
+    avant: "</style>\n</helmet>",
+    apres: BIENTOT_CSS(".lg-entete > nav:not(.ld-langues)") + ENTETE_GRAND_CSS(".lg-entete", ".lg-entete > nav:not(.ld-langues)") + "</style>\n</helmet>" })),
+  { quoi: "Pied de page : réseaux sociaux un peu plus grands (27/10)", fichiers: ["Sponsors.dc.html"], n: 1,
+    avant: "</style>\n</helmet>",
+    apres: "/* Correction du 27/10 (scripts/construire.mjs) : réseaux sociaux un peu plus grands, à la mesure de l'écran. */\n" +
+      ".ld-familles .ld-reseau__nom { font-size: clamp(14px, .25vw + 11px, 16.5px); }\n" +
+      ".ld-familles .ld-reseau__glyphe { width: clamp(24px, .3vw + 20px, 28px); height: clamp(24px, .3vw + 20px, 28px); }\n" +
+      "</style>\n</helmet>" },
+  { quoi: "« See pricing » → « See the options » (27/10)", fichiers: VF, n: 1, avant: ">See pricing<", apres: ">See the options<" },
+  ...BOUTON_FORMULE.map(([avant, apres]) => ({ quoi: `Bouton des cartes : « ${avant} » → « ${apres} » (27/10)`, fichiers: VF, n: 2,
+    avant: `>${avant}<`, apres: `>${apres}<` })),
+  { quoi: "Vitrine : bouton « See full details » sous chaque carte (27/10)", fichiers: VF, n: 3,
+    avant: "</article></div>", apres: "</article>" + DETAILS + "</div>" },
+  { quoi: "Vitrine : place du lien « See full details » sous les cartes, petits écrans d'ordinateur (27/10)", fichiers: VF, n: 1,
+    avant: "(H - cartesV.offsetTop - (mob ? 110 : 150))", apres: "(H - cartesV.offsetTop - (mob ? 110 : 196)) /* 27/10 : + 46 px pour « See full details » */" },
+  { quoi: "Vitrine : action du bouton « See full details » (27/10)", fichiers: VF, n: 1,
+    avant: "      voirPrix: () => { if (this._vitrine) this._vitrine(true); },\n",
+    apres: "      voirPrix: () => { if (this._vitrine) this._vitrine(true); },\n      voirDetails: () => this.descendreFormules(), /* Correction du 27/10 */\n" },
+  { quoi: "Descente animée jusqu'aux cartes de la planche II (27/10)", fichiers: VF, n: 1,
+    avant: "  aller(id) {\n", apres: DESCENTE_JS + "  aller(id) {\n" },
+  { quoi: "Étude nette sur grand écran : taille de pose de la feuille (27/10)", fichiers: VF, n: 1,
+    avant: "    let tNet = 0;\n    const peindre = () => {\n", apres: ETUDE_NETTE_DECL + "    let tNet = 0;\n    const peindre = () => {\n" },
+  { quoi: "Étude nette sur grand écran : caméra (27/10)", fichiers: VF, n: 1,
+    avant: ETUDE_TR_AVANT, apres: ETUDE_TR_APRES },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
