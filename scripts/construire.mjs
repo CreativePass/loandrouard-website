@@ -386,9 +386,6 @@ html:not(.vf-defile) .vf-sommaire a[data-actif="oui"] { opacity: .9; }
     -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.05) calc(var(--vfk-fondu) * .2), rgba(0,0,0,.2) calc(var(--vfk-fondu) * .4), rgba(0,0,0,.48) calc(var(--vfk-fondu) * .6), rgba(0,0,0,.8) calc(var(--vfk-fondu) * .8), #000 var(--vfk-fondu));
     mask-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.05) calc(var(--vfk-fondu) * .2), rgba(0,0,0,.2) calc(var(--vfk-fondu) * .4), rgba(0,0,0,.48) calc(var(--vfk-fondu) * .6), rgba(0,0,0,.8) calc(var(--vfk-fondu) * .8), #000 var(--vfk-fondu)); }
 }
-/* « See the options » plus tôt sur mobile (les visiteurs descendent avant de l'avoir vu) : départ à 2,4 s au lieu de 4,2 s, montée
-   en 1,4 s au lieu de 2,2 s. Ordinateur inchangé. */
-@media (max-width: 899px) { .vfp-affiche { animation-duration: 1.4s; animation-delay: 2.4s; } }
 `;
 const PAPIER_AVANT = "        papier.style.opacity = vP.toFixed(3);\n";
 const PAPIER_APRES = PAPIER_AVANT + '        sec.toggleAttribute("data-posee", deja); /* Correction du 28/10 : fondu au-dessus de la planche posée. */\n';
@@ -569,11 +566,13 @@ const CORRECTIONS = [
   { quoi: "Verrou de la planche : jamais de retour par script sur écran tactile ni pendant la fin provisoire (18/10)", fichiers: VF, n: 1,
     avant: "const onScroll = () => { if (verrou() && yVerrou && window.scrollY > yVerrou + 2) window.scrollTo",
     apres: "const onScroll = () => { if (verrou() && yVerrou && !finPage && !doigtLarge() && window.scrollY > yVerrou + 2) window.scrollTo" },
-  // « See pricing » plus tôt (retour de Loan du 17/10 : « il faut qu'il s'affiche un petit peu plus rapidement ») : départ à 4,2 s au
-  // lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s (lisible vers 5 s, à la fin de l'allumage du projecteur, au lieu de 6,3 s).
-  { quoi: "See pricing affiché plus tôt (17/10)", fichiers: VF, n: 1,
+  // « See pricing » (« See the options » depuis le 27/10) plus tôt. Retour de Loan du 17/10 (« il faut qu'il s'affiche un petit
+  // peu plus rapidement ») : départ à 4,2 s au lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s. Retour du 28/10 : d'abord sur mobile
+  // (les visiteurs descendent avant de l'avoir vu), puis sur ordinateur « comme sur iPhone » : départ à 2,4 s, montée en 1,4 s,
+  // à toutes les largeurs (lisible vers 2,7 s au lieu de 4,6 s).
+  { quoi: "See the options affiché plus tôt (17/10, puis 28/10 à toutes les largeurs)", fichiers: VF, n: 1,
     avant: "animation: vfp-affiche-in 2.6s cubic-bezier(.16,.6,.2,1) 5.2s both;",
-    apres: "animation: vfp-affiche-in 2.2s cubic-bezier(.16,.6,.2,1) 4.2s both;" },
+    apres: "animation: vfp-affiche-in 1.4s cubic-bezier(.16,.6,.2,1) 2.4s both;" },
   { quoi: "Cartes : dessin refait quand les cartes changent de place (15/10)", fichiers: VF, n: 1,
     avant: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",");\n',
     apres: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",") + "x" + plaque.offsetHeight + "," + bloc.parentNode.offsetHeight; /* Correction du 15/10 : place des cartes comprise. */\n' },
@@ -640,7 +639,7 @@ const CORRECTIONS = [
   { quoi: "Étude nette sur grand écran : caméra (27/10)", fichiers: VF, n: 1,
     avant: ETUDE_TR_AVANT, apres: ETUDE_TR_APRES },
   // Retour de Loan du 28/10 (constantes plus haut : HAUT_JS, VF_CSS_28, PAPIER_APRES, INCLINE_APRES).
-  { quoi: "Styles du 28/10 : sommaire déplié et liens de l'en-tête en haut de page, fondu de la planche II, See the options plus tôt sur mobile", fichiers: VF, n: 1,
+  { quoi: "Styles du 28/10 : sommaire déplié et liens de l'en-tête en haut de page et fondu de la planche II", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_28 + SOMMAIRE_STYLE_FIN },
   { quoi: "En haut de page : classe vf-defile (28/10)", fichiers: VF, n: 1,
     avant: "    const suivre = () => {\n      rafS = 0;\n", apres: "    const suivre = () => {\n      rafS = 0;\n" + HAUT_JS },
