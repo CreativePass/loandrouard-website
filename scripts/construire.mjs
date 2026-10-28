@@ -360,6 +360,42 @@ const ETUDE_TR_APRES = "      /* Correction du 27/10 : feuille posée à B fois 
   "      camS = s; camX = tx; camY = ty; clearTimeout(tB); tB = setTimeout(nette, 200);\n" +
   ETUDE_TR_AVANT.replace('scale(" + s.toFixed(4) + ")"', 'scale(" + (s / B).toFixed(4) + ")"');
 
+// --- Retour de Loan du 28/10 -------------------------------------------------------------------------------------
+// En haut de page (40 px au plus, comme l'arrivée « en cours de page » du projecteur), html n'a pas la classe vf-defile :
+// sommaire déplié et liens de l'en-tête visibles. Dès qu'on descend, vf-defile : sommaire replié (section courante seule,
+// dépliée au survol comme avant) et liens de l'en-tête effacés (Home, The Journey et Press sont « Coming soon »).
+// Sans script (avant le premier calcul), la page est « en haut » : rien ne clignote à l'ouverture.
+const HAUT_JS = '      document.documentElement.classList.toggle("vf-defile", window.scrollY > 40); /* Correction du 28/10 (scripts/construire.mjs) : en haut de page, sommaire déplié et liens de l\'en-tête visibles. */\n';
+const VF_CSS_28 = `/* Corrections du 28/10 (scripts/construire.mjs). Sommaire déplié en haut de page (ordinateur ; caché sur mobile). */
+html:not(.vf-defile) .vf-sommaire a { max-height: 2.4em; padding-block: 4.5px; opacity: .38; visibility: visible; transition: opacity .35s ease, max-height .35s ease, padding .35s ease; }
+html:not(.vf-defile) .vf-sommaire a:is(:hover, :focus-visible) { opacity: .8; }
+html:not(.vf-defile) .vf-sommaire a[data-actif="oui"] { opacity: .9; }
+/* Liens de l'en-tête (ordinateur) : effacés dès qu'on descend, de retour tout en haut. Leur place reste : rien ne bouge. */
+@media (min-width: 1041px) {
+  .vf-entete > nav:not(.vf-sommaire) { transition: opacity .45s ease, visibility 0s; }
+  html.vf-defile .vf-entete > nav:not(.vf-sommaire) { opacity: 0; visibility: hidden; transition: opacity .45s ease, visibility 0s linear .45s; }
+}
+@media (prefers-reduced-motion: reduce) { html:not(.vf-defile) .vf-sommaire a, .vf-entete > nav:not(.vf-sommaire) { transition: none !important; } }
+/* Planche II (ordinateur) : une fois les cartes retournées, la planche reste posée et glisse comme un calque au-dessus de l'étude
+   quand on remonte puis redescend ; son bord haut coupait net la photo. Un fondu la précède : même papier, même tuile (calée
+   comme lui sur son bas), de transparent à plein sur --vfk-fondu. Caché tant que les cartes n'ont pas été jouées (data-posee) :
+   la première fois, la planche apparaît déjà en fondu, sans bord. */
+@media (min-width: 1000px) {
+  .vf > .vfk { --vfk-fondu: clamp(140px, 24svh, 260px); }
+  .vf > .vfk[data-posee]::before { content: ""; position: absolute; left: 0; right: 0; top: calc(-1 * var(--vfk-fondu)); bottom: var(--vfk-tenue); pointer-events: none; background: #101010 url("${ENDUIT}") 50% 100% / 620px;
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.05) calc(var(--vfk-fondu) * .2), rgba(0,0,0,.2) calc(var(--vfk-fondu) * .4), rgba(0,0,0,.48) calc(var(--vfk-fondu) * .6), rgba(0,0,0,.8) calc(var(--vfk-fondu) * .8), #000 var(--vfk-fondu));
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.05) calc(var(--vfk-fondu) * .2), rgba(0,0,0,.2) calc(var(--vfk-fondu) * .4), rgba(0,0,0,.48) calc(var(--vfk-fondu) * .6), rgba(0,0,0,.8) calc(var(--vfk-fondu) * .8), #000 var(--vfk-fondu)); }
+}
+/* « See the options » plus tôt sur mobile (les visiteurs descendent avant de l'avoir vu) : départ à 2,4 s au lieu de 4,2 s, montée
+   en 1,4 s au lieu de 2,2 s. Ordinateur inchangé. */
+@media (max-width: 899px) { .vfp-affiche { animation-duration: 1.4s; animation-delay: 2.4s; } }
+`;
+const PAPIER_AVANT = "        papier.style.opacity = vP.toFixed(3);\n";
+const PAPIER_APRES = PAPIER_AVANT + '        sec.toggleAttribute("data-posee", deja); /* Correction du 28/10 : fondu au-dessus de la planche posée. */\n';
+// Inclinaison des cartes au survol (vitrine et planche II) : 6,5 → 9 (± 4,5° aux bords au lieu de ± 3,25°).
+const INCLINE_AVANT = 'rotateY(" + (px * 6.5).toFixed(2) + "deg) rotateX(" + (-py * 6.5).toFixed(2) + "deg)';
+const INCLINE_APRES = 'rotateY(" + (px * 9).toFixed(2) + "deg) rotateX(" + (-py * 9).toFixed(2) + "deg)';
+
 const CORRECTIONS = [
   {
     quoi: "Crédits photo des mentions légales (01/10)",
@@ -579,6 +615,13 @@ const CORRECTIONS = [
     avant: "    let tNet = 0;\n    const peindre = () => {\n", apres: ETUDE_NETTE_DECL + "    let tNet = 0;\n    const peindre = () => {\n" },
   { quoi: "Étude nette sur grand écran : caméra (27/10)", fichiers: VF, n: 1,
     avant: ETUDE_TR_AVANT, apres: ETUDE_TR_APRES },
+  // Retour de Loan du 28/10 (constantes plus haut : HAUT_JS, VF_CSS_28, PAPIER_APRES, INCLINE_APRES).
+  { quoi: "Styles du 28/10 : sommaire déplié et liens de l'en-tête en haut de page, fondu de la planche II, See the options plus tôt sur mobile", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_28 + SOMMAIRE_STYLE_FIN },
+  { quoi: "En haut de page : classe vf-defile (28/10)", fichiers: VF, n: 1,
+    avant: "    const suivre = () => {\n      rafS = 0;\n", apres: "    const suivre = () => {\n      rafS = 0;\n" + HAUT_JS },
+  { quoi: "Planche II : fondu au-dessus de la planche posée (28/10)", fichiers: VF, n: 1, avant: PAPIER_AVANT, apres: PAPIER_APRES },
+  { quoi: "Cartes : inclinaison au survol un peu plus marquée (28/10)", fichiers: VF, n: 1, avant: INCLINE_AVANT, apres: INCLINE_APRES },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
