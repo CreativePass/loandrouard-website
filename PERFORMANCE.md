@@ -834,7 +834,7 @@ Vérifié avec `node scripts/verif-chargement.mjs`, qui pose la même extension 
 - corrigé : écran retiré à 3,5–4,7 s dans les 8 cas (ordinateur et mobile, anglais et français, avec et sans extension) ;
 - témoin (même page, sans la correction) : 22,1 s.
 
-Non vérifiable ici : Safari lui-même (WebKit ne se télécharge pas, refus du proxy). La règle (trace seulement pour http(s)) est la même dans tous les navigateurs ; confirmation par Loan sur son Mac.
+Non vérifiable ici : Safari lui-même (WebKit ne se télécharge pas, refus du proxy). La règle (trace seulement pour http(s)) est la même dans tous les navigateurs. Confirmé par Loan sur son Mac le 28/10 (« ça charge désormais beaucoup plus vite ») ; en ligne sur loandrouard.com le 28/10 (version `22c4a599`).
 
 ## Vérifications
 
