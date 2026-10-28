@@ -21,19 +21,16 @@ const INSECABLE = (t) => t.replace(/ /g, NB);
 // Langue lue dans l'adresse, avant tout affichage (page et écran de chargement).
 const LIRE_FR = '(() => { try { return new URLSearchParams(location.search).get("lang") === "fr"; } catch (e) { return false; } })()';
 
-// Bouton des cartes (retour de Loan du 27/10 : « Pay » va trop droit au but). Essais choisis au moment de construire :
-// BOUTON=choose (par défaut) ou start (ex. BOUTON=start npm run construire). Texte [anglais, français].
-// « Select · 49 € » / « Choisir · 49 € », essayé le 27/10, écarté par Loan.
-const BOUTONS = {
-  choose: () => ["Choose this package", "Choisir cette formule"],
-  start: () => ["Get started", "Commencer"],
-};
-export const BOUTON = BOUTONS[process.env.BOUTON] ? process.env.BOUTON : "choose";
-export const PRIX_BOUTON = ["49", "129", "499"].map((p) => p + NB + "€");
-export const texteBouton = (prix) => BOUTONS[BOUTON](prix);
-// Même texte sur les trois formules : une seule entrée, 6 occurrences (vitrine et planche II) ; sinon une par prix.
-const TEXTES_BOUTON = (() => { const l = PRIX_BOUTON.map(texteBouton);
-  return l.every(([en]) => en === l[0][0]) ? [[...l[0], 6]] : l.map(([en, fr]) => [en, fr, 2]); })();
+// Bouton des cartes (retour de Loan des 27 et 28/10 : « Pay » va trop droit au but) : un texte par formule, choisi par Loan,
+// en français naturel et engageant (première personne, comme sur la plupart des sites français) : [prix, anglais, français].
+// Textes courts : sur mobile, le bouton tient à côté du « + » de la petite carte dès 360 px de large (« Recevoir mon analyse »
+// ou « Commencer le programme » n'y tenaient qu'à partir de 390 px). Essais écartés : « Select · 49 € », « Choose this package ».
+// (« Get a feedback » demandé : « Get feedback », feedback ne prenant pas d'article en anglais.)
+export const BOUTONS = [
+  ["49", "Get feedback", "Je commande"],
+  ["129", "Get this package", "Je prends le pack"],
+  ["499", "Get started", "Je me lance"],
+];
 
 // Textes de Video Feedback : [anglais, français, occurrences], entre deux balises, HTML compris (<br>, <em>, &nbsp;).
 // En-tête (Home, The Journey et Press restent grisés et non cliquables), aussi sur les pages légales.
@@ -65,8 +62,8 @@ const TEXTES = [
   ["49&nbsp;€ · one full analysis", "49&nbsp;€ · analyse complète", 2],
   ["129&nbsp;€ · 3 full analyses", "129&nbsp;€ · trois analyses", 2],
   ["499&nbsp;€ · weekly coaching", "499&nbsp;€ · coaching hebdo", 2],
-  // Bouton des cartes (27/10, « Pay » remplacé dans scripts/construire.mjs) : texte de l'essai choisi (BOUTON, ci-dessus).
-  ...TEXTES_BOUTON,
+  // Boutons des cartes (27–28/10, « Pay » remplacé dans scripts/construire.mjs) : BOUTONS, ci-dessus.
+  ...BOUTONS.map(([, en, fr]) => [en, fr, 2]), // vitrine et planche II
   ["See full details", "Voir tous les détails", 3], // 27/10 : sous les cartes de la vitrine
   ["Spots left", "Places restantes", 4],
   ["Written or voice feedback", "Retour écrit ou vocal", 4],

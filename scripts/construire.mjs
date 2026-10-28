@@ -6,7 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
 import { SAFARI, SAFARI_IDS, SAFARI_TOUTES, VARIANTES_ESSAI, fichiersSafari, controleTextures } from "./safari.mjs";
-import { TRADUCTION, PRIX_BOUTON, texteBouton } from "./traduction-fr.mjs";
+import { TRADUCTION, BOUTONS } from "./traduction-fr.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
@@ -290,8 +290,8 @@ const VF_CSS_27 = BIENTOT_CSS(".vf-entete > nav:not(.vf-sommaire)") + ENTETE_GRA
   .vfp-details::after { display: inline-block; margin: 0 0 0 .55em; vertical-align: .3em; }
   .vfp-c .vf-prix { flex-basis: 100%; } /* le prix toujours sous le nom : le lien occupe la droite du nom */ }
 `;
-// Bouton des cartes : texte de l'essai choisi (BOUTON, scripts/traduction-fr.mjs), à la place de « Pay 49 € ».
-const BOUTON_FORMULE = PRIX_BOUTON.map((prix) => [`Pay ${prix}`, texteBouton(prix)[0]]);
+// Boutons des cartes : un texte par formule à la place de « Pay 49 € » (BOUTONS, scripts/traduction-fr.mjs).
+const BOUTON_FORMULE = BOUTONS.map(([prix, en]) => [`Pay ${prix}&nbsp;€`, en]);
 const DETAILS = '<button type="button" class="vfp-details" onClick="{{ voirDetails }}">See full details</button>';
 // Descente animée jusqu'aux cartes de la planche II (bouton « See full details »).
 const DESCENTE_JS = `  /* Correction du 27/10 (scripts/construire.mjs) : « See full details », sous les cartes de la vitrine, descend jusqu'aux cartes
