@@ -293,7 +293,7 @@ const TEXTES_CHARGEMENT = [
   { quoi: "libellé de l'écran de chargement (lecteurs d'écran)", fichiers: ["chargement.js"], n: 1,
     avant: 'aria-label="Loading"', apres: 'aria-label="${FR ? "Chargement" : "Loading"}"' },
 ];
-// Préfixe ajouté au numéro de version, quel qu'il soit (7p avec les optimisations, 7 sans), tiré du contenu des corrections
+// Préfixe ajouté au numéro de version, quel qu'il soit (7q avec les optimisations, 7 sans), tiré du contenu des corrections
 // ci-dessus : il change dès qu'elles changent (chargement.js est gardé un an en cache par les visiteurs).
 const V_CHARGEMENT = "fr" + crypto.createHash("sha256").update(JSON.stringify(TEXTES_CHARGEMENT)).digest("hex").slice(0, 4) + "-";
 const CHARGEMENT = [

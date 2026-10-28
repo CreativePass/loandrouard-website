@@ -118,9 +118,17 @@ const TOUTES = [
     apres: "  const echecs = new Set(); " + OPTIM + "une ressource en échec n'arrivera jamais (Safari n'en garde aucune trace). */\n" +
       "  addEventListener(\"error\", e => { const t = e.target; if (t && t !== window && (t.src || t.href)) echecs.add(abs(t.src || t.href)); }, true);\n" +
       "  const recu = u => /^(blob|data):/.test(u) || echecs.has(abs(u)) || performance.getEntriesByName(abs(u)).length > 0;" },
-  // Version 7p : le contenu a encore changé depuis la 7o publiée le 03/10 (cache d'un an chez les visiteurs).
+  // Script ajouté par une extension du navigateur (chrome-extension:, safari-web-extension:…) : il se charge sans erreur,
+  // mais le navigateur ne laisse de trace (Resource Timing) que pour les adresses http(s). Sur ordinateur, l'écran restait
+  // à 96 % jusqu'à sa limite de 20 s (retour de Loan, 28/10 ; reproduit avec une extension : 22 s → moins de 5 s).
+  // S'applique sur le résultat de la correction précédente.
+  { id: "chargement", quoi: "Écran de chargement : un script d'extension du navigateur ne bloque plus", fichiers: ["chargement.js"], n: 1,
+    avant: "  const recu = u => /^(blob|data):/.test(u) || echecs.has(abs(u))",
+    apres: "  " + OPTIM + "seules les adresses http(s) laissent une trace ; un script d'extension du navigateur n'en laisse jamais. */\n" +
+      "  const recu = u => !/^https?:/.test(abs(u)) || echecs.has(abs(u))" },
+  // Version 7q : le contenu a encore changé depuis la 7p publiée le 19/10 (cache d'un an chez les visiteurs).
   ...PAGES_PUBLIEES.map((f) => ({ id: "chargement", quoi: "Écran de chargement : nouvelle version (cache)", fichiers: [f], n: 1,
-    avant: "chargement.js?v=7", apres: "chargement.js?v=7p" })),
+    avant: "chargement.js?v=7", apres: "chargement.js?v=7q" })),
 
   // Scripts exécutés deux fois (par la page, puis par le moteur) : une seule installation suffit.
   { id: "doublons", quoi: "Header flottant installé une seule fois", fichiers: ["header-flottant.js"], n: 1,
