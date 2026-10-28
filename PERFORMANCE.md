@@ -61,7 +61,7 @@ Scénarios : chargement (1re visite et avec cache, 5 essais, 4 pages), défileme
 | `sable` | `--flux` posé sur le nom seul | style au pied de page −82 %, fil principal −23 % |
 | `poussiere` | poussière du projecteur arrêtée hors écran | mobile, étude : fil principal 29 % → 2,5 % |
 | `parallaxe` | parallaxe ignorée hors écran | souris dans l'étude : −37 % |
-| `chargement` | feuille de l'écran de chargement laissée en place (inerte) ; une ressource en échec ne le retient plus | gel à l'apparition supprimé (0,1 s / 0,5 s) ; plus d'attente de 20 s à 96 % quand Safari bloque la balise Cloudflare |
+| `chargement` | feuille de l'écran de chargement laissée en place (inerte) ; une ressource en échec ne le retient plus ; un script d'extension du navigateur non plus (28/10) | gel à l'apparition supprimé (0,1 s / 0,5 s) ; plus d'attente de 20 s à 96 % quand Safari bloque la balise Cloudflare, ni sur ordinateur avec une extension (22 s → 3,5 s) |
 | `doublons` | design system et en-tête exécutés une seule fois ; `header-flottant.js` placé avant le design system pour garder le même ordre de décision du ton de l'en-tête qu'en ligne | plus de recréation ; prête −8 % / −11 % |
 | `css` | lien redondant vers `styles.css` retiré | −9 requêtes par visite ; démarrage mobile −13 à −24 % |
 | `react` | React servi par le site (accord de Loan), préchargé ; `support.js` le charge toujours avec son empreinte (SRI) | prête −11 % (Video Feedback, ordinateur), −2 à −5 % ailleurs ; un serveur tiers de moins |
@@ -813,6 +813,28 @@ Vérification finale (19/10, 2 relecteurs et 2 vérificateurs, Chromium 141 seul
 **« See pricing » plus tôt** (retour de Loan, 17/10) : départ de l'apparition à 4,2 s au lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s : lisible vers 5 s, à la fin de l'allumage du projecteur, au lieu de ≈ 6,3 s (ordinateur et mobile).
 
 **« See the options » encore plus tôt sur mobile** (retour de Loan, 28/10 : « les gens scrollent sans même avoir vu quoi que ce soit ») : sous 900 px, départ à 2,4 s au lieu de 4,2 s, montée en 1,4 s au lieu de 2,2 s. Mesuré (Chromium, iPhone 13 simulé) : opacité 0,61 à 2,7 s et 0,91 à 3,1 s, au lieu de 0,54 à 4,6 s. Le bouton apparaît donc juste avant que le projecteur s'allume (3,3 s). Ordinateur inchangé (4,2 s).
+
+## Retour de Loan du 28/10 : chargement bloqué à 96 % sur ordinateur
+
+Symptôme : sur ordinateur seulement, la page Video Feedback monte vite à 95 %, reste longtemps à 96 %, puis s'affiche.
+
+**Cause (reproduite)** : de nombreuses extensions du navigateur (bloqueur de pub, mots de passe, traduction, correcteur) posent leur propre script dans chaque page (`chrome-extension://…`, `safari-web-extension://…`).
+- Ce script se charge sans erreur. Mais le navigateur ne laisse de trace (Resource Timing) que pour les adresses http(s).
+- `chargement.js` l'attendait donc jusqu'à sa limite de 20 s. Tout le reste étant arrivé, le chiffre plafonnait à 96 %.
+- La correction du 03/10 (une ressource **en échec** ne bloque plus) ne couvrait pas ce cas.
+- Les iPhone ont rarement des extensions, d'où « ordinateur seulement ».
+
+Mesuré sur loandrouard.com (Chromium, 1440 × 900, extension de test qui pose un script et le laisse en place) :
+- avec l'extension : 0 → 95 % en 2,8 s, **96 % de 3,3 s à 20,2 s**, écran retiré à 22,2 s ;
+- sans extension : écran retiré vers 4 s, de 1280 à 2560 px de large et sur mobile.
+
+**Correction** (`chargement`, `scripts/optimisations.mjs`) : seules les adresses http(s) sont attendues (`blob:` et `data:` l'étaient déjà). `chargement.js?v=…-7q`.
+
+Vérifié avec `node scripts/verif-chargement.mjs`, qui pose la même extension de test :
+- corrigé : écran retiré à 3,5–4,7 s dans les 8 cas (ordinateur et mobile, anglais et français, avec et sans extension) ;
+- témoin (même page, sans la correction) : 22,1 s.
+
+Non vérifiable ici : Safari lui-même (WebKit ne se télécharge pas, refus du proxy). La règle (trace seulement pour http(s)) est la même dans tous les navigateurs ; confirmation par Loan sur son Mac.
 
 ## Vérifications
 
