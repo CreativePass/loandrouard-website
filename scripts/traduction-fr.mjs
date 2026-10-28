@@ -21,6 +21,17 @@ const INSECABLE = (t) => t.replace(/ /g, NB);
 // Langue lue dans l'adresse, avant tout affichage (page et écran de chargement).
 const LIRE_FR = '(() => { try { return new URLSearchParams(location.search).get("lang") === "fr"; } catch (e) { return false; } })()';
 
+// Bouton des cartes (retour de Loan des 27 et 28/10 : « Pay » va trop droit au but) : un texte par formule, choisi par Loan,
+// en français naturel et engageant (première personne, comme sur la plupart des sites français) : [prix, anglais, français].
+// Textes courts : sur mobile, le bouton tient à côté du « + » de la petite carte dès 360 px de large (« Recevoir mon analyse »
+// ou « Commencer le programme » n'y tenaient qu'à partir de 390 px). Essais écartés : « Select · 49 € », « Choose this package ».
+// (« Get a feedback » demandé : « Get feedback », feedback ne prenant pas d'article en anglais.)
+export const BOUTONS = [
+  ["49", "Get feedback", "Je commande"],
+  ["129", "Get this package", "Je prends le pack"],
+  ["499", "Get started", "Je me lance"],
+];
+
 // Textes de Video Feedback : [anglais, français, occurrences], entre deux balises, HTML compris (<br>, <em>, &nbsp;).
 // En-tête (Home, The Journey et Press restent grisés et non cliquables), aussi sur les pages légales.
 const ENTETE = [
@@ -39,7 +50,7 @@ const TEXTES = [
   ["broken down", "décortiqué", 1],
   ["move by move", "geste par geste", 1],
   ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer.", 1],
-  ["See pricing", "Voir les tarifs", 1],
+  ["See the options", "Voir les formules", 1], // 27/10 : « See pricing » / « Voir les tarifs » auparavant (scripts/construire.mjs)
   ["Three packages · from 49&nbsp;€", "Trois formules · dès 49&nbsp;€", 1],
   ["Scroll for everything included", "Faites défiler pour tout le détail", 1],
   ["Back to Loan", "Retour à Loan", 1],
@@ -51,9 +62,9 @@ const TEXTES = [
   ["49&nbsp;€ · one full analysis", "49&nbsp;€ · analyse complète", 2],
   ["129&nbsp;€ · 3 full analyses", "129&nbsp;€ · trois analyses", 2],
   ["499&nbsp;€ · weekly coaching", "499&nbsp;€ · coaching hebdo", 2],
-  ["Pay 49&nbsp;€", "Payer 49&nbsp;€", 2],
-  ["Pay 129&nbsp;€", "Payer 129&nbsp;€", 2],
-  ["Pay 499&nbsp;€", "Payer 499&nbsp;€", 2],
+  // Boutons des cartes (27–28/10, « Pay » remplacé dans scripts/construire.mjs) : BOUTONS, ci-dessus.
+  ...BOUTONS.map(([, en, fr]) => [en, fr, 2]), // vitrine et planche II
+  ["See full details", "Voir tous les détails", 3], // 27/10 : sous les cartes de la vitrine
   ["Spots left", "Places restantes", 4],
   ["Written or voice feedback", "Retour écrit ou vocal", 4],
   ["Three analyses, progress tracked between them", "Trois analyses, avec le suivi de vos progrès de l’une à l’autre", 1],
