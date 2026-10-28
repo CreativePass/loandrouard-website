@@ -568,11 +568,11 @@ const CORRECTIONS = [
     apres: "const onScroll = () => { if (verrou() && yVerrou && !finPage && !doigtLarge() && window.scrollY > yVerrou + 2) window.scrollTo" },
   // « See pricing » (« See the options » depuis le 27/10) plus tôt. Retour de Loan du 17/10 (« il faut qu'il s'affiche un petit
   // peu plus rapidement ») : départ à 4,2 s au lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s. Retour du 28/10 : d'abord sur mobile
-  // (les visiteurs descendent avant de l'avoir vu), puis sur ordinateur « comme sur iPhone » : départ à 2,4 s, montée en 1,4 s,
-  // à toutes les largeurs (lisible vers 2,7 s au lieu de 4,6 s).
-  { quoi: "See the options affiché plus tôt (17/10, puis 28/10 à toutes les largeurs)", fichiers: VF, n: 1,
+  // (les visiteurs descendent avant de l'avoir vu), puis sur ordinateur « comme sur iPhone », montée en 1,4 s à toutes les largeurs.
+  // Départ calé ensuite par Loan sur le premier flash du projecteur (vfp-frappe, 3,3 s) au lieu de 2,4 s.
+  { quoi: "See the options : départ avec le premier flash du projecteur (17/10, puis 28/10 à toutes les largeurs)", fichiers: VF, n: 1,
     avant: "animation: vfp-affiche-in 2.6s cubic-bezier(.16,.6,.2,1) 5.2s both;",
-    apres: "animation: vfp-affiche-in 1.4s cubic-bezier(.16,.6,.2,1) 2.4s both;" },
+    apres: "animation: vfp-affiche-in 1.4s cubic-bezier(.16,.6,.2,1) 3.3s both;" },
   { quoi: "Cartes : dessin refait quand les cartes changent de place (15/10)", fichiers: VF, n: 1,
     avant: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",");\n',
     apres: '    const cleDims = () => pin.clientWidth + "x" + window.innerHeight + "x" + C.map((k) => k.front.offsetHeight).join(",") + "x" + plaque.offsetHeight + "," + bloc.parentNode.offsetHeight; /* Correction du 15/10 : place des cartes comprise. */\n' },
