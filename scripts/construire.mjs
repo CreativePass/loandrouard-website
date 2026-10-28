@@ -392,6 +392,30 @@ html:not(.vf-defile) .vf-sommaire a[data-actif="oui"] { opacity: .9; }
 `;
 const PAPIER_AVANT = "        papier.style.opacity = vP.toFixed(3);\n";
 const PAPIER_APRES = PAPIER_AVANT + '        sec.toggleAttribute("data-posee", deja); /* Correction du 28/10 : fondu au-dessus de la planche posée. */\n';
+// Sommaire à l'ouverture (ordinateur) : son premier calcul passe avant que le projecteur place les ancres II et III (toutes
+// encore en haut de page) : « III For Who » restait marqué jusqu'au premier défilement, et repassait sur « Opening » au retrait
+// de l'écran de chargement. Recalcul dès que ces ancres bougent (placement, redimensionnement).
+const SOMMAIRE_INIT_AVANT = '    window.addEventListener("scroll", surS, { passive: true });\n    setTimeout(suivre, 0);\n' +
+  '    this._offSom = () => { window.removeEventListener("scroll", surS); if (rafS) cancelAnimationFrame(rafS); };\n';
+const SOMMAIRE_INIT_APRES = '    window.addEventListener("scroll", surS, { passive: true });\n    setTimeout(suivre, 0);\n' +
+  "    /* Correction du 28/10 (scripts/construire.mjs) : les ancres II et III sont placées par le projecteur après ce premier calcul ; recalcul quand elles bougent. */\n" +
+  '    const moS = window.MutationObserver ? new MutationObserver(surS) : null;\n' +
+  '    if (moS) ["what-is-it", "for-who"].forEach((id) => { const el = document.getElementById(id); if (el) moS.observe(el, { attributes: true, attributeFilter: ["style"] }); });\n' +
+  '    this._offSom = () => { window.removeEventListener("scroll", surS); if (rafS) cancelAnimationFrame(rafS); if (moS) moS.disconnect(); };\n';
+// Titre de l'onglet (aucun dans l'export : le navigateur affichait l'adresse). Pages légales : dans la langue de la page
+// (?lang=fr à l'ouverture, puis sélecteur EN / FR, qui change l'attribut lang de <html> sans recharger).
+const TITRES = {
+  "Video Feedback.dc.html": ["Video Feedback | LOAN DROUARD"],
+  "CGV.dc.html": ["Terms of Sale | LOAN DROUARD", "Conditions générales de vente | LOAN DROUARD"],
+  "Privacy.dc.html": ["Privacy Policy | LOAN DROUARD", "Politique de confidentialité | LOAN DROUARD"],
+  "Legal.dc.html": ["Legal Notice | LOAN DROUARD", "Mentions légales | LOAN DROUARD"],
+};
+const VIEWPORT = '<meta name="viewport" content="width=device-width, initial-scale=1">\n';
+const TITRE_HTML = ([en, fr]) => `${VIEWPORT}<title>${en}</title>\n` + (!fr ? "" :
+  `<script>/* Correction du 28/10 (scripts/construire.mjs) : titre de l'onglet dans la langue de la page. */\n` +
+  `(() => { const h = document.documentElement, T = { en: ${JSON.stringify(en)}, fr: ${JSON.stringify(fr)} };\n` +
+  `  const maj = () => { const fr = h.lang ? h.lang === "fr" : /[?&]lang=fr(&|$)/.test(location.search), t = fr ? T.fr : T.en; if (document.title !== t) document.title = t; };\n` +
+  `  maj(); if (window.MutationObserver) new MutationObserver(maj).observe(h, { attributes: true, attributeFilter: ["lang"] }); })();</script>\n`);
 // Inclinaison des cartes au survol (vitrine et planche II) : 6,5 → 9 (± 4,5° aux bords au lieu de ± 3,25°).
 const INCLINE_AVANT = 'rotateY(" + (px * 6.5).toFixed(2) + "deg) rotateX(" + (-py * 6.5).toFixed(2) + "deg)';
 const INCLINE_APRES = 'rotateY(" + (px * 9).toFixed(2) + "deg) rotateX(" + (-py * 9).toFixed(2) + "deg)';
@@ -622,6 +646,10 @@ const CORRECTIONS = [
     avant: "    const suivre = () => {\n      rafS = 0;\n", apres: "    const suivre = () => {\n      rafS = 0;\n" + HAUT_JS },
   { quoi: "Planche II : fondu au-dessus de la planche posée (28/10)", fichiers: VF, n: 1, avant: PAPIER_AVANT, apres: PAPIER_APRES },
   { quoi: "Cartes : inclinaison au survol un peu plus marquée (28/10)", fichiers: VF, n: 1, avant: INCLINE_AVANT, apres: INCLINE_APRES },
+  { quoi: "Sommaire : « Opening » à l'ouverture, recalcul quand les ancres sont placées (28/10)", fichiers: VF, n: 1,
+    avant: SOMMAIRE_INIT_AVANT, apres: SOMMAIRE_INIT_APRES },
+  ...Object.entries(TITRES).map(([f, t]) => ({ quoi: `Titre de l'onglet : « ${t[0]} » (28/10)`, fichiers: [f], n: 1,
+    avant: VIEWPORT, apres: TITRE_HTML(t) })),
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
