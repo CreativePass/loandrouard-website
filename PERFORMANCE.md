@@ -812,6 +812,8 @@ Vérification finale (19/10, 2 relecteurs et 2 vérificateurs, Chromium 141 seul
 
 **« See pricing » plus tôt** (retour de Loan, 17/10) : départ de l'apparition à 4,2 s au lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s : lisible vers 5 s, à la fin de l'allumage du projecteur, au lieu de ≈ 6,3 s (ordinateur et mobile).
 
+**« See the options » encore plus tôt sur mobile** (retour de Loan, 28/10 : « les gens scrollent sans même avoir vu quoi que ce soit ») : sous 900 px, départ à 2,4 s au lieu de 4,2 s, montée en 1,4 s au lieu de 2,2 s. Mesuré (Chromium, iPhone 13 simulé) : opacité 0,61 à 2,7 s et 0,91 à 3,1 s, au lieu de 0,54 à 4,6 s. Le bouton apparaît donc juste avant que le projecteur s'allume (3,3 s). Ordinateur inchangé (4,2 s).
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).
