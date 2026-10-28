@@ -50,7 +50,7 @@ const TEXTES = [
   ["broken down", "décortiqué", 1],
   ["move by move", "geste par geste", 1],
   ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer.", 1],
-  ["See the options", "Voir les formules", 1], // 27/10 : « See pricing » / « Voir les tarifs » auparavant (scripts/construire.mjs)
+  ["See the options", "Voir les options", 1], // 27/10 : « See pricing » / « Voir les tarifs », puis « Voir les formules » (28/10 : « Voir les options », demandé par Loan)
   ["Three packages · from 49&nbsp;€", "Trois formules · dès 49&nbsp;€", 1],
   ["Scroll for everything included", "Faites défiler pour tout le détail", 1],
   ["Back to Loan", "Retour à Loan", 1],
