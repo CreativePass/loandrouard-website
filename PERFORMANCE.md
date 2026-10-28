@@ -812,7 +812,7 @@ Vérification finale (19/10, 2 relecteurs et 2 vérificateurs, Chromium 141 seul
 
 **« See pricing » plus tôt** (retour de Loan, 17/10) : départ de l'apparition à 4,2 s au lieu de 5,2 s, montée en 2,2 s au lieu de 2,6 s : lisible vers 5 s, à la fin de l'allumage du projecteur, au lieu de ≈ 6,3 s (ordinateur et mobile).
 
-**« See the options » encore plus tôt, sur mobile puis sur ordinateur** (retour de Loan, 28/10 : « les gens scrollent sans même avoir vu quoi que ce soit ») : sous 900 px, départ à 2,4 s au lieu de 4,2 s, montée en 1,4 s au lieu de 2,2 s. Mesuré (Chromium, iPhone 13 simulé) : opacité 0,61 à 2,7 s et 0,91 à 3,1 s, au lieu de 0,54 à 4,6 s. Le bouton apparaît donc juste avant que le projecteur s'allume (3,3 s). Le même jour, à la demande de Loan, même réglage sur ordinateur (« comme sur iPhone ») : lisible vers 3,7 s depuis l'ouverture au lieu de 6 s (Chromium, 1280 à 1920 px), en ligne le 28/10 (`55d0e0a7`).
+**« See the options » encore plus tôt, sur mobile puis sur ordinateur** (retour de Loan, 28/10 : « les gens scrollent sans même avoir vu quoi que ce soit ») : sous 900 px, départ à 2,4 s au lieu de 4,2 s, montée en 1,4 s au lieu de 2,2 s. Mesuré (Chromium, iPhone 13 simulé) : opacité 0,61 à 2,7 s et 0,91 à 3,1 s, au lieu de 0,54 à 4,6 s. Le bouton apparaît donc juste avant que le projecteur s'allume (3,3 s). Le même jour, à la demande de Loan, même réglage sur ordinateur (« comme sur iPhone ») : lisible vers 3,7 s depuis l'ouverture au lieu de 6 s (Chromium, 1280 à 1920 px), en ligne le 28/10 (`55d0e0a7`). Puis départ calé par Loan sur le premier flash du projecteur (`vfp-frappe`, 3,3 s) : l'apparition commence avec lui, à toutes les largeurs (`d25e4528`).
 
 ## Retour de Loan du 28/10 : chargement bloqué à 96 % sur ordinateur
 
