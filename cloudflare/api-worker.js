@@ -9,13 +9,13 @@
 // (sinon Stripe refuse la case CGV et la session ne se crée pas).
 
 // Formules = produits du compte Stripe (vérifiés le 01/10). Les prix vivent chez Stripe, pas dans le navigateur.
-// Nouveaux prix (demande de Loan du 29/10) : 99, 249 et 990 €. Offre de lancement dès le 1er novembre 2026 (heure de Paris), sans
-// date de fin (Loan, 29/10 : « le temps que le site est en construction ») : prix normal + coupon « Offre de lancement / Launch
-// offer », que Stripe affiche (prix normal, remise, total) au paiement, sur le reçu et la facture. Avant le 1er novembre : anciens
-// prix, sans coupon (mêmes montants). Même calendrier que la page (OFFRE, scripts/construire.mjs) : pour terminer l'offre, y mettre
+// Nouveaux prix (demande de Loan du 29/10) : 99, 249 et 990 €. Offre de lancement dès la mise en ligne du 29/10, sans date de fin
+// (Loan : « le temps que le site est en construction ») : prix normal + coupon « Offre de lancement / Launch offer », que Stripe
+// affiche (prix normal, remise, total) au paiement, sur le reçu et la facture. Avant debut : anciens prix, sans coupon (mêmes
+// montants). Les prix de l'offre sont ceux de toutes les promos de Loan (CLAUDE.md, « Promotions »). Même calendrier que la page (OFFRE, scripts/construire.mjs) : pour terminer l'offre, y mettre
 // la date de fin dans les deux fichiers, puis republier le Worker et le site.
 // Prix normaux et coupons créés chez Stripe le 29/10 (coupons sans date limite ni code promo).
-const OFFRE = { debut: Date.parse("2026-11-01T00:00:00+01:00"), fin: Infinity };
+const OFFRE = { debut: Date.parse("2026-10-29T00:00:00+01:00"), fin: Infinity };
 const FORMULES = {
   single: { mode: "payment", coupon: "lancement-single",
     lancement: { prix: "price_1UGFgoEAanq7mbbHqvWu58xR", montant: 4900 }, normal: { prix: "price_1UVsqgEAanq7mbbHBMlz3mis", montant: 9900 } },

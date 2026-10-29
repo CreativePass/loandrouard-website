@@ -293,18 +293,18 @@ const VF_CSS_27 = BIENTOT_CSS(".vf-entete > nav:not(.vf-sommaire)") + ENTETE_GRA
 // Boutons des cartes : un texte par formule à la place de « Pay 49 € » (BOUTONS, scripts/traduction-fr.mjs).
 const BOUTON_FORMULE = BOUTONS.map(([prix, en]) => [`Pay ${prix}&nbsp;€`, en]);
 const DETAILS = '<button type="button" class="vfp-details" onClick="{{ voirDetails }}">See full details</button>';
-// Nouveaux prix et offre de lancement (demande de Loan du 29/10). Prix normaux : 99, 249 et 990 €. Dès le 1er novembre 2026 (heure
-// de Paris), les prix d'avant deviennent l'offre de lancement : prix normal barré, réduction en %. Sans date de fin, et aucune date
+// Nouveaux prix et offre de lancement (demande de Loan du 29/10). Prix normaux : 99, 249 et 990 €. Dès la mise en ligne du 29/10
+// (Loan), les prix d'avant deviennent l'offre de lancement : prix normal barré, réduction en %. Sans date de fin, et aucune date
 // affichée (Loan : offre valable « le temps que le site est en construction ») ; pour la terminer, mettre la date dans fin (ici et
 // dans cloudflare/api-worker.js), renseigner LIENS_PRIX_NORMAUX, puis republier : la page affichera alors les prix normaux seuls.
-// Avant le 1er novembre, l'affichage ne change pas. La page bascule d'elle-même (horloge du visiteur) ; le prix payé est fixé par
-// le Worker API, aux mêmes dates. Réduction arrondie à l'inférieur, pour ne jamais annoncer plus que la vraie : −50 %, −48 %, −49 %.
-const OFFRE = { debut: "2026-11-01T00:00:00+01:00", fin: null }; // fin : null = pas de fin
+// Avant debut, l'affichage d'origine. La page bascule d'elle-même (horloge du visiteur) ; le prix payé est fixé par le Worker API,
+// aux mêmes dates. Les prix de l'offre sont ceux de toutes les promos de Loan (CLAUDE.md, « Promotions »). Réduction arrondie à l'inférieur, pour ne jamais annoncer plus que la vraie : −50 %, −48 %, −49 %.
+const OFFRE = { debut: "2026-10-29T00:00:00+01:00", fin: null }; // fin : null = pas de fin
 const TARIFS = { single: [49, 99], pack: [129, 249], prog: [499, 990] }; // [offre de lancement, prix normal], en euros
 // Liens de paiement de secours aux prix normaux (utilisés après la fin de l'offre) : à créer chez Stripe, puis à renseigner ici.
 const LIENS_PRIX_NORMAUX = {};
 if (OFFRE.fin && Object.keys(LIENS_PRIX_NORMAUX).length < 3) console.warn("Attention : liens de paiement de secours aux prix normaux (LIENS_PRIX_NORMAUX) pas encore renseignés : après la fin de l'offre, le secours ouvrirait les liens aux anciens prix.");
-const OFFRE_JS = `/* Correction du 29/10 (scripts/construire.mjs) : nouveaux prix et offre de lancement, dès le 1er novembre 2026 (heure de Paris). */
+const OFFRE_JS = `/* Correction du 29/10 (scripts/construire.mjs) : nouveaux prix et offre de lancement, dès le 29 octobre 2026. */
 const OFFRE = { debut: Date.parse("${OFFRE.debut}"), fin: ${OFFRE.fin ? `Date.parse("${OFFRE.fin}")` : "Infinity"} };
 const TARIFS = ${JSON.stringify(TARIFS)}; /* [offre de lancement, prix normal] */
 const PHASE = Date.now() < OFFRE.debut ? "avant" : Date.now() < OFFRE.fin ? "offre" : "apres";
@@ -323,7 +323,7 @@ const SI_OFFRE = (html) => `<sc-if value="{{ offre }}" hint-placeholder-val="{{ 
 // Au-dessus du nom : « Launch offer » ; au-dessus du prix : prix normal barré et réduction (aucune date affichée).
 const OFFRE_TITRE = SI_OFFRE('<div class="vf-offre">Launch offer</div>') + "\n";
 const OFFRE_PRIX = (k) => SI_OFFRE(`<span class="vf-remise"><s>{{ normal${k} }}</s><b>{{ remise${k} }}</b></span>`);
-const OFFRE_CSS = `/* Correction du 29/10 (scripts/construire.mjs) : offre de lancement (dès le 1er novembre 2026). Filet et lettres d'or, prix
+const OFFRE_CSS = `/* Correction du 29/10 (scripts/construire.mjs) : offre de lancement (dès le 29 octobre 2026). Filet et lettres d'or, prix
    normal en ivoire éteint barré d'un trait d'or, réduction dans un fin cadre d'or. */
 .vf-offre { display: flex; align-items: center; gap: 10px; margin-bottom: -6px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: #C6A05E; }
 .vf-offre::before { content: ''; flex: none; width: 22px; height: 1px; background: linear-gradient(90deg, rgba(198,160,94,0), #C6A05E); }
@@ -567,10 +567,10 @@ const CORRECTIONS = [
   { quoi: "CGV : refund of an analysis not provided (29/10)", fichiers: ["CGV.dc.html"], n: 1,
     avant: "49&nbsp;€ for the single feedback, 43&nbsp;€ per remaining analysis of the pack,",
     apres: "the price paid for the single feedback, a third of the price paid per remaining analysis of the pack," },
-  { quoi: "CGV : version du 1er novembre 2026 (29/10)", fichiers: ["CGV.dc.html"], n: 1,
-    avant: "<span>Version du 20 octobre 2026</span>", apres: "<span>Version du 1er novembre 2026</span>" },
-  { quoi: "CGV : version of 1 November 2026 (29/10)", fichiers: ["CGV.dc.html"], n: 1,
-    avant: "<span>Version of 20 October 2026</span>", apres: "<span>Version of 1 November 2026</span>" },
+  { quoi: "CGV : version du 29 octobre 2026", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<span>Version du 20 octobre 2026</span>", apres: "<span>Version du 29 octobre 2026</span>" },
+  { quoi: "CGV : version of 29 October 2026", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<span>Version of 20 October 2026</span>", apres: "<span>Version of 29 October 2026</span>" },
   // Cartes des formules (02/10).
   { quoi: "Prix Single : one full analysis", fichiers: VF, n: 2,
     avant: "49&nbsp;€ · one routine", apres: "49&nbsp;€ · one full analysis" },
