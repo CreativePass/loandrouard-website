@@ -65,7 +65,6 @@ const TEXTES = [
   [" · one full analysis", " · analyse complète", 2],
   [" · 3 full analyses", " · trois analyses", 2],
   [" · weekly coaching", " · coaching hebdo", 2],
-  ["until 30 November", "jusqu’au 30 novembre", 6], // offre de lancement : sous le prix normal barré
   // Boutons des cartes (27–28/10, « Pay » remplacé dans scripts/construire.mjs) : BOUTONS, ci-dessus.
   ...BOUTONS.map(([, en, fr]) => [en, fr, 2]), // vitrine et planche II
   ["See full details", "Voir tous les détails", 3], // 27/10 : sous les cartes de la vitrine

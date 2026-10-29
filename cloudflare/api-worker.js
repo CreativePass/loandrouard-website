@@ -9,19 +9,21 @@
 // (sinon Stripe refuse la case CGV et la session ne se crée pas).
 
 // Formules = produits du compte Stripe (vérifiés le 01/10). Les prix vivent chez Stripe, pas dans le navigateur.
-// Nouveaux prix (demande de Loan du 29/10) : 99, 249 et 990 €. Offre de lancement du 1er au 30 novembre 2026 (heure de Paris) :
-// prix normal + coupon « Launch offer », que Stripe affiche (prix normal, remise, total) au paiement, sur le reçu et la facture.
-// Avant le 1er novembre : anciens prix, sans coupon (mêmes montants). Même calendrier que la page (scripts/construire.mjs).
-// NE PAS DÉPLOYER tant que les identifiants « À_CRÉER » n'ont pas été remplacés par ceux créés chez Stripe.
-const OFFRE = { debut: Date.parse("2026-11-01T00:00:00+01:00"), fin: Date.parse("2026-12-01T00:00:00+01:00") };
+// Nouveaux prix (demande de Loan du 29/10) : 99, 249 et 990 €. Offre de lancement dès le 1er novembre 2026 (heure de Paris), sans
+// date de fin (Loan, 29/10 : « le temps que le site est en construction ») : prix normal + coupon « Offre de lancement / Launch
+// offer », que Stripe affiche (prix normal, remise, total) au paiement, sur le reçu et la facture. Avant le 1er novembre : anciens
+// prix, sans coupon (mêmes montants). Même calendrier que la page (OFFRE, scripts/construire.mjs) : pour terminer l'offre, y mettre
+// la date de fin dans les deux fichiers, puis republier le Worker et le site.
+// Prix normaux et coupons créés chez Stripe le 29/10 (coupons sans date limite ni code promo).
+const OFFRE = { debut: Date.parse("2026-11-01T00:00:00+01:00"), fin: Infinity };
 const FORMULES = {
-  single: { mode: "payment", coupon: "COUPON_À_CRÉER_SINGLE",
-    lancement: { prix: "price_1UGFgoEAanq7mbbHqvWu58xR", montant: 4900 }, normal: { prix: "price_À_CRÉER_SINGLE", montant: 9900 } },
-  pack: { mode: "payment", coupon: "COUPON_À_CRÉER_PACK",
-    lancement: { prix: "price_1UGFgpEAanq7mbbHusj9753Q", montant: 12900 }, normal: { prix: "price_À_CRÉER_PACK", montant: 24900 } },
-  // Tous les 3 mois. Coupon « forever » : un abonnement pris pendant l'offre reste à 499 € (CGV : reconduit au même prix).
-  prog: { mode: "subscription", coupon: "COUPON_À_CRÉER_PROG",
-    lancement: { prix: "price_1UGFgrEAanq7mbbHWFKnOkTv", montant: 49900 }, normal: { prix: "price_À_CRÉER_PROG", montant: 99000 } },
+  single: { mode: "payment", coupon: "lancement-single",
+    lancement: { prix: "price_1UGFgoEAanq7mbbHqvWu58xR", montant: 4900 }, normal: { prix: "price_1UVsqgEAanq7mbbHBMlz3mis", montant: 9900 } },
+  pack: { mode: "payment", coupon: "lancement-pack",
+    lancement: { prix: "price_1UGFgpEAanq7mbbHusj9753Q", montant: 12900 }, normal: { prix: "price_1UVsqlEAanq7mbbHRp3rdzms", montant: 24900 } },
+  // Tous les 3 mois. Coupon « forever » : un abonnement pris pendant l'offre reste à 499 € (choix de Loan ; CGV : reconduit au même prix).
+  prog: { mode: "subscription", coupon: "lancement-prog",
+    lancement: { prix: "price_1UGFgrEAanq7mbbHWFKnOkTv", montant: 49900 }, normal: { prix: "price_1UVsqoEAanq7mbbHkcS8jv5o", montant: 99000 } },
 };
 // Prix d'une nouvelle session : { prix, montant payé, coupon éventuel, offre (true pendant l'offre de lancement) }.
 const tarif = (f, t = Date.now()) =>

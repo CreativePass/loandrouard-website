@@ -293,25 +293,26 @@ const VF_CSS_27 = BIENTOT_CSS(".vf-entete > nav:not(.vf-sommaire)") + ENTETE_GRA
 // Boutons des cartes : un texte par formule à la place de « Pay 49 € » (BOUTONS, scripts/traduction-fr.mjs).
 const BOUTON_FORMULE = BOUTONS.map(([prix, en]) => [`Pay ${prix}&nbsp;€`, en]);
 const DETAILS = '<button type="button" class="vfp-details" onClick="{{ voirDetails }}">See full details</button>';
-// Nouveaux prix et offre de lancement (demande de Loan du 29/10). Prix normaux : 99, 249 et 990 €. Du 1er au 30 novembre 2026
-// (heure de Paris), les prix d'avant deviennent l'offre de lancement : prix normal barré, réduction en %, date de fin. Avant le
-// 1er novembre, l'affichage ne change pas ; dès le 1er décembre, les prix normaux s'affichent seuls. La page bascule d'elle-même
-// (horloge du visiteur) ; le prix payé est fixé par le Worker API (cloudflare/api-worker.js), aux mêmes dates.
-// Réduction arrondie à l'inférieur, pour ne jamais annoncer plus que la vraie : −50 %, −48 %, −49 %.
-const OFFRE = { debut: "2026-11-01T00:00:00+01:00", fin: "2026-12-01T00:00:00+01:00" };
+// Nouveaux prix et offre de lancement (demande de Loan du 29/10). Prix normaux : 99, 249 et 990 €. Dès le 1er novembre 2026 (heure
+// de Paris), les prix d'avant deviennent l'offre de lancement : prix normal barré, réduction en %. Sans date de fin, et aucune date
+// affichée (Loan : offre valable « le temps que le site est en construction ») ; pour la terminer, mettre la date dans fin (ici et
+// dans cloudflare/api-worker.js), renseigner LIENS_PRIX_NORMAUX, puis republier : la page affichera alors les prix normaux seuls.
+// Avant le 1er novembre, l'affichage ne change pas. La page bascule d'elle-même (horloge du visiteur) ; le prix payé est fixé par
+// le Worker API, aux mêmes dates. Réduction arrondie à l'inférieur, pour ne jamais annoncer plus que la vraie : −50 %, −48 %, −49 %.
+const OFFRE = { debut: "2026-11-01T00:00:00+01:00", fin: null }; // fin : null = pas de fin
 const TARIFS = { single: [49, 99], pack: [129, 249], prog: [499, 990] }; // [offre de lancement, prix normal], en euros
-// Liens de paiement de secours aux prix normaux (utilisés dès le 1er décembre) : à créer chez Stripe, puis à renseigner ici.
+// Liens de paiement de secours aux prix normaux (utilisés après la fin de l'offre) : à créer chez Stripe, puis à renseigner ici.
 const LIENS_PRIX_NORMAUX = {};
-if (Object.keys(LIENS_PRIX_NORMAUX).length < 3) console.warn("Attention : liens de paiement de secours aux prix normaux (LIENS_PRIX_NORMAUX) pas encore renseignés : dès le 1er décembre, le secours ouvrirait les liens aux anciens prix.");
-const OFFRE_JS = `/* Correction du 29/10 (scripts/construire.mjs) : nouveaux prix et offre de lancement, du 1er au 30 novembre 2026 (heure de Paris). */
-const OFFRE = { debut: Date.parse("${OFFRE.debut}"), fin: Date.parse("${OFFRE.fin}") };
+if (OFFRE.fin && Object.keys(LIENS_PRIX_NORMAUX).length < 3) console.warn("Attention : liens de paiement de secours aux prix normaux (LIENS_PRIX_NORMAUX) pas encore renseignés : après la fin de l'offre, le secours ouvrirait les liens aux anciens prix.");
+const OFFRE_JS = `/* Correction du 29/10 (scripts/construire.mjs) : nouveaux prix et offre de lancement, dès le 1er novembre 2026 (heure de Paris). */
+const OFFRE = { debut: Date.parse("${OFFRE.debut}"), fin: ${OFFRE.fin ? `Date.parse("${OFFRE.fin}")` : "Infinity"} };
 const TARIFS = ${JSON.stringify(TARIFS)}; /* [offre de lancement, prix normal] */
 const PHASE = Date.now() < OFFRE.debut ? "avant" : Date.now() < OFFRE.fin ? "offre" : "apres";
 const EUROS = (n) => n + "\\u00A0\\u20AC";
 const REMISE = (k) => "\\u2212" + Math.floor((1 - TARIFS[k][0] / TARIFS[k][1]) * 100) + (document.documentElement.lang === "fr" ? "\\u00A0%" : "%");
 for (const k in TARIFS) FORMULES[k].prix = EUROS(TARIFS[k][PHASE === "apres" ? 1 : 0]);
 `;
-const OFFRE_LIENS_JS = `/* Correction du 29/10 : dès le 1er décembre, liens de secours aux prix normaux. */
+const OFFRE_LIENS_JS = `/* Correction du 29/10 : après l'offre, liens de secours aux prix normaux. */
 if (PHASE === "apres") Object.assign(STRIPE, ${JSON.stringify(LIENS_PRIX_NORMAUX)});
 `;
 const OFFRE_VALS = "      offre: PHASE === \"offre\", horsOffre: PHASE !== \"offre\", prixMin: FORMULES.single.prix, /* Correction du 29/10 : offre de lancement. */\n" +
@@ -319,10 +320,10 @@ const OFFRE_VALS = "      offre: PHASE === \"offre\", horsOffre: PHASE !== \"off
   "      normalSingle: EUROS(TARIFS.single[1]), normalPack: EUROS(TARIFS.pack[1]), normalProg: EUROS(TARIFS.prog[1]),\n" +
   "      remiseSingle: REMISE(\"single\"), remisePack: REMISE(\"pack\"), remiseProg: REMISE(\"prog\"),\n";
 const SI_OFFRE = (html) => `<sc-if value="{{ offre }}" hint-placeholder-val="{{ false }}">${html}</sc-if>`;
-// Au-dessus du nom : « Launch offer » ; au-dessus du prix : prix normal barré, réduction, date de fin.
+// Au-dessus du nom : « Launch offer » ; au-dessus du prix : prix normal barré et réduction (aucune date affichée).
 const OFFRE_TITRE = SI_OFFRE('<div class="vf-offre">Launch offer</div>') + "\n";
-const OFFRE_PRIX = (k) => SI_OFFRE(`<span class="vf-remise"><s>{{ normal${k} }}</s><b>{{ remise${k} }}</b><span>until 30 November</span></span>`);
-const OFFRE_CSS = `/* Correction du 29/10 (scripts/construire.mjs) : offre de lancement (1er–30 novembre 2026). Filet et lettres d'or, prix
+const OFFRE_PRIX = (k) => SI_OFFRE(`<span class="vf-remise"><s>{{ normal${k} }}</s><b>{{ remise${k} }}</b></span>`);
+const OFFRE_CSS = `/* Correction du 29/10 (scripts/construire.mjs) : offre de lancement (dès le 1er novembre 2026). Filet et lettres d'or, prix
    normal en ivoire éteint barré d'un trait d'or, réduction dans un fin cadre d'or. */
 .vf-offre { display: flex; align-items: center; gap: 10px; margin-bottom: -6px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: #C6A05E; }
 .vf-offre::before { content: ''; flex: none; width: 22px; height: 1px; background: linear-gradient(90deg, rgba(198,160,94,0), #C6A05E); }
@@ -330,13 +331,12 @@ const OFFRE_CSS = `/* Correction du 29/10 (scripts/construire.mjs) : offre de la
 .vf-remise s { position: relative; text-decoration: none; color: rgba(246,245,241,.55); }
 .vf-remise s::after { content: ''; position: absolute; left: -3px; right: -3px; top: 47%; height: 1px; background: rgba(198,160,94,.95); } /* trait dessiné : celui de la police tombait sous les chiffres de Cinzel */
 .vf-remise b { font-weight: 500; font-size: 12px; line-height: 1; letter-spacing: .1em; color: #C6A05E; padding: 4px 7px 3px; border: 1px solid rgba(198,160,94,.45); border-radius: 2px; }
-.vf-remise > span { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: rgba(246,245,241,.5); } /* « > » : les valeurs {{ }} du gabarit sont elles aussi rendues dans un span */
 /* Cartes en colonne (ordinateur, carte ouverte sur mobile) : l'en-tête grandit d'autant que les deux lignes ajoutées (17 + 16 − 6 et 23 + 9 px, mesuré), la liste garde sa place sous le bouton. */
 .vf-carte__tete:has(> .vf-offre) { min-height: calc(216px + 59px); }
 /* Vitrine sur mobile : la hauteur des cartes est comptée (réduction à 0,78 au plus, puis débordement sur les petits écrans). Pendant
-   l'offre, une seule ligne : prix normal barré, prix de lancement, réduction (« Launch offer » est sous See the options ; la date et le
-   détail de la formule, sur les cartes de la planche II). Navigateurs sans :has (iOS < 15.4) : prix barré sur sa ligne, au-dessus. */
-@media (max-width: 899px) { .vfp-c .vf-carte__tete:has(> .vf-offre) { min-height: 0; } .vfp-c .vf-offre, .vfp-c .vf-remise > span { display: none; }
+   l'offre, une seule ligne : prix normal barré, prix de lancement, réduction (« Launch offer » est sous See the options ; le détail de
+   la formule, sur les cartes de la planche II). Navigateurs sans :has (iOS < 15.4) : prix barré sur sa ligne, au-dessus. */
+@media (max-width: 899px) { .vfp-c .vf-carte__tete:has(> .vf-offre) { min-height: 0; } .vfp-c .vf-offre { display: none; }
   .vfp-c .vf-remise { margin-bottom: 4px; font-size: 13px; }
   .vfp-c .vf-prix:has(> .vf-remise) { display: flex; align-items: center; gap: 10px; } .vfp-c .vf-prix:has(> .vf-remise) .vf-remise { display: contents; }
   .vfp-c .vf-prix:has(> .vf-remise) .vf-remise b { order: 1; } .vfp-c .vf-prix:has(> .vf-remise) .vf-prix-d { display: none; } }
@@ -535,7 +535,7 @@ const CORRECTIONS = [
   { quoi: "CGV : version of 20 October 2026", fichiers: ["CGV.dc.html"], n: 1,
     avant: "<span>Version of 1 October 2026</span>", apres: "<span>Version of 20 October 2026</span>" },
   // Nouveaux prix et offre de lancement (29/10, voir OFFRE) : prix normaux dans les titres et à l'article 05, offre de lancement
-  // du 1er au 30 novembre 2026 ; montants remboursés exprimés à partir du prix payé (49 ou 99 €, tiers du pack : 43 ou 83 €).
+  // sans date (tant qu'elle est affichée sur le site) ; montants remboursés exprimés à partir du prix payé (49 ou 99 €, tiers du pack : 43 ou 83 €).
   // Texte à faire valider par Loan avant la mise en ligne.
   ...[["Single feedback — 49&nbsp;€", "Single feedback — 99&nbsp;€"], ["3× feedback pack — 129&nbsp;€", "3× feedback pack — 249&nbsp;€"],
     ["Quarterly program — 499&nbsp;€ every 3 months (subscription)", "Quarterly program — 990&nbsp;€ every 3 months (subscription)"],
@@ -544,11 +544,11 @@ const CORRECTIONS = [
   { quoi: "CGV : prix et offre de lancement (29/10)", fichiers: ["CGV.dc.html"], n: 1,
     avant: "<li>Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois.</li>",
     apres: "<li>Single feedback : 99&nbsp;€ · 3× feedback pack : 249&nbsp;€ · Quarterly program : 990&nbsp;€ par période de 3 mois.</li>\n" +
-      "<li>Offre de lancement, pour toute commande passée du 1er au 30 novembre 2026 (heure de Paris) : Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois. Un programme souscrit pendant l’offre reste à 499&nbsp;€ par période jusqu’à sa résiliation.</li>" },
+      "<li>Offre de lancement, pour toute commande passée tant qu’elle est affichée sur la page Video Feedback : Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois. Un programme souscrit pendant l’offre reste à 499&nbsp;€ par période jusqu’à sa résiliation.</li>" },
   { quoi: "CGV : prices and launch offer (29/10)", fichiers: ["CGV.dc.html"], n: 1,
     avant: "<li>Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period.</li>",
     apres: "<li>Single feedback: 99&nbsp;€ · 3× feedback pack: 249&nbsp;€ · Quarterly program: 990&nbsp;€ per 3-month period.</li>\n" +
-      "<li>Launch offer, for any order placed from 1 to 30 November 2026 (Paris time): Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period. A program taken out during the offer stays at 499&nbsp;€ per period until you cancel it.</li>" },
+      "<li>Launch offer, for any order placed while it is shown on the Video Feedback page: Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period. A program taken out during the offer stays at 499&nbsp;€ per period until you cancel it.</li>" },
   { quoi: "CGV : prélèvement du programme (29/10)", fichiers: ["CGV.dc.html"], n: 1,
     avant: "<li>Programme : les 499&nbsp;€ sont prélevés automatiquement au début de chaque période de 3 mois, sur le moyen de paiement utilisé.</li>",
     apres: "<li>Programme : son prix est prélevé automatiquement au début de chaque période de 3 mois, sur le moyen de paiement utilisé.</li>" },
