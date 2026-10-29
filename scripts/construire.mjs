@@ -515,6 +515,43 @@ const VF_CSS_29 = `/* Correction du 29/10 (scripts/construire.mjs) : textes plus
 }
 `;
 
+// Retour de Loan du 29/10 (« plusieurs personnes m'ont dit qu'elles pensaient que c'était la fin de la page ») : en défilant, l'image
+// ne s'arrête plus jamais net, sauf sur les cartes de paiement en fin de page. Là où elle se figeait, elle continue au ralenti, comme
+// un super ralenti de cinéma : toujours un micro-mouvement.
+// Projecteur, tenue du cran (1,25 écran où la scène n'avançait qu'à 0,6 % du défilement) : la vitesse descend en douceur jusqu'à 7 %,
+// puis remonte. Même retard total (0,994 × tenue) et même milieu (le cran, ancre « What is it ») : avant et après la tenue, tout est
+// exactement à la même place qu'avant.
+const RALENTI_AVANT = "const lisse = (a, b, v) => { const t = borne((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };\n";
+const RALENTI_APRES = RALENTI_AVANT +
+  "/* Correction du 29/10 (scripts/construire.mjs) : retard accumulé à la distance x du milieu d'une tenue de longueur T. La vitesse\n" +
+  "   descend en douceur (rampes de T / 2) jusqu'à 7 % du défilement, jamais à zéro, puis remonte ; retard total 0,994 × T, comme avant. */\n" +
+  "const ralenti = (x, T) => { const k = 0.07, a = 0.5 * T, L = (0.994 * T / (1 - k) + a) / 2, F = L - a, y = Math.min(Math.abs(x), L), v = Math.max(0, y - F), t = v / a;\n" +
+  "  return 0.497 * T + Math.sign(x) * (1 - k) * (Math.min(y, F) + v - a * t * t * t * (1 - t / 2)); };\n";
+// Projecteur, après l'éblouissement (P plafonné à 0,8 : page blanche « Video Feedback / For everyone… » immobile sur près de
+// 3 écrans, seuls les mots apparaissaient) : la caméra continue d'avancer très lentement sur toute l'affiche (≈ 1,7 % par écran,
+// 5,5 % le temps de la page blanche), prise en douceur dès la fin de l'approche (P = 0,6), sans à-coup. Loan et le titre grandissent
+// ensemble autour du même point : les écarts entre les mots et la silhouette (ecarter(), mesuré sans cette avancée) restent ceux
+// d'avant, à l'échelle ; plafonnée une fois la scène sortie de l'écran. Mouvement réduit : rien.
+const POUSSEE_AVANT = "const t = borne(P / 0.7, 0, 1), z = 1 + (Zm - 1) * (1 - Math.pow(1 - t, 2.1));";
+const POUSSEE_APRES = "const t = borne(P / 0.7, 0, 1), pz = calme ? 0 : borne(s / plage - 0.36, 0, 1.2), pf = 1 + 0.08 * (pz < 0.12 ? pz * pz / 0.24 : pz - 0.06), z = (1 + (Zm - 1) * (1 - Math.pow(1 - t, 2.1))) * pf; /* Correction du 29/10 (scripts/construire.mjs) : la caméra ne s'arrête jamais, lente avancée sur la page blanche. */";
+const TITRE_POUSSEE_AVANT = "      fig.style.transform = reman.style.transform = tFig;\n";
+const TITRE_POUSSEE_APRES = TITRE_POUSSEE_AVANT +
+  "      { const tt = G.tt || (G.tt = sec.querySelector(\".vfp-titre\")), o = Sx.toFixed(1) + \"px \" + Sy.toFixed(1) + \"px\", v = pf > 1.0005 ? \"scale(\" + pf.toFixed(4) + \")\" : \"\";\n" +
+  "        if (tt && tt.__v !== v + o) { tt.__v = v + o; tt.style.transformOrigin = o; tt.style.transform = v; } } /* Correction du 29/10 (scripts/construire.mjs) : le titre avance avec Loan. */\n";
+const ECARTER_DEBUT_AVANT = "    function ecarter() {\n      if (!A || !G) return;\n";
+const ECARTER_DEBUT_APRES = ECARTER_DEBUT_AVANT +
+  "      const tt = sec.querySelector(\".vfp-titre\"), tz = tt ? tt.style.transform : \"\"; if (tt) tt.style.transform = \"\"; /* Correction du 29/10 : mesuré sans l'avancée de la caméra. */\n";
+const ECARTER_FIN_AVANT = "        if (k < 1) el.style.scale = k.toFixed(3);\n      });\n    }\n";
+const ECARTER_FIN_APRES = "        if (k < 1) el.style.scale = k.toFixed(3);\n      });\n      if (tt) tt.style.transform = tz;\n    }\n";
+// Étude, bascule yin-yang et photo en couleur (u ≥ 6,9) : la caméra est fixe et chaque étape finit en douceur, d'où des presque-arrêts
+// (début du tour du taiji, arrivée des moitiés, pause 7,4 → 7,56 « tout est posé, rien ne bouge », photo immobile pendant que les
+// corrections en or s'effacent). La caméra avance très lentement vers Loan pendant tout ce passage (≈ 1,5 % par écran, prise en
+// douceur), puis continue pendant le recul de la tenue. Les étapes du croquis (u < 6,2) bougeaient déjà (zoom de 3,5 % par point).
+const DERIVE_AVANT = "      cible = { fx: pl.f[0] + (0.42 - pl.f[0]) * V.m, fy: pl.f[1] + (0.395 - pl.f[1]) * V.m, z: pl.z * z * (1 - 0.06 * V.m) * (1 - 0.3 * lisse(0.05, 0.4, h)) };\n";
+const DERIVE_APRES = "      /* Correction du 29/10 (scripts/construire.mjs) : lente avancée de la caméra dès la bascule, jamais d'arrêt. */\n" +
+  "      const xd = calme ? 0 : Math.max(0, xr - depuisU(6.9)), pousse = 0.014 * (xd < 0.5 ? xd * xd : xd - 0.25);\n" +
+  "      cible = { fx: pl.f[0] + (0.42 - pl.f[0]) * V.m, fy: pl.f[1] + (0.395 - pl.f[1]) * V.m, z: pl.z * z * (1 - 0.06 * V.m) * (1 - 0.3 * lisse(0.05, 0.4, h)) * (1 + pousse) };\n";
+
 const CORRECTIONS = [
   {
     quoi: "Crédits photo des mentions légales (01/10)",
@@ -834,6 +871,22 @@ const CORRECTIONS = [
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_28C + SOMMAIRE_STYLE_FIN },
   { quoi: "Styles du 29/10 : textes plus lisibles sur mobile, « For everyone / From beginner / To pro » plus grand", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
+  // Retour de Loan du 29/10 : jamais d'arrêt net en défilant (constantes plus haut : RALENTI_APRES, POUSSEE_APRES, TITRE_POUSSEE_APRES,
+  // ECARTER_DEBUT_APRES, ECARTER_FIN_APRES, DERIVE_APRES).
+  { quoi: "Défilement sans arrêt : fonction ralenti (29/10)", fichiers: VF, n: 1, avant: RALENTI_AVANT, apres: RALENTI_APRES },
+  { quoi: "Défilement sans arrêt : projecteur au ralenti au lieu de la tenue du cran (29/10)", fichiers: VF, n: 1,
+    avant: "s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994",
+    apres: "s = s1 - ralenti(s1 - s0 - tenue / 2, tenue) /* Correction du 29/10 (scripts/construire.mjs) : ralenti au lieu d'un arrêt. */" },
+  { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
+    avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
+  { quoi: "Défilement sans arrêt : le titre de la page blanche avance avec Loan (29/10)", fichiers: VF, n: 1,
+    avant: TITRE_POUSSEE_AVANT, apres: TITRE_POUSSEE_APRES },
+  { quoi: "Défilement sans arrêt : écart titre / silhouette mesuré sans l'avancée (29/10)", fichiers: VF, n: 1,
+    avant: ECARTER_DEBUT_AVANT, apres: ECARTER_DEBUT_APRES },
+  { quoi: "Défilement sans arrêt : avancée rendue au titre après la mesure (29/10)", fichiers: VF, n: 1,
+    avant: ECARTER_FIN_AVANT, apres: ECARTER_FIN_APRES },
+  { quoi: "Défilement sans arrêt : lente avancée de la caméra de l'étude pendant la bascule (29/10)", fichiers: VF, n: 1,
+    avant: DERIVE_AVANT, apres: DERIVE_APRES },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
