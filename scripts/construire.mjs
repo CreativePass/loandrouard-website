@@ -443,6 +443,28 @@ const VF_CSS_28C = `/* Correction du 28/10, 3e retour (scripts/construire.mjs) :
   .vfk-tete .vf-lede { max-width: none; margin-inline: -160px !important; font-size: clamp(24px, .7vw + 15px, 30px); }
 }
 `;
+// Retour de Loan du 29/10 : mêmes textes plus grands sur mobile aussi, et « For everyone / From beginner / To pro » plus grand,
+// « surtout sur mobile où c'est vraiment trop petit ». Ce dernier est réduit par ecarter() tant qu'il touche la silhouette de
+// Loan : sur mobile, la place à côté de la jambe le ramenait à 0,4–0,6 fois sa taille (10 à 14 px). Il descend donc là où la
+// jambe est plus fine et ses lignes se resserrent, ce qui lui laisse la place de grandir.
+const VF_CSS_29 = `/* Correction du 29/10 (scripts/construire.mjs) : textes plus lisibles sur mobile, « For everyone… » plus grand. */
+.vfp-mot--feedback.vfp-pour { font-size: clamp(28px, 3vw, 54px); }
+@media (max-width: 899px) {
+  /* Plus bas (la jambe y est plus fine) ; + 100lvh − 100svh comme la correction Safari « lvh », qu'il remplace ici. */
+  .vfp-mot--feedback.vfp-pour { font-size: clamp(26px, 8vw, 32px); gap: .45em; }
+  .vfp-scene .vfp-mot--feedback.vfp-pour { bottom: calc(max(24px, 8svh) + 100lvh - 100svh) !important; }
+  .vfp-texte .vfp-h1-p { font-size: .4em; }
+  .vfp-texte .vfp-lede { font-size: 20px; }
+}
+@media (max-width: 999px) {
+  /* Planche II : plaque sur toute la largeur (elle est centrée au-dessus du titre), textes plus grands. */
+  .vfk-plaque { max-width: none; }
+  .vfk-plaque b { font-size: 12.5px; }
+  .vfk-plaque span { font-size: 19px; }
+  .vfk-tete .vf-eyebrow { font-size: 14px; }
+  .vfk-tete .vf-lede { font-size: 22px; }
+}
+`;
 
 const CORRECTIONS = [
   {
@@ -678,6 +700,8 @@ const CORRECTIONS = [
     avant: VIEWPORT, apres: TITRE_HTML(t) })),
   { quoi: "Styles du 28/10 (3e retour) : textes du projecteur et du haut de la planche II plus lisibles sur ordinateur", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_28C + SOMMAIRE_STYLE_FIN },
+  { quoi: "Styles du 29/10 : textes plus lisibles sur mobile, « For everyone / From beginner / To pro » plus grand", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
