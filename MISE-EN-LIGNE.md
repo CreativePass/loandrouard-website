@@ -194,4 +194,5 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
   - tailles mesurées en ligne identiques au local : « For everyone… » 20 px à 390 px (31,2 px réduit à 0,62–0,64) et 43,2 px à 1440 px ; textes mobiles du projecteur et de la planche II comme prévu ;
   - descente « See full details » / « Voir tous les détails » : 4,0 à 4,5 s (390 et 1440 px) ;
   - aucune erreur JS ; `/places` = 200 ; loandrouard.fr → `/?lang=fr` (301).
+  - `npm run verifier -- https://loandrouard.com` : 144 captures sur 144 avec écart, attendus (mêmes écarts que le 29/10 au matin, plus les textes mobiles agrandis) ; contrôles d'en-tête et « Powered by » passés partout, aucune erreur JS ; seules ressources en échec : la balise Cloudflare Web Analytics (réseau de vérification) et `/places` en 403 (dû au vérificateur).
 - [ ] Cloudflare Web Analytics est actif sur loandrouard.com et .fr depuis le 06/09 (installation automatique : Cloudflare ajoute sa balise aux pages). À confirmer ou désactiver par Loan ; la page Privacy n'en parle pas.
