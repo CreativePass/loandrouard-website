@@ -9,32 +9,58 @@
 // (sinon Stripe refuse la case CGV et la session ne se crée pas).
 
 // Formules = produits du compte Stripe (vérifiés le 01/10). Les prix vivent chez Stripe, pas dans le navigateur.
+// Nouveaux prix (demande de Loan du 29/10) : 99, 249 et 990 €. Offre de lancement dès la mise en ligne du 29/10, sans date de fin
+// (Loan : « le temps que le site est en construction ») : prix normal + coupon « Offre de lancement / Launch offer », que Stripe
+// affiche (prix normal, remise, total) au paiement, sur le reçu et la facture. Avant debut : anciens prix, sans coupon (mêmes
+// montants). Les prix de l'offre sont ceux de toutes les promos de Loan (CLAUDE.md, « Promotions »). Même calendrier que la page (OFFRE, scripts/construire.mjs) : pour terminer l'offre, y mettre
+// la date de fin dans les deux fichiers, puis republier le Worker et le site.
+// Prix normaux et coupons créés chez Stripe le 29/10 (coupons sans date limite ni code promo).
+const OFFRE = { debut: Date.parse("2026-10-29T00:00:00+01:00"), fin: Infinity };
 const FORMULES = {
-  single: { prix: "price_1UGFgoEAanq7mbbHqvWu58xR", montant: 4900, mode: "payment" },
-  pack: { prix: "price_1UGFgpEAanq7mbbHusj9753Q", montant: 12900, mode: "payment" },
-  prog: { prix: "price_1UGFgrEAanq7mbbHWFKnOkTv", montant: 49900, mode: "subscription" }, // 499 € tous les 3 mois
+  single: { mode: "payment", coupon: "lancement-single",
+    lancement: { prix: "price_1UGFgoEAanq7mbbHqvWu58xR", montant: 4900 }, normal: { prix: "price_1UVsqgEAanq7mbbHBMlz3mis", montant: 9900 } },
+  pack: { mode: "payment", coupon: "lancement-pack",
+    lancement: { prix: "price_1UGFgpEAanq7mbbHusj9753Q", montant: 12900 }, normal: { prix: "price_1UVsqlEAanq7mbbHRp3rdzms", montant: 24900 } },
+  // Tous les 3 mois. Coupon « forever » : un abonnement pris pendant l'offre reste à 499 € (choix de Loan ; CGV : reconduit au même prix).
+  prog: { mode: "subscription", coupon: "lancement-prog",
+    lancement: { prix: "price_1UGFgrEAanq7mbbHWFKnOkTv", montant: 49900 }, normal: { prix: "price_1UVsqoEAanq7mbbHkcS8jv5o", montant: 99000 } },
 };
+// Prix d'une nouvelle session : { prix, montant payé, coupon éventuel, offre (true pendant l'offre de lancement) }.
+const tarif = (f, t = Date.now()) =>
+  t < OFFRE.debut ? { prix: f.lancement.prix, montant: f.lancement.montant, offre: false }
+  : t < OFFRE.fin ? { prix: f.normal.prix, montant: f.lancement.montant, coupon: f.coupon, offre: true }
+  : { prix: f.normal.prix, montant: f.normal.montant, offre: false };
+const euros = (c) => String(c / 100);
 // Textes du paiement, en français pour un navigateur en français, en anglais sinon (Accept-Language).
 // Case à cocher obligatoire : renonciation au droit de rétractation (mêmes termes que les CGV).
 const RENONCIATION = {
   fr: "En cochant cette case, je demande expressément que la prestation commence avant la fin du délai de rétractation de 14 jours et je reconnais que je perdrai ce droit une fois la prestation pleinement exécutée (art. L221-25 et L221-28, 1° du code de la consommation).",
   en: "By ticking this box, I expressly request that the service start before the end of the 14-day withdrawal period, and I acknowledge that I will lose this right once the service has been fully performed (French Consumer Code, art. L221-25 and L221-28 1°).",
 };
+// Abonnement : montant tous les 3 mois (t = tarif), avec la mention de l'offre de lancement pendant l'offre.
+const ABONNEMENT = {
+  fr: (t) => "Abonnement : " + euros(t.montant) + " € tous les 3 mois" +
+    (t.offre ? " (offre de lancement, au lieu de " + euros(FORMULES.prog.normal.montant) + " €), reconduit automatiquement à ce prix" : ", reconduit automatiquement") +
+    " jusqu'à résiliation, résiliable à tout moment avec effet à la fin de la période en cours. ",
+  en: (t) => "Subscription: €" + euros(t.montant) + " every 3 months" +
+    (t.offre ? " (launch offer, instead of €" + euros(FORMULES.prog.normal.montant) + "), renewed automatically at this price" : ", renewed automatically") +
+    " until cancelled; you can cancel at any time, effective at the end of the current period. ",
+};
 const CASE = {
   fr: {
-    single: RENONCIATION.fr,
-    pack: RENONCIATION.fr + " Les 3 retours du pack sont valables 6 mois à compter du premier envoi.",
-    prog: "Abonnement : 499 € tous les 3 mois, reconduit automatiquement jusqu'à résiliation, résiliable à tout moment avec effet à la fin de la période en cours. " + RENONCIATION.fr,
+    single: () => RENONCIATION.fr,
+    pack: () => RENONCIATION.fr + " Les 3 retours du pack sont valables 6 mois à compter du premier envoi.",
+    prog: (t) => ABONNEMENT.fr(t) + RENONCIATION.fr,
   },
   en: {
-    single: RENONCIATION.en,
-    pack: RENONCIATION.en + " The pack's 3 analyses are valid for 6 months from your first video.",
-    prog: "Subscription: €499 every 3 months, renewed automatically until cancelled; you can cancel at any time, effective at the end of the current period. " + RENONCIATION.en,
+    single: () => RENONCIATION.en,
+    pack: () => RENONCIATION.en + " The pack's 3 analyses are valid for 6 months from your first video.",
+    prog: (t) => ABONNEMENT.en(t) + RENONCIATION.en,
   },
 };
 const PRELEVEMENT = {
-  fr: "Vous serez prélevé de 499 € aujourd'hui, puis tous les 3 mois jusqu'à résiliation.",
-  en: "You will be charged €499 today, then every 3 months until you cancel.",
+  fr: (t) => "Vous serez prélevé de " + euros(t.montant) + " € aujourd'hui, puis tous les 3 mois jusqu'à résiliation.",
+  en: (t) => "You will be charged €" + euros(t.montant) + " today, then every 3 months until you cancel.",
 };
 const VALIDE_JOURS = 180; // accès WhatsApp d'un achat unique
 const ABO_ACTIF = ["active", "trialing", "past_due"];
@@ -58,11 +84,12 @@ const MEMO = {
     "Open your access (WhatsApp button + QR code):\n" + lien + "\n\nWhatsApp: " + lisible(numero),
 };
 
-// Formule d'une session : métadonnée (paiement intégré), sinon déduite du montant (liens de paiement).
+// Formule d'une session : métadonnée (paiement intégré), sinon déduite du montant (liens de paiement : prix de lancement ou normal).
 const formuleDe = (s) => {
   const m = s.metadata && s.metadata.formule;
   if (FORMULES[m]) return m;
-  return Object.keys(FORMULES).find((k) => FORMULES[k].montant === s.amount_total && s.currency === "eur");
+  return Object.keys(FORMULES).find((k) => s.currency === "eur" &&
+    [FORMULES[k].lancement.montant, FORMULES[k].normal.montant].includes(s.amount_total));
 };
 
 export default {
@@ -109,13 +136,15 @@ export default {
     };
     const depuis = (jours) => String(Math.floor(Date.now() / 1000 - jours * 86400));
 
+    // Programme : abonnements en cours aux deux prix (lancement et normal).
     const restantes = async () => {
-      const [pack, prog] = await Promise.all([
+      const [pack, ...prog] = await Promise.all([
         lister("checkout/sessions", { status: "complete", "created[gte]": depuis(PLACES.pack.jours) },
           (s) => s.payment_status === "paid" && formuleDe(s) === "pack"),
-        lister("subscriptions", { price: FORMULES.prog.prix, status: "all" }, (a) => ABO_ACTIF.includes(a.status)),
+        ...[FORMULES.prog.lancement.prix, FORMULES.prog.normal.prix].map((price) =>
+          lister("subscriptions", { price, status: "all" }, (a) => ABO_ACTIF.includes(a.status))),
       ]);
-      return { pack: Math.max(0, PLACES.pack.total - pack), prog: Math.max(0, PLACES.prog.total - prog) };
+      return { pack: Math.max(0, PLACES.pack.total - pack), prog: Math.max(0, PLACES.prog.total - prog[0] - prog[1]) };
     };
 
     // GET /places — { pack, prog } places restantes.
@@ -133,29 +162,36 @@ export default {
       if (PLACES[formule]) {
         try { if ((await restantes())[formule] <= 0) return json({ error: "complet" }, 409); } catch (e) { /* Stripe indisponible : on n'empêche pas l'achat */ }
       }
-      const corps = new URLSearchParams({
-        ui_mode: "embedded",
-        mode: f.mode,
-        redirect_on_completion: "never",
-        "line_items[0][price]": f.prix,
-        "line_items[0][quantity]": "1",
-        "metadata[formule]": formule,
-        "phone_number_collection[enabled]": "true",
-        "consent_collection[terms_of_service]": "required",
-        "custom_text[terms_of_service_acceptance][message]": CASE[langue][formule],
-      });
-      if (f.mode === "subscription") {
-        corps.set("subscription_data[metadata][formule]", formule);
-        corps.set("custom_text[submit][message]", PRELEVEMENT[langue]);
-        // Abonnement : Stripe crée lui-même la facture ; son mémo est le mémo par défaut du compte (tableau de bord).
-      } else if (env.WHATSAPP_NUMBER) {
-        const j = jeton();
-        corps.set("metadata[acces]", j);
-        corps.set("invoice_creation[enabled]", "true");
-        corps.set("invoice_creation[invoice_data][description]", MEMO[langue](SITE + "/acces/" + j, env.WHATSAPP_NUMBER));
-        corps.set("invoice_creation[invoice_data][metadata][formule]", formule);
-      }
-      const r = await stripe("checkout/sessions", { method: "POST", body: corps });
+      const session = (t) => {
+        const corps = new URLSearchParams({
+          ui_mode: "embedded",
+          mode: f.mode,
+          redirect_on_completion: "never",
+          "line_items[0][price]": t.prix,
+          "line_items[0][quantity]": "1",
+          "metadata[formule]": formule,
+          "phone_number_collection[enabled]": "true",
+          "consent_collection[terms_of_service]": "required",
+          "custom_text[terms_of_service_acceptance][message]": CASE[langue][formule](t),
+        });
+        if (t.coupon) corps.set("discounts[0][coupon]", t.coupon);
+        if (f.mode === "subscription") {
+          corps.set("subscription_data[metadata][formule]", formule);
+          corps.set("custom_text[submit][message]", PRELEVEMENT[langue](t));
+          // Abonnement : Stripe crée lui-même la facture ; son mémo est le mémo par défaut du compte (tableau de bord).
+        } else if (env.WHATSAPP_NUMBER) {
+          const j = jeton();
+          corps.set("metadata[acces]", j);
+          corps.set("invoice_creation[enabled]", "true");
+          corps.set("invoice_creation[invoice_data][description]", MEMO[langue](SITE + "/acces/" + j, env.WHATSAPP_NUMBER));
+          corps.set("invoice_creation[invoice_data][metadata][formule]", formule);
+        }
+        return stripe("checkout/sessions", { method: "POST", body: corps });
+      };
+      const t = tarif(f);
+      let r = await session(t);
+      // Offre de lancement : si Stripe refuse le coupon, même montant au prix de lancement, sans la mention de l'offre.
+      if (!r.ok && t.coupon) r = await session({ prix: f.lancement.prix, montant: f.lancement.montant, offre: true });
       const s = await r.json();
       if (!r.ok) return json({ error: "stripe", detail: s.error && s.error.message }, 502);
       return json({ clientSecret: s.client_secret, sessionId: s.id });

@@ -9,6 +9,12 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - Pas d'analytics, cookies, traceurs, bannière ni CSP sans demande de Loan.
 - **Terminer chaque réponse par un résumé** : réponses aux questions posées, puis liste de ce que Loan doit faire.
 
+## Prix et promotions (décision de Loan du 29/10/2026)
+- Prix normaux : Single feedback 99 €, 3× feedback pack 249 €, Quarterly program 990 € tous les 3 mois.
+- **À chaque promotion, les prix promo sont toujours ceux-ci : 49 €, 129 € et 499 € tous les 3 mois** (prix normal barré, réduction : −50 %, −48 %, −49 %). Un programme souscrit pendant une promo reste à 499 € tant qu'il n'est pas résilié.
+- Chez Stripe : coupons `lancement-single`, `lancement-pack`, `lancement-prog` (sans date limite ; leur nom affiché, « Offre de lancement / Launch offer », est à changer si la promo porte un autre nom). Dates de la promo : `OFFRE` dans `scripts/construire.mjs` et `cloudflare/api-worker.js` (voir MISE-EN-LIGNE.md).
+- Offre de lancement en cours depuis le 29/10/2026, sans date de fin ni date affichée : Loan dira quand l'arrêter.
+
 ## Où trouver quoi
 - `PASSATION-CLAUDE-CODE.md` : cahier des charges d'origine (liste blanche, paiement, vérifications § 8, plus tard § 9).
 - `MISE-EN-LIGNE.md` : fonctionnement actuel (hébergement, redirections, Worker API, e-mails Stripe), commandes, état et retour arrière.

@@ -293,6 +293,55 @@ const VF_CSS_27 = BIENTOT_CSS(".vf-entete > nav:not(.vf-sommaire)") + ENTETE_GRA
 // Boutons des cartes : un texte par formule à la place de « Pay 49 € » (BOUTONS, scripts/traduction-fr.mjs).
 const BOUTON_FORMULE = BOUTONS.map(([prix, en]) => [`Pay ${prix}&nbsp;€`, en]);
 const DETAILS = '<button type="button" class="vfp-details" onClick="{{ voirDetails }}">See full details</button>';
+// Nouveaux prix et offre de lancement (demande de Loan du 29/10). Prix normaux : 99, 249 et 990 €. Dès la mise en ligne du 29/10
+// (Loan), les prix d'avant deviennent l'offre de lancement : prix normal barré, réduction en %. Sans date de fin, et aucune date
+// affichée (Loan : offre valable « le temps que le site est en construction ») ; pour la terminer, mettre la date dans fin (ici et
+// dans cloudflare/api-worker.js), renseigner LIENS_PRIX_NORMAUX, puis republier : la page affichera alors les prix normaux seuls.
+// Avant debut, l'affichage d'origine. La page bascule d'elle-même (horloge du visiteur) ; le prix payé est fixé par le Worker API,
+// aux mêmes dates. Les prix de l'offre sont ceux de toutes les promos de Loan (CLAUDE.md, « Promotions »). Réduction arrondie à l'inférieur, pour ne jamais annoncer plus que la vraie : −50 %, −48 %, −49 %.
+const OFFRE = { debut: "2026-10-29T00:00:00+01:00", fin: null }; // fin : null = pas de fin
+const TARIFS = { single: [49, 99], pack: [129, 249], prog: [499, 990] }; // [offre de lancement, prix normal], en euros
+// Liens de paiement de secours aux prix normaux (utilisés après la fin de l'offre) : à créer chez Stripe, puis à renseigner ici.
+const LIENS_PRIX_NORMAUX = {};
+if (OFFRE.fin && Object.keys(LIENS_PRIX_NORMAUX).length < 3) console.warn("Attention : liens de paiement de secours aux prix normaux (LIENS_PRIX_NORMAUX) pas encore renseignés : après la fin de l'offre, le secours ouvrirait les liens aux anciens prix.");
+const OFFRE_JS = `/* Correction du 29/10 (scripts/construire.mjs) : nouveaux prix et offre de lancement, dès le 29 octobre 2026. */
+const OFFRE = { debut: Date.parse("${OFFRE.debut}"), fin: ${OFFRE.fin ? `Date.parse("${OFFRE.fin}")` : "Infinity"} };
+const TARIFS = ${JSON.stringify(TARIFS)}; /* [offre de lancement, prix normal] */
+const PHASE = Date.now() < OFFRE.debut ? "avant" : Date.now() < OFFRE.fin ? "offre" : "apres";
+const EUROS = (n) => n + "\\u00A0\\u20AC";
+const REMISE = (k) => "\\u2212" + Math.floor((1 - TARIFS[k][0] / TARIFS[k][1]) * 100) + (document.documentElement.lang === "fr" ? "\\u00A0%" : "%");
+for (const k in TARIFS) FORMULES[k].prix = EUROS(TARIFS[k][PHASE === "apres" ? 1 : 0]);
+`;
+const OFFRE_LIENS_JS = `/* Correction du 29/10 : après l'offre, liens de secours aux prix normaux. */
+if (PHASE === "apres") Object.assign(STRIPE, ${JSON.stringify(LIENS_PRIX_NORMAUX)});
+`;
+const OFFRE_VALS = "      offre: PHASE === \"offre\", horsOffre: PHASE !== \"offre\", prixMin: FORMULES.single.prix, /* Correction du 29/10 : offre de lancement. */\n" +
+  "      prixSingle: FORMULES.single.prix, prixPack: FORMULES.pack.prix, prixProg: FORMULES.prog.prix,\n" +
+  "      normalSingle: EUROS(TARIFS.single[1]), normalPack: EUROS(TARIFS.pack[1]), normalProg: EUROS(TARIFS.prog[1]),\n" +
+  "      remiseSingle: REMISE(\"single\"), remisePack: REMISE(\"pack\"), remiseProg: REMISE(\"prog\"),\n";
+const SI_OFFRE = (html) => `<sc-if value="{{ offre }}" hint-placeholder-val="{{ false }}">${html}</sc-if>`;
+// Au-dessus du nom : « Launch offer » ; au-dessus du prix : prix normal barré et réduction (aucune date affichée).
+const OFFRE_TITRE = SI_OFFRE('<div class="vf-offre">Launch offer</div>') + "\n";
+const OFFRE_PRIX = (k) => SI_OFFRE(`<span class="vf-remise"><s>{{ normal${k} }}</s><b>{{ remise${k} }}</b></span>`);
+const OFFRE_CSS = `/* Correction du 29/10 (scripts/construire.mjs) : offre de lancement (dès le 29 octobre 2026). Filet et lettres d'or, prix
+   normal en ivoire éteint barré d'un trait d'or, réduction dans un fin cadre d'or. */
+.vf-offre { display: flex; align-items: center; gap: 10px; margin-bottom: -6px; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: #C6A05E; }
+.vf-offre::before { content: ''; flex: none; width: 22px; height: 1px; background: linear-gradient(90deg, rgba(198,160,94,0), #C6A05E); }
+.vf-remise { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 9px; font-size: 18px; line-height: 1.3; letter-spacing: .04em; }
+.vf-remise s { position: relative; text-decoration: none; color: rgba(246,245,241,.55); }
+.vf-remise s::after { content: ''; position: absolute; left: -3px; right: -3px; top: 47%; height: 1px; background: rgba(198,160,94,.95); } /* trait dessiné : celui de la police tombait sous les chiffres de Cinzel */
+.vf-remise b { font-weight: 500; font-size: 12px; line-height: 1; letter-spacing: .1em; color: #C6A05E; padding: 4px 7px 3px; border: 1px solid rgba(198,160,94,.45); border-radius: 2px; }
+/* Cartes en colonne (ordinateur, carte ouverte sur mobile) : l'en-tête grandit d'autant que les deux lignes ajoutées (17 + 16 − 6 et 23 + 9 px, mesuré), la liste garde sa place sous le bouton. */
+.vf-carte__tete:has(> .vf-offre) { min-height: calc(216px + 59px); }
+/* Vitrine sur mobile : la hauteur des cartes est comptée (réduction à 0,78 au plus, puis débordement sur les petits écrans). Pendant
+   l'offre, une seule ligne : prix normal barré, prix de lancement, réduction (« Launch offer » est sous See the options ; le détail de
+   la formule, sur les cartes de la planche II). Navigateurs sans :has (iOS < 15.4) : prix barré sur sa ligne, au-dessus. */
+@media (max-width: 899px) { .vfp-c .vf-carte__tete:has(> .vf-offre) { min-height: 0; } .vfp-c .vf-offre { display: none; }
+  .vfp-c .vf-remise { margin-bottom: 4px; font-size: 13px; }
+  .vfp-c .vf-prix:has(> .vf-remise) { display: flex; align-items: center; gap: 10px; } .vfp-c .vf-prix:has(> .vf-remise) .vf-remise { display: contents; }
+  .vfp-c .vf-prix:has(> .vf-remise) .vf-remise b { order: 1; } .vfp-c .vf-prix:has(> .vf-remise) .vf-prix-d { display: none; } }
+@media (max-width: 999px) { .vfk-c:not([data-grand]) .vf-offre { flex-basis: 100%; margin-bottom: -2px; } .vfk-c:not([data-grand]) .vf-remise { margin-bottom: 4px; font-size: 15px; } }
+`;
 // Descente animée jusqu'aux cartes de la planche II (bouton « See full details »).
 const DESCENTE_JS = `  /* Correction du 27/10 (scripts/construire.mjs) : « See full details », sous les cartes de la vitrine, descend jusqu'aux cartes
      de la planche II à vitesse régulière (ECRANS_S hauteurs d'écran par seconde, élan au départ, freinage à l'arrivée) : le
@@ -485,6 +534,43 @@ const CORRECTIONS = [
     avant: "<span>Version du 1er octobre 2026</span>", apres: "<span>Version du 20 octobre 2026</span>" },
   { quoi: "CGV : version of 20 October 2026", fichiers: ["CGV.dc.html"], n: 1,
     avant: "<span>Version of 1 October 2026</span>", apres: "<span>Version of 20 October 2026</span>" },
+  // Nouveaux prix et offre de lancement (29/10, voir OFFRE) : prix normaux dans les titres et à l'article 05, offre de lancement
+  // sans date (tant qu'elle est affichée sur le site) ; montants remboursés exprimés à partir du prix payé (49 ou 99 €, tiers du pack : 43 ou 83 €).
+  // Texte à faire valider par Loan avant la mise en ligne.
+  ...[["Single feedback — 49&nbsp;€", "Single feedback — 99&nbsp;€"], ["3× feedback pack — 129&nbsp;€", "3× feedback pack — 249&nbsp;€"],
+    ["Quarterly program — 499&nbsp;€ every 3 months (subscription)", "Quarterly program — 990&nbsp;€ every 3 months (subscription)"],
+    ["Quarterly program — 499&nbsp;€ tous les 3 mois (abonnement)", "Quarterly program — 990&nbsp;€ tous les 3 mois (abonnement)"]].map(([avant, apres]) => ({
+    quoi: `CGV : ${apres.replace(/&nbsp;/g, " ")} (29/10)`, fichiers: ["CGV.dc.html"], n: avant.startsWith("Quarterly") ? 1 : 2, avant: `<h3>${avant}</h3>`, apres: `<h3>${apres}</h3>` })),
+  { quoi: "CGV : prix et offre de lancement (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<li>Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois.</li>",
+    apres: "<li>Single feedback : 99&nbsp;€ · 3× feedback pack : 249&nbsp;€ · Quarterly program : 990&nbsp;€ par période de 3 mois.</li>\n" +
+      "<li>Offre de lancement, pour toute commande passée tant qu’elle est affichée sur la page Video Feedback : Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois. Un programme souscrit pendant l’offre reste à 499&nbsp;€ par période jusqu’à sa résiliation.</li>" },
+  { quoi: "CGV : prices and launch offer (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<li>Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period.</li>",
+    apres: "<li>Single feedback: 99&nbsp;€ · 3× feedback pack: 249&nbsp;€ · Quarterly program: 990&nbsp;€ per 3-month period.</li>\n" +
+      "<li>Launch offer, for any order placed while it is shown on the Video Feedback page: Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period. A program taken out during the offer stays at 499&nbsp;€ per period until you cancel it.</li>" },
+  { quoi: "CGV : prélèvement du programme (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<li>Programme : les 499&nbsp;€ sont prélevés automatiquement au début de chaque période de 3 mois, sur le moyen de paiement utilisé.</li>",
+    apres: "<li>Programme : son prix est prélevé automatiquement au début de chaque période de 3 mois, sur le moyen de paiement utilisé.</li>" },
+  { quoi: "CGV : program charge (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<li>Program: the 499&nbsp;€ are charged automatically at the start of each 3-month period, to the payment method you used.</li>",
+    apres: "<li>Program: its price is charged automatically at the start of each 3-month period, to the payment method you used.</li>" },
+  { quoi: "CGV : rétractation, pack en partie exécuté (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "43&nbsp;€ par analyse reçue pour le pack ;",
+    apres: "un tiers du prix payé par analyse reçue pour le pack (43&nbsp;€ pendant l’offre de lancement, 83&nbsp;€ au prix normal) ;" },
+  { quoi: "CGV : withdrawal, pack partly performed (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "43&nbsp;€ per analysis received for the pack;",
+    apres: "a third of the price paid per analysis received for the pack (43&nbsp;€ during the launch offer, 83&nbsp;€ at the regular price);" },
+  { quoi: "CGV : remboursement d'une analyse non fournie (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "49&nbsp;€ pour le single feedback, 43&nbsp;€ par analyse restante du pack,",
+    apres: "le prix payé pour le single feedback, un tiers du prix payé par analyse restante du pack," },
+  { quoi: "CGV : refund of an analysis not provided (29/10)", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "49&nbsp;€ for the single feedback, 43&nbsp;€ per remaining analysis of the pack,",
+    apres: "the price paid for the single feedback, a third of the price paid per remaining analysis of the pack," },
+  { quoi: "CGV : version du 29 octobre 2026", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<span>Version du 20 octobre 2026</span>", apres: "<span>Version du 29 octobre 2026</span>" },
+  { quoi: "CGV : version of 29 October 2026", fichiers: ["CGV.dc.html"], n: 1,
+    avant: "<span>Version of 20 October 2026</span>", apres: "<span>Version of 29 October 2026</span>" },
   // Cartes des formules (02/10).
   { quoi: "Prix Single : one full analysis", fichiers: VF, n: 2,
     avant: "49&nbsp;€ · one routine", apres: "49&nbsp;€ · one full analysis" },
@@ -492,6 +578,28 @@ const CORRECTIONS = [
     avant: "129&nbsp;€ · six months", apres: "129&nbsp;€ · 3 full analyses" },
   { quoi: "Prix Programme : weekly coaching", fichiers: VF, n: 2,
     avant: "499&nbsp;€ · every 3 months", apres: "499&nbsp;€ · weekly coaching" },
+  // Nouveaux prix et offre de lancement (29/10) : voir OFFRE, plus haut.
+  { quoi: "Offre de lancement : prix, phase et liens de secours (29/10)", fichiers: VF, n: 1,
+    avant: "\n/* Liens de paiement Stripe de repli (vérifiés sur le compte le 01/10). */\n",
+    apres: "\n" + OFFRE_JS + "\n/* Liens de paiement Stripe de repli (vérifiés sur le compte le 01/10). */\n" },
+  { quoi: "Offre de lancement : liens de secours aux prix normaux (29/10)", fichiers: VF, n: 1,
+    avant: '  prog: "https://buy.stripe.com/aFa8wPfcReatc1J8A74ko03",\n};\n',
+    apres: '  prog: "https://buy.stripe.com/aFa8wPfcReatc1J8A74ko03",\n};\n' + OFFRE_LIENS_JS },
+  { quoi: "Offre de lancement : valeurs du gabarit (29/10)", fichiers: VF, n: 1,
+    avant: "      placesPack: String(pl.pack), placesProg: String(pl.prog),\n",
+    apres: "      placesPack: String(pl.pack), placesProg: String(pl.prog),\n" + OFFRE_VALS },
+  { quoi: "Offre de lancement : « Launch offer » au-dessus du nom (29/10)", fichiers: VF, n: 6,
+    avant: '<div class="vf-carte__tete">\n<div class="vf-nom">', apres: '<div class="vf-carte__tete">\n' + OFFRE_TITRE + '<div class="vf-nom">' },
+  ...[["Single", "one full analysis"], ["Pack", "3 full analyses"], ["Prog", "weekly coaching"]].map(([k, quoi], i) => ({
+    quoi: `Offre de lancement : prix ${k} (29/10)`, fichiers: VF, n: 2,
+    avant: `<div class="vf-prix">${Object.values(TARIFS)[i][0]}&nbsp;€ · ${quoi}</div>`,
+    apres: `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}<span class="vf-prix-d"> · ${quoi}</span></span></div>` })),
+  { quoi: "Offre de lancement : « Launch offer · from 49 € » sous See the options (29/10)", fichiers: VF, n: 1,
+    avant: '<span class="vfp-affiche-s">Three packages · from 49&nbsp;€</span>',
+    apres: `<span class="vfp-affiche-s">${SI_OFFRE("Launch offer")}<sc-if value="{{ horsOffre }}" hint-placeholder-val="{{ true }}">Three packages</sc-if> · from {{ prixMin }}</span>` },
+  { quoi: "Offre de lancement : styles (29/10)", fichiers: VF, n: 1,
+    avant: ".vf-prix { font-family: 'Cinzel', Georgia, serif; font-size: 22px; letter-spacing: .03em; color: rgba(246,245,241,.7); }\n",
+    apres: ".vf-prix { font-family: 'Cinzel', Georgia, serif; font-size: 22px; letter-spacing: .03em; color: rgba(246,245,241,.7); }\n" + OFFRE_CSS },
   { quoi: "Puce « Written or voice feedback » (cartes des formules)", fichiers: VF, n: 3,
     avant: "<span>One full analysis, written or voice</span>", apres: "<span>Written or voice feedback</span>" },
   { quoi: "Puce « Written or voice feedback » (cartes du projecteur)", fichiers: VF, n: 1,

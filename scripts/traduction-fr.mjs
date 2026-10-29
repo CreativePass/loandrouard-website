@@ -51,7 +51,10 @@ const TEXTES = [
   ["move by move", "geste par geste", 1],
   ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer.", 1],
   ["See the options", "Voir les options", 1], // 27/10 : « See pricing » / « Voir les tarifs », puis « Voir les formules » (28/10 : « Voir les options », demandé par Loan)
-  ["Three packages · from 49&nbsp;€", "Trois formules · dès 49&nbsp;€", 1],
+  // Offre de lancement (29/10, scripts/construire.mjs) : « Launch offer » au-dessus du nom des cartes et sous See the options.
+  ["Launch offer", "Offre de lancement", 7],
+  ["Three packages", "Trois formules", 1],
+  [" · from {{ prixMin }}", " · dès {{ prixMin }}", 1],
   ["Scroll for everything included", "Faites défiler pour tout le détail", 1],
   ["Back to Loan", "Retour à Loan", 1],
   ["Scroll", "Défiler", 1],
@@ -59,9 +62,9 @@ const TEXTES = [
   ["Single<br>feedback", "Analyse<br>unique", 2],
   ["3× feedback<br>pack", "Pack<br>3 analyses", 2],
   ["Quarterly<br>program", "Programme<br>trimestriel", 2],
-  ["49&nbsp;€ · one full analysis", "49&nbsp;€ · analyse complète", 2],
-  ["129&nbsp;€ · 3 full analyses", "129&nbsp;€ · trois analyses", 2],
-  ["499&nbsp;€ · weekly coaching", "499&nbsp;€ · coaching hebdo", 2],
+  [" · one full analysis", " · analyse complète", 2],
+  [" · 3 full analyses", " · trois analyses", 2],
+  [" · weekly coaching", " · coaching hebdo", 2],
   // Boutons des cartes (27–28/10, « Pay » remplacé dans scripts/construire.mjs) : BOUTONS, ci-dessus.
   ...BOUTONS.map(([, en, fr]) => [en, fr, 2]), // vitrine et planche II
   ["See full details", "Voir tous les détails", 3], // 27/10 : sous les cartes de la vitrine
