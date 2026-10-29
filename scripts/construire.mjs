@@ -284,7 +284,7 @@ const VF_CSS_27 = BIENTOT_CSS(".vf-entete > nav:not(.vf-sommaire)") + ENTETE_GRA
 .vfp-details { position: absolute; z-index: 3; left: 50%; top: calc(100% + 16px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 9px; padding: 7px 2px 6px; border: 0; border-bottom: 1px solid rgba(246,245,241,.32); background: none; color: rgba(246,245,241,.74); font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: clamp(11px, .2vw + 8.5px, 13.5px); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: color .3s ease, border-color .3s ease; -webkit-tap-highlight-color: transparent; }
 .vfp-details::after { content: ""; width: .45em; height: .45em; margin-top: -.3em; border: solid currentColor; border-width: 0 1px 1px 0; transform: rotate(45deg); }
 .vfp-details:hover, .vfp-details:focus-visible { color: #F6F5F1; border-bottom-color: #A9814A; outline: none; }
-/* « See the options » / « Voir les formules » : tient dans l'écran jusqu'à 320 px (inchangé à partir de 390 px). */
+/* « See the options » / « Voir les options » : tient dans l'écran jusqu'à 320 px (inchangé à partir de 390 px). */
 @media (max-width: 899px) { .vfp-affiche { padding-left: min(40px, 9.8vw); padding-right: min(40px, 9.8vw); } .vfp-affiche-mot { font-size: min(26px, 7vw); } }
 @media (max-width: 899px) { .vfp-details { display: block; left: auto; right: 22px; top: 20px; transform: none; max-width: 11.8em; padding: 4px 0 5px; line-height: 1.55; white-space: normal; text-wrap: balance; text-align: right; }
   .vfp-details::after { display: inline-block; margin: 0 0 0 .55em; vertical-align: .3em; }
@@ -297,12 +297,13 @@ const DETAILS = '<button type="button" class="vfp-details" onClick="{{ voirDetai
 const DESCENTE_JS = `  /* Correction du 27/10 (scripts/construire.mjs) : « See full details », sous les cartes de la vitrine, descend jusqu'aux cartes
      de la planche II à vitesse régulière (ECRANS_S hauteurs d'écran par seconde, élan au départ, freinage à l'arrivée) : le
      projecteur, l'étude et le yin-yang s'animent au passage, sans effet d'accélération. Un geste du visiteur (molette, doigt,
-     clic, touche) arrête la descente là où elle est ; il peut ensuite remonter ou descendre librement. */
+     clic, touche) arrête la descente là où elle est ; il peut ensuite remonter ou descendre librement.
+     28/10 (« clairement trop long ») : 7 écrans par seconde au lieu de 2,4, élan et freinage plus courts : ≈ 4 s au lieu de 10. */
   descendreFormules() {
     const el = document.getElementById("formules");
     if (!el) return;
     if (this._finDescente) this._finDescente();
-    const ECRANS_S = 2.4, ELAN = 0.9, FREIN = 1.4;
+    const ECRANS_S = 7, ELAN = 0.7, FREIN = 1.2;
     const y0 = window.scrollY, vh = window.innerHeight, max = document.documentElement.scrollHeight - vh;
     let y1;
     if (window.matchMedia("(max-width: 999px)").matches) {
@@ -416,6 +417,32 @@ const TITRE_HTML = ([en, fr]) => `${VIEWPORT}<title>${en}</title>\n` + (!fr ? ""
 // Inclinaison des cartes au survol (vitrine et planche II) : 6,5 → 9 (± 4,5° aux bords au lieu de ± 3,25°).
 const INCLINE_AVANT = 'rotateY(" + (px * 6.5).toFixed(2) + "deg) rotateX(" + (-py * 6.5).toFixed(2) + "deg)';
 const INCLINE_APRES = 'rotateY(" + (px * 9).toFixed(2) + "deg) rotateX(" + (-py * 9).toFixed(2) + "deg)';
+// Troisième retour de Loan du 28/10 : textes « trop petits, pas lisibles sur ordinateur » (projecteur : « Your » et « You film.
+// You send… » ; haut de la planche II : plaque, surtitre et phrase sous le titre). Tailles à la mesure de l'écran, comme le
+// 27/10 ; mobile inchangé. La descente « See full details » et « Voir les options » : DESCENTE_JS et scripts/traduction-fr.mjs.
+const VF_CSS_28C = `/* Correction du 28/10, 3e retour (scripts/construire.mjs) : textes plus lisibles sur ordinateur. */
+@media (min-width: 900px) {
+  /* Projecteur : « Your » (.26 → .4 de la ligne) et « You film. You send… » (19 px → 24 à 32 px). Texte coupé aux mêmes endroits
+     qu'à 19 px (3 lignes, en anglais comme en français) : largeur du texte gardée en em (26ch moins le trait de 15 px, à 19 px).
+     Le bloc garde son haut (déjà près de l'en-tête sur un écran bas) et grandit vers le bas : décalé de la moitié de ce qu'il
+     gagne (« Your » : .14 × 1,18 × 1,5 ligne ; phrase : 3 lignes de 1,55 + marge de 3,2). */
+  .vfp-texte { --vfp-h1: clamp(26px, 2.7vw, 46px); --vfp-lede: clamp(24px, 1.2vw + 8px, 32px); transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px))); }
+  .vfp-texte .vfp-h1-p { font-size: .4em; }
+  .vfp-texte .vfp-lede { font-size: var(--vfp-lede); max-width: calc(10.597em + 15px); }
+}
+@media (min-width: 1000px) {
+  /* Planche II. Surtitre (--vfk-eb) : une ligne en anglais, deux en français (37em au plus) ; la plaque, à sa hauteur, s'arrête
+     avant lui (sa largeur en dépend). Phrase sous le titre sur une ligne. Le titre garde sa largeur ; surtitre, titre et phrase
+     restent dans le bloc des cartes, réduit d'ensemble si la hauteur manque. */
+  .vfk { --vfk-eb: clamp(13px, .65vw + 7px, 20px); }
+  .vfk-plaque { max-width: max(150px, calc(46vw - 18.5 * var(--vfk-eb) - 65px)); }
+  .vfk-plaque b { font-size: clamp(11px, .4vw + 8px, 17px); }
+  .vfk-plaque span { font-size: clamp(19px, .5vw + 13.5px, 25px); }
+  .vfk-tete .vf-eyebrow { margin-inline: -120px; font-size: var(--vfk-eb); }
+  .vfk-tete .vf-eyebrow > span { max-width: 37em; }
+  .vfk-tete .vf-lede { max-width: none; margin-inline: -160px !important; font-size: clamp(24px, .7vw + 15px, 30px); }
+}
+`;
 
 const CORRECTIONS = [
   {
@@ -649,6 +676,8 @@ const CORRECTIONS = [
     avant: SOMMAIRE_INIT_AVANT, apres: SOMMAIRE_INIT_APRES },
   ...Object.entries(TITRES).map(([f, t]) => ({ quoi: `Titre de l'onglet : « ${t[0]} » (28/10)`, fichiers: [f], n: 1,
     avant: VIEWPORT, apres: TITRE_HTML(t) })),
+  { quoi: "Styles du 28/10 (3e retour) : textes du projecteur et du haut de la planche II plus lisibles sur ordinateur", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_28C + SOMMAIRE_STYLE_FIN },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
