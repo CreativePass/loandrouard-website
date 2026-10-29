@@ -6,7 +6,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - **Demander l'accord de Loan avant toute action sur Stripe, Cloudflare ou les DNS**, y compris chaque mise en ligne (`npm run publier`, `publier:api`, `publier:redirection`). Les lectures sont libres.
 - Ne jamais demander la clé secrète Stripe dans la conversation.
 - Les pages `*.dc.html` viennent de l'outil de design : ne rien réécrire, reformater ni convertir. Seules les corrections listées dans `scripts/construire.mjs` (contenu), `scripts/optimisations.mjs` (performance) et `scripts/traduction-fr.mjs` (version française) sont appliquées, sur la copie `public/`.
-- Pas d'analytics, cookies, traceurs, bannière ni CSP sans demande de Loan.
+- Pas d'analytics, cookies, traceurs, bannière ni CSP sans demande de Loan. Exception : Cloudflare Web Analytics (sans cookie), gardé par Loan le 29/10/2026 et décrit dans la page Privacy.
 - **Terminer chaque réponse par un résumé** : réponses aux questions posées, puis liste de ce que Loan doit faire.
 
 ## Prix et promotions (décision de Loan du 29/10/2026)
