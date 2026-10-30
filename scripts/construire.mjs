@@ -574,7 +574,9 @@ const GUIDE = {
 };
 const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre « How we'll work together » / « Comment nous allons travailler »,
    ouverte après le paiement, même habillage que la fenêtre de paiement ; lien de la carte payée qui la rouvre. */
-.vf-guide .vf-modale__panneau { width: min(600px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overscroll-behavior: contain; padding: 24px 30px 30px; outline: none; }
+.vf-guide .vf-modale__panneau { display: flex; flex-direction: column; width: min(600px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: hidden; padding: 0; }
+/* Le cadre reste fixe (inclinaison et reflet doré) ; le texte défile à l'intérieur. */
+.vf-guide__defile { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 30px 30px; outline: none; }
 .vf-guide .vf-modale__tete { margin-bottom: 10px; }
 .vf-guide__etiquette { font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #C6A05E; }
 .vf-guide__titre { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(28px, 4vw, 36px); line-height: 1.1; letter-spacing: .01em; text-wrap: balance; }
@@ -589,15 +591,19 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
 .vf-guide__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: 24px; }
 .vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
-@media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide .vf-modale__panneau { padding: 20px 20px 24px; } }
+@media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide__defile { padding: 20px 20px 24px; } }
 /* Inclinaison au survol (demandée par Loan le 30/10) : celle des cartes (incliner / relacher, mêmes valeurs), souris seulement :
    sur écran tactile, un toucher laisserait la fenêtre penchée pendant la lecture. */
 @media (hover: none), (pointer: coarse) { .vf-guide .vf-modale__panneau { transform: none !important; } }
+/* Reflet doré qui suit la souris (demandé par Loan le 30/10) : celui des cartes (.vf-carte::after), mêmes valeurs, souris seulement. */
+.vf-guide .vf-modale__panneau::after { content: ''; position: absolute; inset: -1px; border-radius: 24px; pointer-events: none; opacity: 0; transition: opacity .35s ease; background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(169,129,74,.16), transparent 70%); }
+@media (hover: hover) and (pointer: fine) { .vf-guide .vf-modale__panneau:hover::after { opacity: 1; } }
 `;
 const GUIDE_HTML = `
 <sc-if value="{{ guideOuvert }}" hint-placeholder-val="{{ false }}">
 <div class="vf-modale vf-guide" role="dialog" aria-modal="true" aria-label="{{ guideLien }}" onClick="{{ fermerFondGuide }}">
-<div class="vf-modale__panneau" tabindex="-1" ref="{{ refGuide }}" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
+<div class="vf-modale__panneau" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
+<div class="vf-guide__defile" tabindex="-1" ref="{{ refGuide }}">
 <div class="vf-modale__tete">
 <span class="vf-guide__etiquette">{{ formuleNom }}</span>
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
@@ -613,6 +619,7 @@ const GUIDE_HTML = `
 <div class="vf-guide__actions">
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" href="{{ lienWhatsApp }}" target="_blank" rel="noreferrer" hint-size="170px,44px">{{ guideWhatsApp }}</x-import>
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
+</div>
 </div>
 </div>
 </div>
