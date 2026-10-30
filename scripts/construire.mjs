@@ -618,11 +618,8 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
   .vf-guide__accueil { grid-area: accueil; }
   .vf-guide__blocs { grid-area: blocs; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 0; }
   .vf-guide__bloc p { font-size: 17.5px; line-height: 1.5; }
-  .vf-guide__pied { grid-area: pied; display: flex; align-items: center; justify-content: space-between; gap: 16px 40px; margin-top: 16px; }
+  .vf-guide__pied { grid-area: pied; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 40px; margin-top: 16px; }
   .vf-guide__actions { flex: none; margin-top: 0; }
-  /* « À très bientôt… » et la signature sur une même ligne. */
-  .vf-guide__mot { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; }
-  .vf-guide__mot > :first-child { flex-basis: 100%; }
   /* Plus serré, pour que tout tienne sans défiler jusqu'à 1280 × 720 et 1024 × 768 (iPad en paysage), en français aussi. */
   .vf-guide__defile { padding: 8px 32px 32px; }
   .vf-guide .vf-modale__tete { margin-bottom: 12px; }
@@ -660,7 +657,6 @@ const GUIDE_HTML = `
 </div>
 <div class="vf-guide__actions">
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" href="{{ lienWhatsApp }}" target="_blank" rel="noreferrer" hint-size="170px,44px">{{ guideWhatsApp }}</x-import>
-<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
 </div>
 </div>
 </div>
