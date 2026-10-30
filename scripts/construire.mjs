@@ -592,6 +592,18 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
 .vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
 @media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide__defile { padding: 20px 20px 24px; } }
+/* Format paysage sur ordinateur et tablette en paysage (demandé par Loan le 30/10 : « pour qu'on puisse tout voir d'un coup ») :
+   à gauche le titre et l'introduction, puis la fin et les boutons ; à droite les quatre parties sur deux colonnes.
+   Ordre du texte inchangé (lecteurs d'écran, téléphone). Si la hauteur manque, le texte défile encore. */
+@media (min-width: 900px) {
+  .vf-guide .vf-modale__panneau { width: min(1120px, 100%); }
+  .vf-guide__defile { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); grid-template-rows: auto auto 1fr; grid-template-areas: "tete tete" "accueil blocs" "pied blocs"; column-gap: 44px; padding: 24px 36px 30px; }
+  .vf-guide__defile > .vf-modale__tete { grid-area: tete; }
+  .vf-guide__accueil { grid-area: accueil; }
+  .vf-guide__blocs { grid-area: blocs; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 32px; align-content: start; }
+  .vf-guide__blocs > .vf-guide__bloc { margin-top: 0; }
+  .vf-guide__pied { grid-area: pied; align-self: end; }
+}
 /* Inclinaison au survol (demandée par Loan le 30/10) : celle des cartes (incliner / relacher, mêmes valeurs), souris seulement :
    sur écran tactile, un toucher laisserait la fenêtre penchée pendant la lecture. */
 @media (hover: none), (pointer: coarse) { .vf-guide .vf-modale__panneau { transform: none !important; } }
@@ -613,17 +625,23 @@ const GUIDE_HTML = `
 <span class="vf-guide__etiquette">{{ formuleNom }}</span>
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
 </div>
+<div class="vf-guide__accueil">
 <h2 class="vf-guide__titre">{{ guideTitre }}</h2>
 <p class="vf-guide__intro">{{ guideIntro }}</p>
+</div>
+<div class="vf-guide__blocs">
 <sc-for list="{{ guideSections }}" as="s" hint-placeholder-count="4">
 <div class="vf-guide__bloc"><h3><span aria-hidden="true">{{ s.icone }}</span>{{ s.titre }}</h3><p>{{ s.texte }}</p></div>
 </sc-for>
+</div>
+<div class="vf-guide__pied">
 <p class="vf-guide__fin">{{ guideFin }}</p>
 <p class="vf-guide__fin">{{ guideBientot }}</p>
 <p class="vf-guide__signature">{{ guideSignature }}</p>
 <div class="vf-guide__actions">
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" href="{{ lienWhatsApp }}" target="_blank" rel="noreferrer" hint-size="170px,44px">{{ guideWhatsApp }}</x-import>
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
+</div>
 </div>
 </div>
 </div>
