@@ -708,6 +708,207 @@ const GUIDE_VALS = `      /* Correction du 30/10 (scripts/construire.mjs) : fen�
       fermerGuide: () => this.fermerGuide(),
       fermerFondGuide: (e) => { const t = e.target; if (t === e.currentTarget || (t.matches && t.matches(".vf-modale__panneau, .vf-guide__defile, .vf-guide__blocs"))) this.fermerGuide(); }, /* fond ou vide entre les rectangles */
 `;
+// --- Retour de Loan du 30/10 : textes et structure des cartes de la planche II ------------------------------------
+// Ordre demandé par Loan : nom, prix et sa phrase, texte, puces, bouton, puis des « bento » (petits rectangles : paiement,
+// délai, format, langue, envoi…). Le délai est dans un rectangle : plus de « Reply in … » sous les cartes. « Launch offer »
+// une seule fois, sous « Three ways to work together. » (plus au-dessus de chaque carte de la planche). Noms des formules
+// changés partout (vitrine, fenêtre de paiement, carte payée, message WhatsApp). Français : scripts/traduction-fr.mjs.
+// ⓘ (« le ⓘ à la fin du texte ») : bulle d'information au survol à la souris, au toucher ou au clavier (INFO_JS). Texte de
+// chaque bulle : INFOS ; il est dans la page, caché (lecteurs d'écran : aria-describedby), et recopié dans la bulle.
+const INFOS = {
+  notes: { genre: "notes", lignes: [["A score", "Quality of the technical movements."], ["B score", "Overall performance (power, rhythm, style)."], ["C score", "Jumps and difficulty."]] },
+  validite: { lignes: [["Validity", "Your 3 feedback rounds can be used within 6 months of your first video. Each round is delivered within 3 to 5 days."]] },
+  abonnement: { lignes: [["Keep progressing", "Your subscription renews automatically at the end of each quarter. You can cancel at any time by simply sending us a message or an email before the next billing date. At the end of the 12 weeks, we review your progress and your goals for the next quarter together."]] },
+  semaines: { lignes: [["Unused weeks", "Up to 2 weeks can be carried over to another week of the quarter."]] },
+};
+// Rectangles : [titre (vide : texte seul), texte, ⓘ, sur toute la largeur]. Puces : texte, ou [texte, ⓘ].
+const ENVOI = "2 videos, 2 minutes max each or 3 videos, 45 seconds max each";
+const FICHES = {
+  Single: { ancien: ["Single<br>feedback", "one full analysis", "170px,44px"], nom: "Technical<br>analysis",
+    accroche: "2 videos analyzed so you know what to improve and how.",
+    textes: ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "I analyze your videos based on your level and your goals:"],
+    puces: ["Your strengths and your priority corrections.", "Specific advice on technique, jumps, rhythm or transitions, depending on your needs.",
+      ["Advice mainly focused on the A and C scores", "notes"]],
+    bento: [["", "One-time payment"], ["Turnaround", "4 to 6 days"], ["Feedback format", "Written or voice message"], ["Feedback language", "French or English"],
+      ["Submission", ENVOI, null, true]] },
+  Pack: { ancien: ["3× feedback<br>pack", "3 full analyses", "180px,44px"], nom: "Progression<br>pack",
+    accroche: "6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.",
+    textes: ["Develop your taolu, specific sections or jumps with three personalized feedback rounds on 2 videos each, spaced out to fit your pace."],
+    puces: ["A detailed technical analysis of each of your videos.", "Specific advice on technique, jumps, speed, presence, rhythm, style or transitions, depending on your needs.",
+      "Tracking of your progress from one feedback round to the next.", "Explained corrections and targeted drills after each round.",
+      ["Advice and focus on the B score, in addition to the A and C scores", "notes"],
+      // Prix de l'Analyse technique au moment de l'achat : 49 € pendant l'offre de lancement, 99 € ensuite.
+      "Already had a Technical Analysis? Its {{ prixSingle }} is deducted from the Pack if you get it within 30 days."],
+    bento: [["", "One-time payment"], ["Turnaround", "3 to 5 days per feedback round", "validite"], ["Feedback format", "Written or voice message"], ["Feedback language", "French or English"],
+      ["Submission", ENVOI + ", per round", null, true]] },
+  Prog: { ancien: ["Quarterly<br>program", "weekly coaching", "180px,44px"], nom: "The way of<br>performance", par: " / quarter",
+    accroche: "24 videos analyzed over 12 weeks, to develop your practice effectively.",
+    textes: ["One-on-one coaching, week after week, to work on everything you want to improve and progress as effectively as possible."],
+    puces: ["24 personalized analyses: 2 videos per week.", "Key areas to work on, defined at the start of the quarter.", "Ongoing support and weekly tracking of your corrections and progress.",
+      "Training priorities and technical details set each week.", "Q&amp;A on WhatsApp after each feedback session.", "Final review with recommendations for what comes next."],
+    bento: [["", "Quarterly subscription", "abonnement"], ["Limited spots", "3 per quarter"], ["Turnaround", "Priority handling, within 48 to 72 hours", null, true],
+      ["Feedback format", "Written, voice or video"], ["Feedback language", "French or English"], ["Submission", ENVOI + ", per feedback session", "semaines", true]] },
+};
+// Noms des formules dans le texte (fenêtre de paiement, carte payée, fenêtre du 30/10, message WhatsApp : achat).
+const NOMS = {
+  single: ["Single feedback", "Technical Analysis", "the Technical Analysis"],
+  pack: ["3\\u00D7 feedback pack", "Progression Pack", "the Progression Pack"],
+  prog: ["Quarterly program", "The Way of Performance", "The Way of Performance"],
+};
+let nInfo = 0;
+const INFO = (cle) => { const i = INFOS[cle], id = "vf-i-" + ++nInfo;
+  return `<span class="vf-i" role="button" tabindex="0" aria-label="More information" aria-expanded="false" aria-describedby="${id}"><span class="vf-i-o">i</span></span>` +
+    `<span class="vf-i-txt" id="${id}"${i.genre ? ` data-genre="${i.genre}"` : ""}>${i.lignes.map(([l, t]) => `<span class="vf-i-l"><b>${l}</b><span>${t}</span></span>`).join("")}</span>`; };
+const PUCE = (p) => (Array.isArray(p) ? `<div class="vf-pt"><i></i><span>${p[0]}${INFO(p[1])}</span></div>\n` : `<div class="vf-pt"><i></i><span>${p}</span></div>\n`);
+const BENTO = ([titre, texte, info, large]) => `<div class="vf-bento__b${large ? " vf-bento__b--l" : ""}${titre ? "" : " vf-bento__b--seul"}">` +
+  (titre ? `<b>${titre}</b>` : "") + `<span>${texte}${info ? INFO(info) : ""}</span></div>\n`;
+const PLACES = (k) => (k === "Single" ? "" : `<div class="vf-places"><span>Spots left</span><b>{{ places${k} }}</b></div>`);
+const PAYER = (k, bouton, taille) => `<div class="vf-payer" onPointerEnter="{{ armer${k} }}">\n` +
+  `<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" onClick="{{ pay${k} }}" hint-size="${taille}">${bouton}</x-import>\n</div>\n`;
+const LIBRE = (k) => `<sc-if value="{{ libre${k} }}" hint-placeholder-val="{{ true }}">`;
+// Carte de la planche II avant ce retour (après les corrections précédentes) : garde-fou, comme toute correction.
+const ANCIENNES_PUCES = {
+  Single: ["Written or voice feedback", "Technique, rhythm, jumps, transitions", "Grade A and C corrections"],
+  Pack: ["Written or voice feedback", "Technique, rhythm, jumps, transitions", "Grade A and C corrections"],
+  Prog: ["Renews every 3 months, cancel anytime", "Written or voice feedback", "Technique, rhythm, jumps, transitions", "Grade A and C corrections"],
+};
+const ANCIENS_TIERS = {
+  Single: "",
+  Pack: '<div class="vf-tier vf-tier--pack">\n<b>In the pack</b>\n' + ["Three analyses, whenever you need them", "Targeted exercises after each video",
+    "Progress tracked from one video to the next", "Grade B suggestions on top", "Valid 6 months from your first video"].map(PUCE).join("") + "</div>\n",
+  Prog: '<div class="vf-tier">\n<b>Also included</b>\n' + ["Targeted exercises after each video", "Progress tracked from one video to the next", "Grade B suggestions on top"].map(PUCE).join("") +
+    '</div>\n<div class="vf-tier vf-tier--prog">\n<b>In the program</b>\n' + ["One analysis every single week", "Priorities set together each week",
+    "Written check-ins whenever you need", "Final review, and a plan going forward"].map(PUCE).join("") + "</div>\n",
+};
+const ANCIENS_DELAIS = { Single: "Reply in 4 to 6 days", Pack: "Reply in 3 to 5 days", Prog: "Reply in 2 to 3 days" };
+const CARTE_AVANT = (k, i) => { const [nom, quoi, taille] = FICHES[k].ancien;
+  return LIBRE(k) + PLACES(k) + '\n<div class="vf-carte__tete">\n' + OFFRE_TITRE + `<div class="vf-nom">${nom}</div>\n` +
+    `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}<span class="vf-prix-d"> · ${quoi}</span></span></div>\n` +
+    PAYER(k, BOUTONS[i][1], taille) + "</div>\n" + '<div class="vf-liste">\n' + ANCIENNES_PUCES[k].map(PUCE).join("") + "</div>\n" + ANCIENS_TIERS[k] +
+    "</sc-if>\n</article>\n</div>\n" + DELAI(`libre${k}`, ANCIENS_DELAIS[k]); };
+const CARTE_APRES = (k, i) => { const f = FICHES[k];
+  return LIBRE(k) + PLACES(k) + '\n<div class="vf-carte__tete">\n' + `<div class="vf-nom">${f.nom}</div>\n` +
+    `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}${f.par ? `<span class="vf-prix-d">${f.par}</span>` : ""}</span></div>\n` +
+    `<p class="vf-accroche">${f.accroche}</p>\n</div>\n` +
+    '<div class="vf-texte">\n' + f.textes.map((t) => `<p>${t}</p>\n`).join("") + "</div>\n" +
+    '<div class="vf-liste">\n' + f.puces.map(PUCE).join("") + "</div>\n" +
+    '<div class="vf-agir">\n' + PAYER(k, BOUTONS[i][1], f.ancien[2]) + "</div>\n" +
+    '<div class="vf-bento">\n' + f.bento.map(BENTO).join("") + "</div>\n" +
+    "</sc-if>\n</article>\n</div>\n"; };
+const TITRE_PLANCHE = '<h2 class="vf-titre vfk-ecrit" style="transition-delay:.3s;font-size:clamp(32px,4.2vw,56px)">Three ways to work together.</h2>\n';
+const LEDE_PLANCHE = (t) => `<p class="vf-lede vfk-ecrit" style="transition-delay:.7s;margin-inline:auto;text-align:center">${t}</p>`;
+// Réduction d'ensemble de la planche sur ordinateur : les cartes ne tiennent plus sur un écran (elles tenaient jusqu'au bas du
+// pack). Seuls le haut de la planche et l'en-tête des cartes (nom, prix, phrase) doivent tenir : textes à leur taille, lisibles.
+const ECHELLE_AVANT = "        const pr = pin.getBoundingClientRect(), br = bloc.getBoundingClientRect(), bas = C[1].c.getBoundingClientRect().bottom;\n";
+const ECHELLE_APRES = "        /* Correction du 30/10 (scripts/construire.mjs) : cartes plus longues ; doit tenir jusqu'à l'en-tête des cartes (nom, prix, phrase). */\n" +
+  '        const pr = pin.getBoundingClientRect(), br = bloc.getBoundingClientRect(), tP = C[1].front.querySelector(".vf-carte__tete"), bas = tP ? tP.getBoundingClientRect().bottom + 24 : C[1].c.getBoundingClientRect().top + 360;\n';
+const PLUS = "content: ''; flex: none; align-self: center; margin-left: auto; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(246,245,241,.42); " +
+  "background: linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 11px 1px no-repeat, linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 1px 11px no-repeat;";
+const CARTES_CSS_30 = `/* Correction du 30/10 (scripts/construire.mjs) : cartes de la planche II (nom, prix et phrase, texte, puces, bouton, bento, ⓘ). */
+.vfk-offre { justify-content: center; margin: 16px 0 0; font-size: 12px; }
+.vfk-tete .vf-lede { text-wrap: balance; }
+.vfk-offre::after { content: ''; flex: none; width: 22px; height: 1px; background: linear-gradient(90deg, #C6A05E, rgba(198,160,94,0)); }
+.vfk-c .vf-carte__tete { min-height: 0; gap: 14px; }
+.vfk-c .vf-remise { margin-bottom: 6px; }
+.vf-accroche { margin: 0; font-style: italic; font-size: 19.5px; line-height: 1.4; color: rgba(246,245,241,.88); text-wrap: pretty; }
+.vf-texte { display: grid; gap: 10px; margin-top: 20px; }
+.vf-texte p { margin: 0; font-size: 17.5px; line-height: 1.5; color: rgba(246,245,241,.72); text-wrap: pretty; }
+.vfk-c .vf-liste { margin-top: 14px; }
+.vf-agir { padding-top: 28px; }
+.vf-agir .vf-payer { max-width: 100%; }
+.vf-agir .ld-bouton { max-width: 100%; text-align: left; }
+/* Bento : petits rectangles, deux par ligne (titre en petites capitales, texte dessous) ; les plus longs sur toute la largeur. */
+.vf-bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 22px; }
+.vf-bento__b { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 11px 13px 12px; border: 1px solid rgba(246,245,241,.13); border-radius: 14px; background: rgba(246,245,241,.035); font-size: 16px; line-height: 1.35; color: rgba(246,245,241,.9); }
+.vf-bento__b > b { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9.5px; line-height: 1.3; letter-spacing: .14em; text-transform: uppercase; color: rgba(246,245,241,.52); }
+.vf-bento__b--l { grid-column: 1 / -1; }
+.vf-bento__b--seul > span { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: #C6A05E; }
+/* ⓘ à la fin du texte, collé au dernier mot sans espace (élément en ligne : il ne passe jamais seul à la ligne ; écart = marge). */
+.vf-i { cursor: pointer; outline: none; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.vf-i-o { position: relative; top: -.1em; margin-left: .3em; padding: 0 .4em; border: 1px solid rgba(198,160,94,.7); border-radius: 1em; font: italic 600 .78em/1 'Cormorant', Georgia, serif; letter-spacing: 0; text-transform: none; color: #C6A05E; transition: background-color .2s ease, color .2s ease; }
+.vf-i:hover .vf-i-o, .vf-i[aria-expanded="true"] .vf-i-o { background: rgba(198,160,94,.22); color: #EBD3A0; }
+.vf-i:focus-visible .vf-i-o { outline: 1px solid #A9814A; outline-offset: 2px; }
+.vf-i-txt { display: none; }
+/* La bulle est posée sur la page (INFO_JS), au-dessus de la ⓘ (dessous s'il n'y a pas la place). */
+.vf-bulle-i { position: fixed; z-index: 1000; left: 0; top: 0; box-sizing: border-box; width: max-content; max-width: min(330px, calc(100vw - 24px)); padding: 12px 15px 13px; border: 1px solid rgba(198,160,94,.45); border-radius: 12px; background: #171614; box-shadow: 0 14px 36px rgba(0,0,0,.6), 0 0 30px -12px rgba(169,129,74,.5); color: rgba(246,245,241,.92); font: 400 16.5px/1.45 'Cormorant', Georgia, serif; text-align: left; pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .18s ease, transform .18s ease; }
+.vf-bulle-i[data-on] { opacity: 1; transform: none; }
+.vf-bulle-i .vf-i-l { display: block; }
+.vf-bulle-i .vf-i-l + .vf-i-l { margin-top: 8px; }
+.vf-bulle-i b { display: block; margin-bottom: 3px; font: 500 10px/1.3 'Cinzel', Georgia, serif; letter-spacing: .14em; text-transform: uppercase; color: #C6A05E; }
+.vf-bulle-i[data-notes] .vf-i-l { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px; }
+.vf-bulle-i[data-notes] .vf-i-l + .vf-i-l { margin-top: 5px; }
+.vf-bulle-i[data-notes] b { margin: 0; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o { transition: none; } }
+/* Ordinateur : cartes de même hauteur ; bouton et rectangles alignés en bas des trois cartes. */
+@media (min-width: 1000px) {
+  .vfk-rang { align-items: stretch; }
+  .vfk-c { display: flex; flex-direction: column; }
+  .vfk-flip { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .vfk-c .vf-agir { margin-top: auto; }
+}
+@media (min-width: 1000px) and (max-width: 1100px) { .vf-bento__b { padding: 10px 11px 11px; } }
+/* Petites cartes (mobile) : nom et prix, puis le bouton et le « + » ; le reste dans la carte ouverte. */
+@media (max-width: 999px) {
+  .vfk .vfk-c:not([data-grand]) .vf-carte__tete::after { content: none; }
+  ${MINI} :is(.vf-accroche, .vf-texte, .vf-bento) { display: none; }
+  ${MINI} .vf-agir { display: flex; align-items: center; gap: 14px; padding-top: 12px; }
+  ${MINI} .vf-agir .vf-payer { min-width: 0; }
+  ${MINI} .vf-agir::after { ${PLUS} }
+}
+@media (max-width: 359px) { .vf-bento__b { padding: 10px 10px 11px; } .vf-bento__b > b { font-size: 9px; letter-spacing: .1em; } }
+/* Moins de 375 px (vitrine et petites cartes) : noms et boutons un peu resserrés ; « Performance » ne touche plus « Voir tous les
+   détails », et les cartes de la vitrine grandissent moins (boutons plus longs que « Je commande »…). */
+@media (max-width: 374px) {
+  :is(.vfp-c, ${MINI}) .vf-nom { font-size: 21px; }
+  :is(.vfp-c, ${MINI}) .ld-bouton { padding-left: 16px; padding-right: 18px; letter-spacing: .05em; }
+}
+`;
+const INFO_JS = `<script>/* Correction du 30/10 (scripts/construire.mjs) : bulles ⓘ des cartes. Souris : au survol (un clic la garde ouverte) ;
+   toucher : un toucher l'ouvre ou la ferme ; clavier : au focus, Entrée ou Espace. Échap ou un clic ailleurs la ferme ; elle suit
+   la ⓘ quand la page défile (fermée si la ⓘ sort de l'écran). La bulle est posée sur la page, hors des cartes (elles coupent ce
+   qui dépasse, s'inclinent et sont parfois réduites). */
+(() => { if (window.__ldInfo) return; window.__ldInfo = 1;
+  let bulle = null, cible = null, doigt = false, tPointeur = 0, raf = 0;
+  const trouver = (e) => (e.target && e.target.closest ? e.target.closest(".vf-i") : null);
+  const placer = () => {
+    const o = cible.querySelector(".vf-i-o") || cible, q = o.getBoundingClientRect(), b = bulle.getBoundingClientRect(), m = 12;
+    let y = q.top - b.height - 10; if (y < m) y = q.bottom + 10;
+    bulle.style.left = Math.round(Math.max(m, Math.min(innerWidth - b.width - m, q.left + q.width / 2 - b.width / 2))) + "px";
+    bulle.style.top = Math.round(y) + "px";
+  };
+  const ouvrir = (b) => {
+    const src = document.getElementById(b.getAttribute("aria-describedby")); if (!src) return;
+    if (cible && cible !== b) cible.setAttribute("aria-expanded", "false");
+    if (!bulle) { bulle = document.createElement("div"); bulle.className = "vf-bulle-i"; bulle.setAttribute("aria-hidden", "true"); document.body.appendChild(bulle); }
+    cible = b; b.setAttribute("aria-expanded", "true");
+    bulle.innerHTML = src.innerHTML; bulle.toggleAttribute("data-notes", src.getAttribute("data-genre") === "notes");
+    bulle.style.left = bulle.style.top = "0px"; placer(); bulle.setAttribute("data-on", "");
+  };
+  const fermer = () => { if (!cible) return; cible.setAttribute("aria-expanded", "false"); cible = null; if (bulle) bulle.removeAttribute("data-on"); };
+  document.addEventListener("pointerdown", (e) => { doigt = e.pointerType !== "mouse"; tPointeur = performance.now(); }, true);
+  document.addEventListener("click", (e) => {
+    const b = trouver(e);
+    if (!b) { fermer(); return; }
+    if (!doigt && e.detail) { if (cible !== b) ouvrir(b); return; }
+    if (cible === b) fermer(); else ouvrir(b);
+  });
+  document.addEventListener("pointerover", (e) => { if (e.pointerType !== "mouse") return; const b = trouver(e); if (b && b !== cible) ouvrir(b); });
+  document.addEventListener("pointerout", (e) => { if (e.pointerType !== "mouse") return; const b = trouver(e); if (b && b === cible && !b.contains(e.relatedTarget) && document.activeElement !== b) fermer(); });
+  document.addEventListener("focusin", (e) => { const b = trouver(e); if (b && (b.matches(":focus-visible") || performance.now() - tPointeur > 500)) ouvrir(b); });
+  document.addEventListener("focusout", (e) => { const b = trouver(e); if (b && b === cible) fermer(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { fermer(); return; }
+    const b = trouver(e); if (b && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); if (cible === b) fermer(); else ouvrir(b); }
+  });
+  const suivre = () => { if (!cible || raf) return; raf = requestAnimationFrame(() => { raf = 0; if (!cible) return; const q = cible.getBoundingClientRect();
+    if (!document.contains(cible) || !q.width || q.bottom < 0 || q.top > innerHeight) fermer(); else placer(); }); };
+  addEventListener("scroll", suivre, { passive: true, capture: true });
+  addEventListener("resize", suivre);
+})();
+</script>
+`;
+
 // Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
 // ?apercu=single, pack ou prog l'affiche avec le faux numéro de l'aperçu de l'éditeur (apercuPaye), et ouvre la fenêtre.
 const APERCU_ESSAI = [
@@ -1056,6 +1257,25 @@ const CORRECTIONS = [
     avant: "      refQr: this.refQr,\n", apres: "      refQr: this.refQr,\n" + GUIDE_VALS },
   { quoi: "Fenêtre du 30/10 : touche Échap libérée au démontage", fichiers: VF, n: 1,
     avant: "    if (this._offF) this._offF();\n", apres: "    if (this._offF) this._offF();\n    if (this._offGuide) this._offGuide(); /* Correction du 30/10 */\n" },
+  // Retour de Loan du 30/10 : textes et structure des cartes (constantes plus haut : INFOS, FICHES, NOMS, CARTES_CSS_30, INFO_JS).
+  ...Object.keys(FICHES).map((k, i) => ({ quoi: `Planche II : nouvelle carte ${k} (30/10)`, fichiers: VF, n: 1, avant: CARTE_AVANT(k, i), apres: CARTE_APRES(k, i) })),
+  { quoi: "Planche II : « Launch offer » une seule fois, sous le titre, et analyse adaptée au niveau et aux objectifs (30/10)", fichiers: VF, n: 1,
+    avant: TITRE_PLANCHE + LEDE_PLANCHE("The same analysis for all levels: beginner, intermediate, professional."),
+    apres: TITRE_PLANCHE + SI_OFFRE('<div class="vf-offre vfk-offre vfk-ecrit" style="transition-delay:.5s">Launch offer</div>') + "\n" +
+      LEDE_PLANCHE("An analysis tailored to your level and your goals: beginner, intermediate, professional.") },
+  ...Object.values(FICHES).map((f) => ({ quoi: `Vitrine : nom « ${f.nom.replace("<br>", " ")} » (30/10)`, fichiers: VF, n: 1,
+    avant: `<div class="vf-nom">${f.ancien[0]}</div>`, apres: `<div class="vf-nom">${f.nom}</div>` })),
+  ...Object.entries(NOMS).map(([k, [avant, nom, achat]]) => ({ quoi: `Nom de la formule ${k} : « ${nom} » (30/10)`, fichiers: VF, n: 1,
+    avant: `  ${k}: { nom: "${avant}", prix:`, apres: `  ${k}: { nom: "${nom}", achatEn: "${achat}", prix:` })),
+  { quoi: "Message WhatsApp : nom de la formule avec son article (30/10)", fichiers: VF, n: 1,
+    avant: '"Hi Loan, I just purchased the " + f.nom + ".', apres: '"Hi Loan, I just purchased " + f.achatEn + ".' },
+  { quoi: "Carte payée : 2 vidéos de 2 min ou 3 de 45 s, comme sur les cartes (30/10)", fichiers: VF, n: 3,
+    avant: "<span>3 videos under 30 s, or 2 under 2 minutes.</span>", apres: `<span>${ENVOI}.</span>` },
+  { quoi: "Planche II : réduction d'ensemble calculée sur l'en-tête des cartes (30/10)", fichiers: VF, n: 1, avant: ECHELLE_AVANT, apres: ECHELLE_APRES },
+  { quoi: "Styles du 30/10 : cartes de la planche II, bento et bulles ⓘ", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: CARTES_CSS_30 + SOMMAIRE_STYLE_FIN },
+  { quoi: "Bulles ⓘ des cartes : script (30/10)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: INFO_JS + '<script src="./support.js"></script>' },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------

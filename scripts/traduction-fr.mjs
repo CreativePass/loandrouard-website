@@ -26,11 +26,16 @@ const LIRE_FR = '(() => { try { return new URLSearchParams(location.search).get(
 // Textes courts : sur mobile, le bouton tient à côté du « + » de la petite carte dès 360 px de large (« Recevoir mon analyse »
 // ou « Commencer le programme » n'y tenaient qu'à partir de 390 px). Essais écartés : « Select · 49 € », « Choose this package ».
 // (« Get a feedback » demandé : « Get feedback », feedback ne prenant pas d'article en anglais.)
+// 30/10, nouveaux textes des cartes (Loan) : « Analyser mes vidéos », « Obtenir le Pack », « Commencer mon Suivi Performance » ;
+// sur les petites cartes mobiles, le texte passe sur deux lignes s'il ne tient pas à côté du « + ».
 export const BOUTONS = [
-  ["49", "Get feedback", "Je commande"],
-  ["129", "Get this package", "Je prends le pack"],
-  ["499", "Get started", "Je me lance"],
+  ["49", "Analyze My Videos", "Analyser mes vidéos"],
+  ["129", "Get the Pack", "Obtenir le Pack"],
+  ["499", "Start My Performance Coaching", "Commencer mon Suivi Performance"],
 ];
+// Envoi des vidéos (cartes et carte payée, 30/10).
+const ENVOI_FR = `2 vidéos de 2${NB}minutes maximum chacune ou 3 vidéos de 45${NB}secondes maximum chacune`;
+const ENVOI_EN = "2 videos, 2 minutes max each or 3 videos, 45 seconds max each";
 
 // Textes de Video Feedback : [anglais, français, occurrences], entre deux balises, HTML compris (<br>, <em>, &nbsp;).
 // En-tête (Home, The Journey et Press restent grisés et non cliquables), aussi sur les pages légales.
@@ -51,25 +56,26 @@ const TEXTES = [
   ["move by move", "geste par geste", 1],
   ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer.", 1],
   ["See the options", "Voir les options", 1], // 27/10 : « See pricing » / « Voir les tarifs », puis « Voir les formules » (28/10 : « Voir les options », demandé par Loan)
-  // Offre de lancement (29/10, scripts/construire.mjs) : « Launch offer » au-dessus du nom des cartes et sous See the options.
-  ["Launch offer", "Offre de lancement", 7],
+  // Offre de lancement (29/10, scripts/construire.mjs) : « Launch offer » au-dessus du nom des cartes de la vitrine, sous See the
+  // options et, depuis le 30/10, une seule fois sur la planche II, sous « Three ways to work together. ».
+  ["Launch offer", "Offre de lancement", 5],
   ["Three packages", "Trois formules", 1],
   [" · from {{ prixMin }}", " · dès {{ prixMin }}", 1],
   ["Scroll for everything included", "Faites défiler pour tout le détail", 1],
   ["Back to Loan", "Retour à Loan", 1],
   ["Scroll", "Défiler", 1],
-  // Cartes (vitrine du projecteur et planche II).
-  ["Single<br>feedback", "Analyse<br>unique", 2],
-  ["3× feedback<br>pack", "Pack<br>3 analyses", 2],
-  ["Quarterly<br>program", "Programme<br>trimestriel", 2],
-  [" · one full analysis", " · analyse complète", 2],
-  [" · 3 full analyses", " · trois analyses", 2],
-  [" · weekly coaching", " · coaching hebdo", 2],
+  // Cartes (vitrine du projecteur et planche II). Noms des formules du 30/10 (Loan).
+  ["Technical<br>analysis", "Analyse<br>technique", 2],
+  ["Progression<br>pack", "Pack<br>évolution", 2],
+  ["The way of<br>performance", "Suivi<br>performance", 2],
+  [" · one full analysis", " · analyse complète", 1],
+  [" · 3 full analyses", " · trois analyses", 1],
+  [" · weekly coaching", " · coaching hebdo", 1],
   // Boutons des cartes (27–28/10, « Pay » remplacé dans scripts/construire.mjs) : BOUTONS, ci-dessus.
   ...BOUTONS.map(([, en, fr]) => [en, fr, 2]), // vitrine et planche II
   ["See full details", "Voir tous les détails", 3], // 27/10 : sous les cartes de la vitrine
   ["Spots left", "Places restantes", 4],
-  ["Written or voice feedback", "Retour écrit ou vocal", 4],
+  ["Written or voice feedback", "Retour écrit ou vocal", 1],
   ["Three analyses, progress tracked between them", "Trois analyses, avec le suivi de vos progrès de l’une à l’autre", 1],
   ["One analysis every week, priorities set together", "Une analyse chaque semaine, des priorités définies ensemble", 1],
   ["Renews automatically, cancel anytime", `Renouvelé automatiquement, ${INSECABLE("résiliable à tout moment")}`, 1],
@@ -141,25 +147,69 @@ const TEXTES = [
   ["All exchanges take place on WhatsApp.", "Tous les échanges se font sur WhatsApp.", 1],
   ["Choose · send · receive professional feedback", "Choisissez · envoyez · recevez un retour professionnel", 1],
   ["Three ways to work together.", "Trois façons de travailler ensemble.", 1],
-  ["The same analysis for all levels: beginner, intermediate, professional.", `Une même analyse pour tous${NB}: débutant, intermédiaire, professionnel.`, 1],
-  ["Technique, rhythm, jumps, transitions", "Technique, rythme, sauts, transitions", 3],
-  ["Grade A and C corrections", "Corrections des notes A et C", 3],
-  ["Reply in 4 to 6 days", `Réponse sous 4 à 6${NB}jours`, 1],
-  ["Reply in 3 to 5 days", `Réponse sous 3 à 5${NB}jours`, 1],
-  ["Reply in 2 to 3 days", `Réponse sous 2 à 3${NB}jours`, 1],
-  ["In the pack", "Dans le pack", 1],
-  ["Three analyses, whenever you need them", "Trois analyses, quand vous le souhaitez", 1],
-  ["Targeted exercises after each video", "Exercices ciblés après chaque vidéo", 2],
-  ["Progress tracked from one video to the next", `Suivi de vos progrès d’une vidéo ${INSECABLE("à l’autre")}`, 2],
-  ["Grade B suggestions on top", "Suggestions note B en plus", 2],
-  ["Valid 6 months from your first video", `Valable 6${NB}mois dès votre première vidéo`, 1],
-  ["Renews every 3 months, cancel anytime", `Renouvelé tous les 3${NB}mois, ${INSECABLE("résiliable à tout moment")}`, 1],
-  ["Also included", "Également inclus", 1],
-  ["In the program", "Dans le programme", 1],
-  ["One analysis every single week", `Une analyse par semaine, ${INSECABLE("sans faute")}`, 1],
-  ["Priorities set together each week", `Priorités définies ensemble ${INSECABLE("chaque semaine")}`, 1],
-  ["Written check-ins whenever you need", "Échanges écrits à la demande", 1],
-  ["Final review, and a plan going forward", "Bilan final et plan pour la suite", 1],
+  // 30/10 (Loan) : « Une analyse adaptée à votre niveau et à vos objectifs » au lieu de « Une même analyse pour tous ».
+  ["An analysis tailored to your level and your goals: beginner, intermediate, professional.", `Une analyse adaptée à votre niveau et à vos objectifs${NB}: débutant, intermédiaire, professionnel.`, 1],
+  // Cartes de la planche II, textes de Loan du 30/10 (anglais de Loan ; structure : scripts/construire.mjs, FICHES).
+  [" / quarter", " / trimestre", 1],
+  ["2 videos analyzed so you know what to improve and how.", "2 vidéos analysées pour savoir quoi améliorer et comment.", 1],
+  ["6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.", "6 vidéos analysées en 3 retours, pour pratiquer, ajuster et progresser.", 1],
+  ["24 videos analyzed over 12 weeks, to develop your practice effectively.", `24 vidéos analysées en 12${NB}semaines, pour faire évoluer votre pratique efficacement.`, 1],
+  ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "Envoyez votre taolu, vos sauts ou une partie ciblée pour plus de détails sur des éléments spécifiques.", 1],
+  ["I analyze your videos based on your level and your goals:", `J’analyse vos vidéos selon votre niveau et vos objectifs${NB}:`, 1],
+  ["Your strengths and your priority corrections.", "Vos points forts et vos corrections prioritaires.", 1],
+  ["Specific advice on technique, jumps, rhythm or transitions, depending on your needs.", "Des conseils précis sur la technique, les sauts, le rythme ou les transitions, selon vos besoins.", 1],
+  ["Advice mainly focused on the A and C scores", "Conseils principalement axés sur les notes A et C", 1],
+  ["Develop your taolu, specific sections or jumps with three personalized feedback rounds on 2 videos each, spaced out to fit your pace.",
+    "Faites évoluer votre taolu, des parties ou des sauts ciblés grâce à trois retours personnalisés sur 2 vidéos chacun, espacés selon votre rythme.", 1],
+  ["A detailed technical analysis of each of your videos.", "Une analyse technique détaillée de chacune de vos vidéos.", 1],
+  ["Specific advice on technique, jumps, speed, presence, rhythm, style or transitions, depending on your needs.",
+    "Des conseils précis sur la technique, les sauts, la vitesse, la présence, le rythme, le style ou les transitions, selon vos besoins.", 1],
+  ["Tracking of your progress from one feedback round to the next.", "Un suivi de vos progrès d’un retour à l’autre.", 1],
+  ["Explained corrections and targeted drills after each round.", "Des corrections expliquées et des exercices ciblés après chaque retour.", 1],
+  ["Advice and focus on the B score, in addition to the A and C scores", "Conseils et focus sur la note B, en plus des notes A et C", 1],
+  ["Already had a Technical Analysis? Its {{ prixSingle }} is deducted from the Pack if you get it within 30 days.",
+    `Vous avez déjà pris une Analyse Technique${NB}? Ses {{ prixSingle }} sont déduits du Pack si vous le prenez dans les 30${NB}jours.`, 1],
+  ["One-on-one coaching, week after week, to work on everything you want to improve and progress as effectively as possible.",
+    "Un suivi individuel, semaine après semaine, pour travailler tout ce que vous souhaitez améliorer et faire progresser de manière optimale.", 1],
+  ["24 personalized analyses: 2 videos per week.", `24 analyses personnalisées${NB}: 2 vidéos par semaine.`, 1],
+  ["Key areas to work on, defined at the start of the quarter.", "Définition des axes à travailler au début du trimestre.", 1],
+  ["Ongoing support and weekly tracking of your corrections and progress.", "Accompagnement &amp; suivi continu des corrections et de la progression chaque semaine.", 1],
+  ["Training priorities and technical details set each week.", "Les points prioritaires à corriger, identifiés à chaque retour.", 1],
+  ["Q&amp;A on WhatsApp after each feedback session.", "Questions-réponses sur WhatsApp après chaque retour.", 1],
+  ["Final review with recommendations for what comes next.", "Bilan final avec des recommandations pour la suite.", 1],
+  // Bento (petits rectangles sous le bouton).
+  ["One-time payment", "Paiement unique", 2],
+  ["Quarterly subscription", "Abonnement trimestriel", 1],
+  ["Limited spots", "Places limitées", 1],
+  ["3 per quarter", "3 par trimestre", 1],
+  ["Turnaround", "Délai de réponse", 3],
+  ["4 to 6 days", `4 à 6${NB}jours`, 1],
+  ["3 to 5 days per feedback round", `3 à 5${NB}jours par retour`, 1],
+  ["Priority handling, within 48 to 72 hours", `Traitement prioritaire, sous 48 à 72${NB}h`, 1],
+  ["Feedback format", "Format de réponse", 3],
+  ["Written or voice message", "Écrit ou vocal", 2],
+  ["Written, voice or video", "Écrit, vocal ou vidéo", 1],
+  ["Feedback language", "Langue du retour", 3],
+  ["French or English", "Français ou anglais", 3],
+  ["Submission", "Envoi", 3],
+  [ENVOI_EN, ENVOI_FR, 1],
+  [ENVOI_EN + ", per round", ENVOI_FR + ", par retour", 1],
+  [ENVOI_EN + ", per feedback session", ENVOI_FR + ", par retour", 1],
+  // Bulles ⓘ (INFOS, scripts/construire.mjs).
+  ["A score", "Note A", 2],
+  ["B score", "Note B", 2],
+  ["C score", "Note C", 2],
+  ["Quality of the technical movements.", "La qualité des mouvements techniques.", 2],
+  ["Overall performance (power, rhythm, style).", "La performance d’ensemble (puissance, rythme, style).", 2],
+  ["Jumps and difficulty.", "Les sauts et la difficulté.", 2],
+  ["Validity", "Validité", 1],
+  ["Your 3 feedback rounds can be used within 6 months of your first video. Each round is delivered within 3 to 5 days.",
+    `Vos 3 retours sont utilisables pendant 6${NB}mois à compter de votre première vidéo. Chaque retour est transmis sous 3 à 5${NB}jours.`, 1],
+  ["Keep progressing", "Poursuivre votre progression", 1],
+  ["Your subscription renews automatically at the end of each quarter. You can cancel at any time by simply sending us a message or an email before the next billing date. At the end of the 12 weeks, we review your progress and your goals for the next quarter together.",
+    `Votre abonnement est renouvelé automatiquement à la fin de chaque trimestre, vous pouvez le résilier à tout moment simplement en nous envoyant un message ou mail avant la prochaine échéance. À la fin des 12${NB}semaines, nous faisons le point ensemble sur vos progrès et vos objectifs pour le trimestre suivant.`, 1],
+  ["Unused weeks", "Semaines non utilisées", 1],
+  ["Up to 2 weeks can be carried over to another week of the quarter.", `Jusqu’à 2${NB}semaines peuvent être reportées sur une autre semaine du trimestre.`, 1],
   ["Secure payment · receipt by email · exchanges on WhatsApp · <a href=\"CGV.dc.html\" style=\"color:inherit;text-decoration:underline;text-underline-offset:3px\">Terms of sale</a>",
     "Paiement sécurisé · reçu par e-mail · échanges sur WhatsApp · <a href=\"CGV.dc.html?lang=fr\" style=\"color:inherit;text-decoration:underline;text-underline-offset:3px\">CGV</a>", 1],
   // Face « après paiement » (nom et délai de la formule : voir SCRIPT).
@@ -169,7 +219,7 @@ const TEXTES = [
   ["Or scan it with your phone", "Ou scannez-le avec votre mobile", 3],
   ["Attach your video as a <em>document</em>, not from your gallery — the quality stays intact.", `Joignez votre vidéo comme <em>document</em>, et non depuis votre galerie${NB}: sa qualité ${INSECABLE("reste intacte.")}`, 3],
   ["Send your videos for analysis.", "Envoyez vos vidéos pour analyse.", 3],
-  ["3 videos under 30 s, or 2 under 2 minutes.", `3 vidéos de moins de 30${NB}s, ou 2 de moins de 2${NB}min.`, 3],
+  [ENVOI_EN + ".", ENVOI_FR + ".", 3], // 30/10 : comme sur les cartes (avant : 3 vidéos de moins de 30 s, ou 2 de moins de 2 min)
   ["{{ delaiTexte }} · Link also in your confirmation email", "{{ delaiTexte }} · Lien aussi dans votre e-mail de confirmation", 3],
   ["Manage or cancel your subscription", "Gérer ou résilier votre abonnement", 1],
   // Fenêtre de paiement (le bouton Close de la carte ouverte sur mobile est dans le script : voir SCRIPT).
@@ -192,6 +242,7 @@ const ATTRIBUTS = [
   ["aria-label", "The whole", "L’ensemble", 1],
   ["aria-label", "QR code that opens WhatsApp", "QR code pour ouvrir WhatsApp", 3],
   ["aria-label", "Payment", "Paiement", 1],
+  ["aria-label", "More information", "Plus d’informations", 5], // bulles ⓘ des cartes (30/10)
 ];
 for (const [, en] of ATTRIBUTS) if (/['"]/.test(en)) throw new Error(`traduction-fr.mjs : guillemet dans « ${en} » (clé de tr)`);
 const TR = Object.fromEntries(ATTRIBUTS.map(([, en, fr]) => [en, fr]));
@@ -213,13 +264,14 @@ const SCRIPT = [
       '  { id: "analysis", num: "IV", nom: FR ? "\\u00C0 quoi s\\u2019attendre" : "What to Expect" },\n  { id: "formules", num: "V", nom: FR ? "Tarifs" : "Pricing" },\n' },
   // achat : la formule dans le message WhatsApp ; etat : « … · activé(e) » sur la carte payée (accord avec le nom ; « débloqué »
   // passait sur deux lignes dans la carte du programme, sur ordinateur).
+  // Noms du 30/10 (Loan) : Analyse Technique, Pack Évolution, Suivi Performance (anglais : scripts/construire.mjs, NOMS).
   { quoi: "noms et délais des formules", n: 1,
-    avant: '  single: { nom: "Single feedback", prix: "49\\u00A0\\u20AC", delai: "4 to 6 days" },\n' +
-      '  pack: { nom: "3\\u00D7 feedback pack", prix: "129\\u00A0\\u20AC", delai: "3 to 5 days" },\n' +
-      '  prog: { nom: "Quarterly program", prix: "499\\u00A0\\u20AC", delai: "2 to 3 days" },\n',
-    apres: '  single: { nom: FR ? "Analyse unique" : "Single feedback", prix: "49\\u00A0\\u20AC", delai: FR ? "4 \\u00E0 6\\u00A0jours" : "4 to 6 days", achat: "l\\u2019Analyse unique", etat: "activ\\u00E9e" },\n' +
-      '  pack: { nom: FR ? "Pack 3 analyses" : "3\\u00D7 feedback pack", prix: "129\\u00A0\\u20AC", delai: FR ? "3 \\u00E0 5\\u00A0jours" : "3 to 5 days", achat: "le Pack 3 analyses", etat: "activ\\u00E9" },\n' +
-      '  prog: { nom: FR ? "Programme trimestriel" : "Quarterly program", prix: "499\\u00A0\\u20AC", delai: FR ? "2 \\u00E0 3\\u00A0jours" : "2 to 3 days", achat: "le Programme trimestriel", etat: "activ\\u00E9" },\n' },
+    avant: '  single: { nom: "Technical Analysis", achatEn: "the Technical Analysis", prix: "49\\u00A0\\u20AC", delai: "4 to 6 days" },\n' +
+      '  pack: { nom: "Progression Pack", achatEn: "the Progression Pack", prix: "129\\u00A0\\u20AC", delai: "3 to 5 days" },\n' +
+      '  prog: { nom: "The Way of Performance", achatEn: "The Way of Performance", prix: "499\\u00A0\\u20AC", delai: "2 to 3 days" },\n',
+    apres: '  single: { nom: FR ? "Analyse Technique" : "Technical Analysis", achatEn: "the Technical Analysis", prix: "49\\u00A0\\u20AC", delai: FR ? "4 \\u00E0 6\\u00A0jours" : "4 to 6 days", achat: "l\\u2019Analyse Technique", etat: "activ\\u00E9e" },\n' +
+      '  pack: { nom: FR ? "Pack \\u00C9volution" : "Progression Pack", achatEn: "the Progression Pack", prix: "129\\u00A0\\u20AC", delai: FR ? "3 \\u00E0 5\\u00A0jours" : "3 to 5 days", achat: "le Pack \\u00C9volution", etat: "activ\\u00E9" },\n' +
+      '  prog: { nom: FR ? "Suivi Performance" : "The Way of Performance", achatEn: "The Way of Performance", prix: "499\\u00A0\\u20AC", delai: FR ? "2 \\u00E0 3\\u00A0jours" : "2 to 3 days", achat: "le Suivi Performance", etat: "activ\\u00E9" },\n' },
   { quoi: "surtitre de l'étude écrit au défilement", n: 1,
     avant: 'num.textContent = i === 0 ? "Sample analysis" : ',
     apres: 'num.textContent = i === 0 ? (FR ? "Analyse type" : "Sample analysis") : ' },
@@ -228,9 +280,9 @@ const SCRIPT = [
     avant: 'fermerBtn.innerHTML = "<span>Close</span>',
     apres: 'fermerBtn.innerHTML = "<span>" + (FR ? "Fermer" : "Close") + "</span>' },
   { quoi: "message WhatsApp pré-rempli", n: 1,
-    avant: '    const message = "Hi Loan, I just purchased the " + f.nom + ". Here\\u2019s my video for the analysis.";\n',
+    avant: '    const message = "Hi Loan, I just purchased " + f.achatEn + ". Here\\u2019s my video for the analysis.";\n',
     apres: '    const message = FR ? "Bonjour Loan, je viens d\\u2019acheter " + f.achat + ". Voici ma vid\\u00E9o pour l\\u2019analyse."\n' +
-      '      : "Hi Loan, I just purchased the " + f.nom + ". Here\\u2019s my video for the analysis.";\n' },
+      '      : "Hi Loan, I just purchased " + f.achatEn + ". Here\\u2019s my video for the analysis.";\n' },
   { quoi: "guillemets du message WhatsApp", n: 1,
     avant: '      messageWhatsApp: "\\u201C" + message + "\\u201D",\n',
     apres: '      messageWhatsApp: FR ? "\\u00AB\\u00A0" + message + "\\u00A0\\u00BB" : "\\u201C" + message + "\\u201D",\n' },
