@@ -542,7 +542,29 @@ const RALENTI_APRES = RALENTI_AVANT +
   "  if (x < D) { const u = x / D; return x - (1 - k) * D * u * u * u * (1 - u / 2); }\n" +
   "  if (x < P) return D * (1 + k) / 2 + k * (x - D);\n" +
   "  if (x < P + E) { const u = (x - P) / E; return D * (1 + k) / 2 + k * (x - D) + (1 - k) * E * u * u * u * (1 - u / 2); }\n" +
-  "  return x - R; };\n";
+  "  return x - R; };\n" +
+  "/* Correction du 30/10 (scripts/construire.mjs) : écran tactile (téléphone, tablette), pour l'inertie de la caméra. */\n" +
+  "let mqTactile = null;\n" +
+  "const tactile = () => { if (mqTactile === null) mqTactile = window.matchMedia ? window.matchMedia(\"(pointer: coarse)\") : false; return !!(mqTactile && mqTactile.matches); };\n";
+// Troisième retour de Loan du 30/10 (« en fait sur mobile je ne vois pas les courbes, il y a toujours ces arrêts nets ») : sur
+// téléphone, un coup de doigt fait défiler 1 à 2 écrans en une demi-seconde ; les courbes, tracées sur ≈ 1,8 écran de défilement,
+// passaient en un instant (simulé : vitesse du zoom 323 → 91 → 33 → 14 % par seconde en 0,6 s, puis à-coup au coup de doigt
+// suivant). Sur écran tactile, la caméra a maintenant de l'inertie : la progression de la scène suit le défilement avec un retard
+// en douceur (constante de temps 0,45 s), comme une caméra qui a du poids. Elle continue de glisser un instant quand le doigt
+// s'arrête et ne change jamais de vitesse d'un coup (simulé : 56, 110, 82, 52, 33, 21, 15… sans à-coup). Même chose pour la
+// bascule yin-yang de l'étude (amorti 0,45 s au lieu de 0,07 s). Ordinateur (souris, pavé) : inchangé. Mouvement réduit : rien.
+const INERTIE_AVANT = "    const maj = () => {\n      raf = 0;\n      if (!G.W || !G.H) { mesurer();";
+const INERTIE_APRES = "    /* Correction du 30/10 (scripts/construire.mjs) : sur écran tactile, inertie de la caméra (la scène suit le défilement en douceur). */\n" +
+  "    let sL = null, tL = 0, rafL = 0;\n" +
+  "    const inertie = (sC) => { const now = performance.now(), dt = tL ? Math.min(0.1, (now - tL) / 1000) : 0; tL = now;\n" +
+  "      if (sL === null || calme || !tactile()) { sL = sC; return sC; }\n" +
+  "      sL += (sC - sL) * (1 - Math.exp(-dt / 0.45));\n" +
+  "      if (Math.abs(sC - sL) < 0.5) sL = sC; else if (!rafL) rafL = requestAnimationFrame(() => { rafL = 0; if (!raf) maj(); });\n" +
+  "      return sL; };\n" + INERTIE_AVANT;
+const INERTIE_FIN_AVANT = "cancelAnimationFrame(vmRaf); cancelAnimationFrame(raf); cancelAnimationFrame(anim); cancelAnimationFrame(rafP); };";
+const INERTIE_FIN_APRES = "cancelAnimationFrame(vmRaf); cancelAnimationFrame(raf); cancelAnimationFrame(anim); cancelAnimationFrame(rafP); cancelAnimationFrame(rafL); };";
+const BASCULE_AMORTI_AVANT = "      else uL += (uC - uL) * (1 - Math.exp(-dt * 14));\n";
+const BASCULE_AMORTI_APRES = "      else uL += (uC - uL) * (1 - Math.exp(-dt * (tactile() ? 1 / 0.45 : 14))); /* Correction du 30/10 (scripts/construire.mjs) : inertie sur écran tactile. */\n";
 const ANCRE_FOR_WHO_AVANT = "tF = Math.round(0.9 * plage + tenue * 0.994);";
 const ANCRE_FOR_WHO_APRES = "tF = Math.round(0.9 * plage + ralentiP(s0, tenue, mob).R); /* Correction du 30/10 (scripts/construire.mjs) : retard total de ralenti(). */";
 // Projecteur, après l'éblouissement (P plafonné à 0,8 : page blanche « Video Feedback / For everyone… » immobile sur près de
@@ -890,13 +912,20 @@ const CORRECTIONS = [
   { quoi: "Styles du 29/10 : textes plus lisibles sur mobile, « For everyone / From beginner / To pro » plus grand", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
   // Retour de Loan du 29/10 : jamais d'arrêt net en défilant (constantes plus haut : RALENTI_APRES, POUSSEE_APRES, TITRE_POUSSEE_APRES,
-  // ECARTER_DEBUT_APRES, ECARTER_FIN_APRES, DERIVE_APRES, ANCRE_FOR_WHO_APRES).
+  // ECARTER_DEBUT_APRES, ECARTER_FIN_APRES, DERIVE_APRES, ANCRE_FOR_WHO_APRES, INERTIE_APRES,
+  // INERTIE_FIN_APRES, BASCULE_AMORTI_APRES).
   { quoi: "Défilement sans arrêt : fonction ralenti (29 et 30/10)", fichiers: VF, n: 1, avant: RALENTI_AVANT, apres: RALENTI_APRES },
   { quoi: "Défilement sans arrêt : projecteur au ralenti au lieu de la tenue du cran, freinage progressif (29 et 30/10)", fichiers: VF, n: 1,
     avant: "s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994",
-    apres: "s = ralenti(s1, s0, tenue, mob) /* Corrections du 29 et 30/10 (scripts/construire.mjs) : ralenti au lieu d'un arrêt, freinage et reprise progressifs. */" },
+    apres: "s = inertie(ralenti(s1, s0, tenue, mob)) /* Corrections du 29 et 30/10 (scripts/construire.mjs) : ralenti au lieu d'un arrêt, freinage et reprise progressifs, inertie sur écran tactile. */" },
   { quoi: "Défilement sans arrêt : ancre « For who » au retard total du ralenti (30/10)", fichiers: VF, n: 1,
     avant: ANCRE_FOR_WHO_AVANT, apres: ANCRE_FOR_WHO_APRES },
+  { quoi: "Défilement sans arrêt : inertie de la caméra du projecteur sur écran tactile (30/10)", fichiers: VF, n: 1,
+    avant: INERTIE_AVANT, apres: INERTIE_APRES },
+  { quoi: "Défilement sans arrêt : inertie, arrêt de la boucle au démontage (30/10)", fichiers: VF, n: 1,
+    avant: INERTIE_FIN_AVANT, apres: INERTIE_FIN_APRES },
+  { quoi: "Défilement sans arrêt : bascule yin-yang amortie sur écran tactile (30/10)", fichiers: VF, n: 1,
+    avant: BASCULE_AMORTI_AVANT, apres: BASCULE_AMORTI_APRES },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
     avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
   { quoi: "Défilement sans arrêt : le titre de la page blanche avance avec Loan (29/10)", fichiers: VF, n: 1,
