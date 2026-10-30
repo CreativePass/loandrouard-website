@@ -575,69 +575,81 @@ const GUIDE = {
 const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre « How we'll work together » / « Comment nous allons travailler »,
    ouverte après le paiement, même habillage que la fenêtre de paiement ; lien de la carte payée qui la rouvre. */
 .vf-guide .vf-modale__panneau { display: flex; flex-direction: column; width: min(600px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: hidden; padding: 0; }
-/* Le cadre reste fixe (inclinaison et reflet doré) ; le texte défile à l'intérieur. */
+/* Le cadre de la fenêtre reste fixe ; le texte défile à l'intérieur si la hauteur manque. */
 .vf-guide__defile { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 30px 30px; outline: none; }
-.vf-guide .vf-modale__tete { margin-bottom: 10px; }
+.vf-guide .vf-modale__tete { margin-bottom: 14px; }
 .vf-guide__etiquette { font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #C6A05E; }
 .vf-guide__titre { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(28px, 4vw, 36px); line-height: 1.1; letter-spacing: .01em; text-wrap: balance; }
 .vf-guide__intro { margin: 14px 0 0; font-size: 19px; line-height: 1.55; color: rgba(246,245,241,.8); }
-.vf-guide__bloc { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(246,245,241,.12); }
+/* Rectangles (demandés par Loan le 30/10, « plus facile à lire ») : l'introduction et chacune des quatre parties dans son cadre,
+   avec l'effet des cartes au survol, mêmes valeurs : inclinaison (incliner / relacher), reflet doré (.vf-carte::after) et bord
+   doré (.vf-carte:hover). Souris seulement : sur écran tactile, un toucher laisserait un cadre penché pendant la lecture. */
+.vf-guide__carte { position: relative; overflow: hidden; border: 1px solid rgba(246,245,241,.14); border-radius: 18px; background: rgba(246,245,241,.035); padding: 20px 22px 22px; transition: border-color .35s ease, box-shadow .35s ease; }
+.vf-guide__carte::after { content: ''; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; opacity: 0; transition: opacity .35s ease; background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(169,129,74,.16), transparent 70%); }
+@media (hover: hover) and (pointer: fine) {
+  .vf-guide__carte:hover::after { opacity: 1; }
+  .vf-guide__carte:hover { border-color: rgba(169,129,74,.4); box-shadow: 0 0 40px -10px rgba(169,129,74,.4); }
+}
+@media (hover: none), (pointer: coarse) { .vf-guide__carte { transform: none !important; } }
+.vf-guide__blocs { display: grid; gap: 12px; margin-top: 12px; }
 .vf-guide__bloc h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: #E3D5B8; }
 .vf-guide__bloc h3 span { font-size: 18px; letter-spacing: 0; }
 .vf-guide__bloc p, .vf-guide__fin { margin: 8px 0 0; font-size: 18px; line-height: 1.55; color: rgba(246,245,241,.86); }
-.vf-guide__fin { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(246,245,241,.12); }
-.vf-guide__fin + .vf-guide__fin { margin-top: 6px; padding-top: 0; border-top: 0; }
+.vf-guide__pied { margin-top: 22px; }
+.vf-guide__fin { margin-top: 0; }
+.vf-guide__fin + .vf-guide__fin { margin-top: 6px; }
 .vf-guide__signature { margin: 6px 0 0; font-style: italic; font-size: 20px; }
 .vf-guide__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: 24px; }
 .vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
-@media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide__defile { padding: 20px 20px 24px; } }
+@media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide__defile { padding: 20px 16px 24px; } .vf-guide__carte { padding: 18px 18px 20px; } }
 /* Format paysage sur ordinateur et tablette en paysage (demandé par Loan le 30/10 : « pour qu'on puisse tout voir d'un coup ») :
-   à gauche le titre et l'introduction, puis la fin et les boutons ; à droite les quatre parties sur deux colonnes.
+   à gauche le rectangle d'introduction (vertical), à droite les quatre parties (2 × 2), dessous la fin du message et les boutons.
    Ordre du texte inchangé (lecteurs d'écran, téléphone). Si la hauteur manque, le texte défile encore. */
 @media (min-width: 900px) {
   .vf-guide .vf-modale__panneau { width: min(1120px, 100%); }
-  .vf-guide__defile { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); grid-template-rows: auto auto 1fr; grid-template-areas: "tete tete" "accueil blocs" "pied blocs"; column-gap: 44px; padding: 24px 36px 30px; }
+  .vf-guide__defile { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 2fr); grid-template-areas: "tete tete" "accueil blocs" "pied pied"; column-gap: 16px; padding: 24px 32px 28px; }
   .vf-guide__defile > .vf-modale__tete { grid-area: tete; }
   .vf-guide__accueil { grid-area: accueil; }
-  .vf-guide__blocs { grid-area: blocs; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 32px; align-content: start; }
-  .vf-guide__blocs > .vf-guide__bloc { margin-top: 0; }
-  .vf-guide__pied { grid-area: pied; align-self: end; }
+  .vf-guide__blocs { grid-area: blocs; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 0; }
+  .vf-guide__bloc p { font-size: 17.5px; line-height: 1.5; }
+  .vf-guide__pied { grid-area: pied; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 40px; margin-top: 16px; }
+  .vf-guide__actions { flex: none; margin-top: 0; }
+  /* Plus serré, pour que tout tienne sans défiler jusqu'à 1280 × 720 et 1024 × 768 (iPad en paysage), en français aussi. */
+  .vf-guide__defile { padding: 22px 32px 24px; }
+  .vf-guide .vf-modale__tete { margin-bottom: 12px; }
+  .vf-guide__carte { padding: 18px 20px 20px; }
+  .vf-guide__bloc p { margin-top: 6px; }
 }
-/* Inclinaison au survol (demandée par Loan le 30/10) : celle des cartes (incliner / relacher, mêmes valeurs), souris seulement :
-   sur écran tactile, un toucher laisserait la fenêtre penchée pendant la lecture. */
-@media (hover: none), (pointer: coarse) { .vf-guide .vf-modale__panneau { transform: none !important; } }
-/* Reflet doré qui suit la souris (demandé par Loan le 30/10) : celui des cartes (.vf-carte::after), mêmes valeurs, souris seulement. */
-.vf-guide .vf-modale__panneau::after { content: ''; position: absolute; inset: -1px; border-radius: 24px; pointer-events: none; opacity: 0; transition: opacity .35s ease; background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(169,129,74,.16), transparent 70%); }
-/* Bord doré au survol (demandé par Loan le 30/10) : celui des cartes (.vf-carte:hover, mêmes valeurs et mêmes fondus), souris seulement. */
-.vf-guide .vf-modale__panneau { transition: border-color .35s ease, box-shadow .35s ease; }
-@media (hover: hover) and (pointer: fine) {
-  .vf-guide .vf-modale__panneau:hover::after { opacity: 1; }
-  .vf-guide .vf-modale__panneau:hover { border-color: rgba(169,129,74,.4); box-shadow: 0 0 40px -10px rgba(169,129,74,.4); }
+@media (min-width: 900px) and (max-width: 1199px) {
+  .vf-guide__defile { grid-template-columns: minmax(0, .75fr) minmax(0, 2fr); padding-left: 24px; padding-right: 24px; }
+  .vf-guide__bloc p { font-size: 16.5px; }
 }
 `;
 const GUIDE_HTML = `
 <sc-if value="{{ guideOuvert }}" hint-placeholder-val="{{ false }}">
 <div class="vf-modale vf-guide" role="dialog" aria-modal="true" aria-label="{{ guideLien }}" onClick="{{ fermerFondGuide }}">
-<div class="vf-modale__panneau" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
+<div class="vf-modale__panneau">
 <div class="vf-guide__defile" tabindex="-1" ref="{{ refGuide }}">
 <div class="vf-modale__tete">
 <span class="vf-guide__etiquette">{{ formuleNom }}</span>
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
 </div>
-<div class="vf-guide__accueil">
+<div class="vf-guide__accueil vf-guide__carte" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
 <h2 class="vf-guide__titre">{{ guideTitre }}</h2>
 <p class="vf-guide__intro">{{ guideIntro }}</p>
 </div>
 <div class="vf-guide__blocs">
 <sc-for list="{{ guideSections }}" as="s" hint-placeholder-count="4">
-<div class="vf-guide__bloc"><h3><span aria-hidden="true">{{ s.icone }}</span>{{ s.titre }}</h3><p>{{ s.texte }}</p></div>
+<div class="vf-guide__bloc vf-guide__carte" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}"><h3><span aria-hidden="true">{{ s.icone }}</span>{{ s.titre }}</h3><p>{{ s.texte }}</p></div>
 </sc-for>
 </div>
 <div class="vf-guide__pied">
+<div class="vf-guide__mot">
 <p class="vf-guide__fin">{{ guideFin }}</p>
 <p class="vf-guide__fin">{{ guideBientot }}</p>
 <p class="vf-guide__signature">{{ guideSignature }}</p>
+</div>
 <div class="vf-guide__actions">
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" href="{{ lienWhatsApp }}" target="_blank" rel="noreferrer" hint-size="170px,44px">{{ guideWhatsApp }}</x-import>
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
