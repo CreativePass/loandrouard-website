@@ -515,6 +515,157 @@ const VF_CSS_29 = `/* Correction du 29/10 (scripts/construire.mjs) : textes plus
 }
 `;
 
+// --- Retour de Loan du 30/10 -------------------------------------------------------------------------------------
+// « J'aimerais que ce message s'affiche quand ils ouvrent la page » : le texte de Loan sur le fonctionnement de WhatsApp
+// s'ouvre dans une fenêtre juste après le paiement (et au retour par le lien de l'e-mail, /acces/…), par-dessus la carte
+// payée ; un lien de la carte la rouvre. Un texte par formule (délais du site, une vidéo / trois / une par semaine) et par
+// langue (anglais traduit par Claude). Écrit pour convenir aussi à un client qui reprend une formule (« votre vidéo »,
+// pas « votre première vidéo »). Section : texte commun, ou { single, pack, prog } ; {delai} = délai de la formule (FORMULES).
+// Version d'essai, à faire valider par Loan sur l'adresse de test (aperçu : ?apercu=single, pack ou prog).
+const GUIDE = {
+  fr: {
+    titre: "Il est l’heure de passer au niveau supérieur 🤸‍♂️",
+    intro: "Je suis heureux de vous accompagner dans votre progression. Voici comment nous allons travailler ensemble sur WhatsApp :",
+    sections: [
+      { icone: "🎥", titre: "Votre vidéo", texte: {
+        single: "Envoyez-moi votre vidéo. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
+        pack: "Envoyez-moi une vidéo pour chacune de vos 3 analyses, valables 6 mois à partir de la première. Je vous transmettrai à chaque fois une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
+        prog: "Envoyez-moi une vidéo par semaine. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités." } },
+      { icone: "💬", titre: "Vos questions", texte: {
+        single: "Après l’analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète.",
+        pack: "Après chaque analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète.",
+        prog: "Après chaque analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète." } },
+      { icone: "⏳", titre: "Mes réponses",
+        texte: "Je consulte WhatsApp sur des créneaux dédiés et vous réponds sous {delai}, du lundi au dimanche. Vous pouvez m’écrire au moment qui vous convient ; les échanges se font en différé." },
+      { icone: "📈", titre: { single: "Après l’analyse", pack: "Entre deux analyses", prog: "Entre deux analyses" }, texte: {
+        single: "Prenez le temps de pratiquer les exercices et de noter vos observations. Pour faire analyser une nouvelle vidéo, il vous suffira de reprendre une formule sur le site.",
+        pack: "Prenez le temps de pratiquer les exercices et de noter vos observations. Les nouvelles vidéos et les sujets nécessitant une analyse complémentaire seront traités lors de votre prochaine analyse.",
+        prog: "Prenez le temps de pratiquer les exercices et de noter vos observations. Les nouvelles vidéos et les sujets nécessitant une analyse complémentaire seront traités lors du prochain rendez-vous hebdomadaire." } },
+    ],
+    fin: "Ce fonctionnement me permet de consacrer toute l’attention nécessaire à votre progression.",
+    bientot: "À très bientôt pour votre vidéo !",
+    signature: "Loan ☀️",
+    lien: "Comment nous allons travailler", fermer: "Fermer", whatsapp: "Ouvrir WhatsApp",
+  },
+  en: {
+    titre: "Time to level up 🤸‍♂️",
+    intro: "I’m happy to support you in your progress. Here’s how we’ll work together on WhatsApp:",
+    sections: [
+      { icone: "🎥", titre: "Your video", texte: {
+        single: "Send me your video. I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
+        pack: "Send me one video for each of your 3 analyses, valid for 6 months from the first one. Each time, I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
+        prog: "Send me one video a week. I’ll send you a personalized analysis and targeted exercises, based on your priorities." } },
+      { icone: "💬", titre: "Your questions", texte: {
+        single: "After the analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer.",
+        pack: "After each analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer.",
+        prog: "After each analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer." } },
+      { icone: "⏳", titre: "My replies",
+        texte: "I check WhatsApp at set times and reply within {delai}, Monday to Sunday. You can write to me whenever suits you; we don’t need to be online at the same time." },
+      { icone: "📈", titre: { single: "After the analysis", pack: "Between analyses", prog: "Between analyses" }, texte: {
+        single: "Take the time to practice the exercises and note what you observe. To have a new video analyzed, simply get another package on the site.",
+        pack: "Take the time to practice the exercises and note what you observe. New videos and topics that need further analysis will be covered in your next analysis.",
+        prog: "Take the time to practice the exercises and note what you observe. New videos and topics that need further analysis will be covered at our next weekly session." } },
+    ],
+    fin: "Working this way lets me give your progress all the attention it deserves.",
+    bientot: "Looking forward to your video!",
+    signature: "Loan ☀️",
+    lien: "How we’ll work together", fermer: "Close", whatsapp: "Open WhatsApp",
+  },
+};
+const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre « How we'll work together » / « Comment nous allons travailler »,
+   ouverte après le paiement, même habillage que la fenêtre de paiement ; lien de la carte payée qui la rouvre. */
+.vf-guide .vf-modale__panneau { width: min(600px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overscroll-behavior: contain; padding: 24px 30px 30px; outline: none; }
+.vf-guide .vf-modale__tete { margin-bottom: 10px; }
+.vf-guide__etiquette { font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #C6A05E; }
+.vf-guide__titre { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(28px, 4vw, 36px); line-height: 1.1; letter-spacing: .01em; text-wrap: balance; }
+.vf-guide__intro { margin: 14px 0 0; font-size: 19px; line-height: 1.55; color: rgba(246,245,241,.8); }
+.vf-guide__bloc { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(246,245,241,.12); }
+.vf-guide__bloc h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: #E3D5B8; }
+.vf-guide__bloc h3 span { font-size: 18px; letter-spacing: 0; }
+.vf-guide__bloc p, .vf-guide__fin { margin: 8px 0 0; font-size: 18px; line-height: 1.55; color: rgba(246,245,241,.86); }
+.vf-guide__fin { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(246,245,241,.12); }
+.vf-guide__fin + .vf-guide__fin { margin-top: 6px; padding-top: 0; border-top: 0; }
+.vf-guide__signature { margin: 6px 0 0; font-style: italic; font-size: 20px; }
+.vf-guide__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: 24px; }
+.vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
+@media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide .vf-modale__panneau { padding: 20px 20px 24px; } }
+`;
+const GUIDE_HTML = `
+<sc-if value="{{ guideOuvert }}" hint-placeholder-val="{{ false }}">
+<div class="vf-modale vf-guide" role="dialog" aria-modal="true" aria-label="{{ guideLien }}" onClick="{{ fermerFondGuide }}">
+<div class="vf-modale__panneau" tabindex="-1" ref="{{ refGuide }}">
+<div class="vf-modale__tete">
+<span class="vf-guide__etiquette">{{ formuleNom }}</span>
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
+</div>
+<h2 class="vf-guide__titre">{{ guideTitre }}</h2>
+<p class="vf-guide__intro">{{ guideIntro }}</p>
+<sc-for list="{{ guideSections }}" as="s" hint-placeholder-count="4">
+<div class="vf-guide__bloc"><h3><span aria-hidden="true">{{ s.icone }}</span>{{ s.titre }}</h3><p>{{ s.texte }}</p></div>
+</sc-for>
+<p class="vf-guide__fin">{{ guideFin }}</p>
+<p class="vf-guide__fin">{{ guideBientot }}</p>
+<p class="vf-guide__signature">{{ guideSignature }}</p>
+<div class="vf-guide__actions">
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" href="{{ lienWhatsApp }}" target="_blank" rel="noreferrer" hint-size="170px,44px">{{ guideWhatsApp }}</x-import>
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
+</div>
+</div>
+</div>
+</sc-if>
+`;
+const GUIDE_JS = `/* Correction du 30/10 (scripts/construire.mjs) : texte de Loan « Comment nous allons travailler », par formule et par langue. */
+const GUIDE = ${JSON.stringify(GUIDE)};
+const guideTextes = (cle) => {
+  const g = GUIDE[document.documentElement.lang === "fr" ? "fr" : "en"], par = (v) => (typeof v === "string" ? v : v[cle]);
+  return { ...g, sections: g.sections.map((s) => ({ icone: s.icone, titre: par(s.titre), texte: par(s.texte).replace("{delai}", FORMULES[cle].delai.replace(/ /g, "\u00A0")) })) };
+};
+
+`;
+const GUIDE_METHODES = `  /* Correction du 30/10 (scripts/construire.mjs) : fenêtre « Comment nous allons travailler », ouverte après le paiement
+     (et depuis le lien de la carte payée) ; Close, Échap ou un clic hors de la fenêtre la referme. */
+  refGuide = (el) => { if (el) el.focus({ preventScroll: true }); };
+  ouvrirGuide() {
+    if (this.state.guide) return;
+    this._focusGuide = document.activeElement;
+    document.body.style.overflow = "hidden";
+    this.setState({ guide: true });
+    if (!this._offGuide) {
+      const esc = (e) => { if (e.key === "Escape" && this.state.guide && !this.state.paiement) this.fermerGuide(); };
+      window.addEventListener("keydown", esc);
+      this._offGuide = () => window.removeEventListener("keydown", esc);
+    }
+  }
+
+  fermerGuide() {
+    if (!this.state.guide) return;
+    document.body.style.overflow = "";
+    this.setState({ guide: false });
+    const f = this._focusGuide; this._focusGuide = null;
+    if (f && f !== document.body && f.focus && document.contains(f)) f.focus({ preventScroll: true });
+  }
+
+`;
+const GUIDE_VALS = `      /* Correction du 30/10 (scripts/construire.mjs) : fenêtre « Comment nous allons travailler ». */
+      ...(() => { const g = guideTextes(FORMULES[clePayee] ? clePayee : "single"); return {
+        guideOuvert: !!(this.state.guide && clePayee), guideTitre: g.titre, guideIntro: g.intro, guideSections: g.sections,
+        guideFin: g.fin, guideBientot: g.bientot, guideSignature: g.signature, guideLien: g.lien, guideFermer: g.fermer, guideWhatsApp: g.whatsapp }; })(),
+      refGuide: this.refGuide,
+      voirGuide: (e) => { e.stopPropagation(); this.ouvrirGuide(); },
+      fermerGuide: () => this.fermerGuide(),
+      fermerFondGuide: (e) => { if (e.target === e.currentTarget) this.fermerGuide(); },
+`;
+// Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
+// ?apercu=single, pack ou prog l'affiche avec le faux numéro de l'aperçu de l'éditeur (apercuPaye), et ouvre la fenêtre.
+const APERCU_ESSAI = [
+  { quoi: "Adresse de test : aperçu de la carte payée et de la fenêtre du 30/10 (?apercu=single, pack ou prog)", fichiers: VF, n: 1,
+    avant: "    if (sid) this.verifier(sid, retour);\n",
+    apres: "    if (sid) this.verifier(sid, retour);\n" +
+      "    /* ADRESSE DE TEST SEULEMENT (ESSAI=1, scripts/construire.mjs) : ?apercu=single|pack|prog, carte payée avec un faux numéro et fenêtre du 30/10. */\n" +
+      '    else { let ap = null; try { ap = new URLSearchParams(location.search).get("apercu"); } catch (e) {} if (FORMULES[ap]) { this.setState({ paye: ap, choix: ap, numero: "33600000000" }); this.ouvrirGuide(); setTimeout(() => this.allerFormules(), 300); } }\n' },
+];
+
 const CORRECTIONS = [
   {
     quoi: "Crédits photo des mentions légales (01/10)",
@@ -834,6 +985,25 @@ const CORRECTIONS = [
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_28C + SOMMAIRE_STYLE_FIN },
   { quoi: "Styles du 29/10 : textes plus lisibles sur mobile, « For everyone / From beginner / To pro » plus grand", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
+  // Retour de Loan du 30/10 (constantes plus haut : GUIDE, GUIDE_CSS, GUIDE_HTML, GUIDE_JS, GUIDE_METHODES, GUIDE_VALS).
+  { quoi: "Styles du 30/10 : fenêtre « Comment nous allons travailler » et lien de la carte payée", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: GUIDE_CSS + SOMMAIRE_STYLE_FIN },
+  { quoi: "Fenêtre « Comment nous allons travailler » après la fenêtre de paiement (30/10)", fichiers: VF, n: 1,
+    avant: '<div class="vf-modale__stripe" ref="{{ refPaiement }}"></div>\n</div>\n</div>\n</sc-if>\n',
+    apres: '<div class="vf-modale__stripe" ref="{{ refPaiement }}"></div>\n</div>\n</div>\n</sc-if>\n' + GUIDE_HTML },
+  { quoi: "Carte payée : lien « Comment nous allons travailler » (30/10)", fichiers: VF, n: 3,
+    avant: '<span class="vf-wa__pied">', apres: '<button type="button" class="vf-guide-lien" onClick="{{ voirGuide }}">{{ guideLien }}</button>\n<span class="vf-wa__pied">' },
+  { quoi: "Textes de la fenêtre du 30/10, par formule et par langue", fichiers: VF, n: 1,
+    avant: "class Component extends DCLogic {\n", apres: GUIDE_JS + "class Component extends DCLogic {\n" },
+  { quoi: "Fenêtre du 30/10 : ouverture et fermeture", fichiers: VF, n: 1,
+    avant: "  fermerPaiement() {\n", apres: GUIDE_METHODES + "  fermerPaiement() {\n" },
+  { quoi: "Fenêtre du 30/10 : ouverte juste après le paiement et au retour par le lien de l'e-mail", fichiers: VF, n: 1,
+    avant: "      if (defiler) setTimeout(() => this.allerFormules(), 300);\n",
+    apres: "      if (defiler) { this.ouvrirGuide(); setTimeout(() => this.allerFormules(), 300); } /* Correction du 30/10 : fenêtre « Comment nous allons travailler ». */\n" },
+  { quoi: "Fenêtre du 30/10 : valeurs du gabarit", fichiers: VF, n: 1,
+    avant: "      refQr: this.refQr,\n", apres: "      refQr: this.refQr,\n" + GUIDE_VALS },
+  { quoi: "Fenêtre du 30/10 : touche Échap libérée au démontage", fichiers: VF, n: 1,
+    avant: "    if (this._offF) this._offF();\n", apres: "    if (this._offF) this._offF();\n    if (this._offGuide) this._offGuide(); /* Correction du 30/10 */\n" },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
@@ -906,8 +1076,9 @@ function corriger(t, c, f, bavard = true) {
 }
 
 // Corrections de contenu, optimisations de performance (scripts/optimisations.mjs), corrections Safari retenues
-// (scripts/safari.mjs), puis version française (scripts/traduction-fr.mjs, appliquée au texte final, sans un message par texte).
-for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI, ...TRADUCTION]) {
+// (scripts/safari.mjs), puis version française (scripts/traduction-fr.mjs, appliquée au texte final, sans un message par texte) ;
+// sur l'adresse de test seulement, l'aperçu de la carte payée (APERCU_ESSAI).
+for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI, ...TRADUCTION, ...(ESSAI ? APERCU_ESSAI : [])]) {
   for (const f of c.fichiers) {
     const p = path.join(PUBLIC, f);
     if (!fs.existsSync(p)) continue;
@@ -1039,6 +1210,7 @@ if (!ESSAI) {
     const nom = path.relative(PUBLIC, f);
     if (nom === "diag.js" || nom === "resultats.html" || Object.keys(VARIANTES_ESSAI).includes(nom)) erreurs.push(`${nom} : fichier de l'adresse de test dans une construction normale`);
     if (/\.html$/.test(f) && fs.readFileSync(f, "utf8").includes("diag.js")) erreurs.push(`${nom} : référence au diagnostic de test (diag.js)`);
+    if (/\.html$/.test(f) && fs.readFileSync(f, "utf8").includes('get("apercu")')) erreurs.push(`${nom} : aperçu de l'adresse de test (?apercu=)`);
   }
 }
 
