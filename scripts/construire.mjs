@@ -590,11 +590,14 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
 .vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
 @media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide .vf-modale__panneau { padding: 20px 20px 24px; } }
+/* Inclinaison au survol (demandée par Loan le 30/10) : celle des cartes (incliner / relacher, mêmes valeurs), souris seulement :
+   sur écran tactile, un toucher laisserait la fenêtre penchée pendant la lecture. */
+@media (hover: none), (pointer: coarse) { .vf-guide .vf-modale__panneau { transform: none !important; } }
 `;
 const GUIDE_HTML = `
 <sc-if value="{{ guideOuvert }}" hint-placeholder-val="{{ false }}">
 <div class="vf-modale vf-guide" role="dialog" aria-modal="true" aria-label="{{ guideLien }}" onClick="{{ fermerFondGuide }}">
-<div class="vf-modale__panneau" tabindex="-1" ref="{{ refGuide }}">
+<div class="vf-modale__panneau" tabindex="-1" ref="{{ refGuide }}" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
 <div class="vf-modale__tete">
 <span class="vf-guide__etiquette">{{ formuleNom }}</span>
 <x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
