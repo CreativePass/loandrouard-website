@@ -217,4 +217,4 @@ Worker `loandrouard-redirection` (`wrangler.redirection.jsonc`, `worker/redirect
   - étude, arrivée des moitiés et pause : pas immobiles 7 → 0 (ordinateur et mobile, hors images de mesure non redessinées) ; photo et corrections en or : écart médian 0,023 → 0,079 (ordinateur), 0,25 → 0,30 (mobile) ;
   - partout ailleurs : mêmes positions qu'avant (même retard total dans la tenue, mêmes ancres du sommaire) ; écarts entre le titre et la silhouette inchangés à l'échelle (captures 390 et 1440 px) ;
   - aucune erreur JS en parcourant toute la page (1440 et 390 px en anglais, 390 px en français).
-  - À essayer par Loan sur l'adresse de test (iPhone, et Mac si possible), avec son accord pour `npm run publier:essai`.
+  - **Publié sur l'adresse de test le 30/10 avec l'accord de Loan** (`loandrouard-essai`, version Cloudflare `c4605b04`) : 138 fichiers servis identiques à `public/` ; aucune erreur JS en local sur la construction d'essai (1440 et 390 px). À essayer par Loan (iPhone, et Mac si possible) : pour chaque zone, mouvement trop discret, juste bien ou trop visible.
