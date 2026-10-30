@@ -574,9 +574,12 @@ const GUIDE = {
 };
 const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre « How we'll work together » / « Comment nous allons travailler »,
    ouverte après le paiement, même habillage que la fenêtre de paiement ; lien de la carte payée qui la rouvre. */
-.vf-guide .vf-modale__panneau { display: flex; flex-direction: column; width: min(600px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: hidden; padding: 0; }
-/* Le cadre de la fenêtre reste fixe ; le texte défile à l'intérieur si la hauteur manque. */
-.vf-guide__defile { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 30px 30px; outline: none; }
+/* Bento (demandé par Loan le 30/10 : « qu'ils flottent dans le vide », pas dans un plus gros rectangle) : pas de cadre autour,
+   les rectangles flottent sur le fond assombri de la page ; le texte défile si la hauteur manque. Marges ≥ 30 px : la lueur
+   dorée d'un rectangle survolé n'est pas coupée. */
+.vf-modale.vf-guide { background: rgba(10,10,10,.9); } /* fond plus sombre que la fenêtre de paiement (.82) : la page se voit moins entre les rectangles */
+.vf-guide .vf-modale__panneau { display: flex; flex-direction: column; width: min(600px, 100%); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow: hidden; padding: 0; border: 0; border-radius: 0; background: none; }
+.vf-guide__defile { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 32px 32px; outline: none; }
 .vf-guide .vf-modale__tete { margin-bottom: 14px; }
 .vf-guide__etiquette { font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #C6A05E; }
 .vf-guide__titre { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(28px, 4vw, 36px); line-height: 1.1; letter-spacing: .01em; text-wrap: balance; }
@@ -584,7 +587,7 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
 /* Rectangles (demandés par Loan le 30/10, « plus facile à lire ») : l'introduction et chacune des quatre parties dans son cadre,
    avec l'effet des cartes au survol, mêmes valeurs : inclinaison (incliner / relacher), reflet doré (.vf-carte::after) et bord
    doré (.vf-carte:hover). Souris seulement : sur écran tactile, un toucher laisserait un cadre penché pendant la lecture. */
-.vf-guide__carte { position: relative; overflow: hidden; border: 1px solid rgba(246,245,241,.14); border-radius: 18px; background: rgba(246,245,241,.035); padding: 20px 22px 22px; transition: border-color .35s ease, box-shadow .35s ease; }
+.vf-guide__carte { position: relative; overflow: hidden; border: 1px solid rgba(246,245,241,.14); border-radius: 18px; background: #1e1d1c; padding: 20px 22px 22px; transition: border-color .35s ease, box-shadow .35s ease; }
 .vf-guide__carte::after { content: ''; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; opacity: 0; transition: opacity .35s ease; background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(169,129,74,.16), transparent 70%); }
 @media (hover: hover) and (pointer: fine) {
   .vf-guide__carte:hover::after { opacity: 1; }
@@ -595,14 +598,16 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
 .vf-guide__bloc h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: #E3D5B8; }
 .vf-guide__bloc h3 span { font-size: 18px; letter-spacing: 0; }
 .vf-guide__bloc p, .vf-guide__fin { margin: 8px 0 0; font-size: 18px; line-height: 1.55; color: rgba(246,245,241,.86); }
-.vf-guide__pied { margin-top: 22px; }
+.vf-guide__pied { margin-top: 12px; }
 .vf-guide__fin { margin-top: 0; }
 .vf-guide__fin + .vf-guide__fin { margin-top: 6px; }
 .vf-guide__signature { margin: 6px 0 0; font-style: italic; font-size: 20px; }
 .vf-guide__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: 24px; }
 .vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
-@media (max-width: 599px) { .vf-modale.vf-guide { padding: 16px; } .vf-guide__defile { padding: 20px 16px 24px; } .vf-guide__carte { padding: 18px 18px 20px; } }
+/* Téléphone et tablette en portrait : fond opaque (la grande carte payée, ouverte dessous, et son bouton Fermer se voyaient entre les rectangles). */
+@media (max-width: 899px) { .vf-modale.vf-guide { background: #0a0a0a; } }
+@media (max-width: 599px) { .vf-modale.vf-guide { padding: 8px 0; } .vf-guide__defile { padding: 12px 16px 24px; } .vf-guide__carte { padding: 18px 18px 20px; } }
 /* Format paysage sur ordinateur et tablette en paysage (demandé par Loan le 30/10 : « pour qu'on puisse tout voir d'un coup ») :
    à gauche le rectangle d'introduction (vertical), à droite les quatre parties (2 × 2), dessous la fin du message et les boutons.
    Ordre du texte inchangé (lecteurs d'écran, téléphone). Si la hauteur manque, le texte défile encore. */
@@ -613,16 +618,19 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
   .vf-guide__accueil { grid-area: accueil; }
   .vf-guide__blocs { grid-area: blocs; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 0; }
   .vf-guide__bloc p { font-size: 17.5px; line-height: 1.5; }
-  .vf-guide__pied { grid-area: pied; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 40px; margin-top: 16px; }
+  .vf-guide__pied { grid-area: pied; display: flex; align-items: center; justify-content: space-between; gap: 16px 40px; margin-top: 16px; }
   .vf-guide__actions { flex: none; margin-top: 0; }
+  /* « À très bientôt… » et la signature sur une même ligne. */
+  .vf-guide__mot { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; }
+  .vf-guide__mot > :first-child { flex-basis: 100%; }
   /* Plus serré, pour que tout tienne sans défiler jusqu'à 1280 × 720 et 1024 × 768 (iPad en paysage), en français aussi. */
-  .vf-guide__defile { padding: 22px 32px 24px; }
+  .vf-guide__defile { padding: 8px 32px 32px; }
   .vf-guide .vf-modale__tete { margin-bottom: 12px; }
   .vf-guide__carte { padding: 18px 20px 20px; }
   .vf-guide__bloc p { margin-top: 6px; }
 }
 @media (min-width: 900px) and (max-width: 1199px) {
-  .vf-guide__defile { grid-template-columns: minmax(0, .75fr) minmax(0, 2fr); padding-left: 24px; padding-right: 24px; }
+  .vf-guide__defile { grid-template-columns: minmax(0, .75fr) minmax(0, 2fr); padding-left: 30px; padding-right: 30px; }
   .vf-guide__bloc p { font-size: 16.5px; }
 }
 `;
@@ -644,7 +652,7 @@ const GUIDE_HTML = `
 <div class="vf-guide__bloc vf-guide__carte" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}"><h3><span aria-hidden="true">{{ s.icone }}</span>{{ s.titre }}</h3><p>{{ s.texte }}</p></div>
 </sc-for>
 </div>
-<div class="vf-guide__pied">
+<div class="vf-guide__pied vf-guide__carte" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
 <div class="vf-guide__mot">
 <p class="vf-guide__fin">{{ guideFin }}</p>
 <p class="vf-guide__fin">{{ guideBientot }}</p>
@@ -699,7 +707,7 @@ const GUIDE_VALS = `      /* Correction du 30/10 (scripts/construire.mjs) : fen�
       refGuide: this.refGuide,
       voirGuide: (e) => { e.stopPropagation(); this.ouvrirGuide(); },
       fermerGuide: () => this.fermerGuide(),
-      fermerFondGuide: (e) => { if (e.target === e.currentTarget) this.fermerGuide(); },
+      fermerFondGuide: (e) => { const t = e.target; if (t === e.currentTarget || (t.matches && t.matches(".vf-modale__panneau, .vf-guide__defile, .vf-guide__blocs"))) this.fermerGuide(); }, /* fond ou vide entre les rectangles */
 `;
 // Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
 // ?apercu=single, pack ou prog l'affiche avec le faux numéro de l'aperçu de l'éditeur (apercuPaye), et ouvre la fenêtre.
