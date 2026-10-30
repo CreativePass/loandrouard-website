@@ -518,15 +518,23 @@ const VF_CSS_29 = `/* Correction du 29/10 (scripts/construire.mjs) : textes plus
 // Retour de Loan du 29/10 (« plusieurs personnes m'ont dit qu'elles pensaient que c'était la fin de la page ») : en défilant, l'image
 // ne s'arrête plus jamais net, sauf sur les cartes de paiement en fin de page. Là où elle se figeait, elle continue au ralenti, comme
 // un super ralenti de cinéma : toujours un micro-mouvement.
-// Projecteur, tenue du cran (1,25 écran où la scène n'avançait qu'à 0,6 % du défilement) : la vitesse descend en douceur jusqu'à 7 %,
-// puis remonte. Même retard total (0,994 × tenue) et même milieu (le cran, ancre « What is it ») : avant et après la tenue, tout est
-// exactement à la même place qu'avant.
+// Projecteur, tenue du cran (1,25 écran où la scène n'avançait qu'à 0,6 % du défilement) : la scène ralentit jusqu'à 7 % du
+// défilement, jamais à zéro, puis repart. Même retard total (0,994 × tenue) et même point au cran (ancre « What is it », P = 0,33) :
+// après la tenue, tout est exactement à la même place qu'avant.
+// Retour de Loan du 30/10 (« ça zoome vite et d'un coup gros freinage », « mouvement organique / naturel de caméra ») : le freinage
+// commence dès le haut de la page et s'étale sur ≈ 1,8 écran au lieu de 0,6 (vitesse en courbe douce, freinage le plus fort 3 fois
+// moins fort). La vitesse du zoom décroît régulièrement (≈ 62, 41, 26, 16, 9, 5 puis 3 % par écran, tous les 0,2 écran, au lieu de
+// 76, 44, 16 puis 3). Sortie du ralenti inchangée (validée par Loan).
 const RALENTI_AVANT = "const lisse = (a, b, v) => { const t = borne((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };\n";
 const RALENTI_APRES = RALENTI_AVANT +
-  "/* Correction du 29/10 (scripts/construire.mjs) : retard accumulé à la distance x du milieu d'une tenue de longueur T. La vitesse\n" +
-  "   descend en douceur (rampes de T / 2) jusqu'à 7 % du défilement, jamais à zéro, puis remonte ; retard total 0,994 × T, comme avant. */\n" +
-  "const ralenti = (x, T) => { const k = 0.07, a = 0.5 * T, L = (0.994 * T / (1 - k) + a) / 2, F = L - a, y = Math.min(Math.abs(x), L), v = Math.max(0, y - F), t = v / a;\n" +
-  "  return 0.497 * T + Math.sign(x) * (1 - k) * (Math.min(y, F) + v - a * t * t * t * (1 - t / 2)); };\n";
+  "/* Corrections du 29 et 30/10 (scripts/construire.mjs) : progression s de la scène pour un défilement x, tenue de longueur T au cran\n" +
+  "   (milieu c = s0 + T / 2). Freinage en courbe douce du haut de la page (x = 0) jusqu'à D, puis 7 % du défilement, jamais zéro, puis\n" +
+  "   reprise en douceur sur T / 2. Au cran et après la tenue, s est celui d'avant (retard total 0,994 × T). */\n" +
+  "const ralenti = (x, s0, T) => { const k = 0.07, a = 0.5 * T, Q = 0.994 * T / (1 - k), F = (Q - a) / 2, c = s0 + T / 2, D = Math.min(c + F, Math.max(1, 2 * c - Q));\n" +
+  "  if (x <= 0) return x;\n" +
+  "  if (x < D) { const u = x / D; return x - (1 - k) * D * u * u * u * (1 - u / 2); }\n" +
+  "  if (x < c + F) return D * (1 + k) / 2 + k * (x - D);\n" +
+  "  const v = Math.min(x - c - F, a), t = v / a; return x - 0.497 * T - (1 - k) * (F + v - a * t * t * t * (1 - t / 2)); };\n";
 // Projecteur, après l'éblouissement (P plafonné à 0,8 : page blanche « Video Feedback / For everyone… » immobile sur près de
 // 3 écrans, seuls les mots apparaissaient) : la caméra continue d'avancer très lentement sur toute l'affiche (≈ 1,7 % par écran,
 // 5,5 % le temps de la page blanche), prise en douceur dès la fin de l'approche (P = 0,6), sans à-coup. Loan et le titre grandissent
@@ -873,10 +881,10 @@ const CORRECTIONS = [
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
   // Retour de Loan du 29/10 : jamais d'arrêt net en défilant (constantes plus haut : RALENTI_APRES, POUSSEE_APRES, TITRE_POUSSEE_APRES,
   // ECARTER_DEBUT_APRES, ECARTER_FIN_APRES, DERIVE_APRES).
-  { quoi: "Défilement sans arrêt : fonction ralenti (29/10)", fichiers: VF, n: 1, avant: RALENTI_AVANT, apres: RALENTI_APRES },
-  { quoi: "Défilement sans arrêt : projecteur au ralenti au lieu de la tenue du cran (29/10)", fichiers: VF, n: 1,
+  { quoi: "Défilement sans arrêt : fonction ralenti (29 et 30/10)", fichiers: VF, n: 1, avant: RALENTI_AVANT, apres: RALENTI_APRES },
+  { quoi: "Défilement sans arrêt : projecteur au ralenti au lieu de la tenue du cran, freinage progressif (29 et 30/10)", fichiers: VF, n: 1,
     avant: "s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994",
-    apres: "s = s1 - ralenti(s1 - s0 - tenue / 2, tenue) /* Correction du 29/10 (scripts/construire.mjs) : ralenti au lieu d'un arrêt. */" },
+    apres: "s = ralenti(s1, s0, tenue) /* Corrections du 29 et 30/10 (scripts/construire.mjs) : ralenti au lieu d'un arrêt, freinage progressif. */" },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
     avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
   { quoi: "Défilement sans arrêt : le titre de la page blanche avance avec Loan (29/10)", fichiers: VF, n: 1,
