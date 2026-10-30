@@ -597,7 +597,12 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
 @media (hover: none), (pointer: coarse) { .vf-guide .vf-modale__panneau { transform: none !important; } }
 /* Reflet doré qui suit la souris (demandé par Loan le 30/10) : celui des cartes (.vf-carte::after), mêmes valeurs, souris seulement. */
 .vf-guide .vf-modale__panneau::after { content: ''; position: absolute; inset: -1px; border-radius: 24px; pointer-events: none; opacity: 0; transition: opacity .35s ease; background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(169,129,74,.16), transparent 70%); }
-@media (hover: hover) and (pointer: fine) { .vf-guide .vf-modale__panneau:hover::after { opacity: 1; } }
+/* Bord doré au survol (demandé par Loan le 30/10) : celui des cartes (.vf-carte:hover, mêmes valeurs et mêmes fondus), souris seulement. */
+.vf-guide .vf-modale__panneau { transition: border-color .35s ease, box-shadow .35s ease; }
+@media (hover: hover) and (pointer: fine) {
+  .vf-guide .vf-modale__panneau:hover::after { opacity: 1; }
+  .vf-guide .vf-modale__panneau:hover { border-color: rgba(169,129,74,.4); box-shadow: 0 0 40px -10px rgba(169,129,74,.4); }
+}
 `;
 const GUIDE_HTML = `
 <sc-if value="{{ guideOuvert }}" hint-placeholder-val="{{ false }}">
