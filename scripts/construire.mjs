@@ -721,17 +721,17 @@ const INFOS = {
   abonnement: { lignes: [["Keep progressing", "Your subscription renews automatically at the end of each quarter. You can cancel at any time by simply sending us a message or an email before the next billing date. At the end of the 12 weeks, we review your progress and your goals for the next quarter together."]] },
   semaines: { lignes: [["Unused weeks", "Up to 2 weeks can be carried over to another week of the quarter."]] },
 };
-// Rectangles : [titre (vide : texte seul), texte, ⓘ, sur toute la largeur]. Puces : texte, ou [texte, ⓘ].
+// Rectangles : [icône (PICTOS), titre (vide : texte seul), texte, ⓘ, sur toute la largeur (carte ouverte sur mobile)]. Puces : texte, ou [texte, ⓘ].
 const ENVOI = "2 videos, 2 minutes max each or 3 videos, 45 seconds max each";
 const FICHES = {
-  Single: { ancien: ["Single<br>feedback", "one full analysis", "170px,44px"], nom: "Technical<br>analysis",
+  Single: { ancien: ["Single<br>feedback", "one full analysis", "170px,44px"], nom: "Technical <br>analysis",
     accroche: "2 videos analyzed so you know what to improve and how.",
     textes: ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "I analyze your videos based on your level and your goals:"],
     puces: ["Your strengths and your priority corrections.", "Specific advice on technique, jumps, rhythm or transitions, depending on your needs.",
       ["Advice mainly focused on the A and C scores", "notes"]],
-    bento: [["", "One-time payment"], ["Turnaround", "4 to 6 days"], ["Feedback format", "Written or voice message"], ["Feedback language", "French or English"],
-      ["Submission", ENVOI, null, true]] },
-  Pack: { ancien: ["3× feedback<br>pack", "3 full analyses", "180px,44px"], nom: "Progression<br>pack",
+    bento: [["paiement", "", "One-time payment"], ["delai", "Turnaround", "4 to 6 days"], ["format", "Feedback format", "Written or voice message"],
+      ["langue", "Feedback language", "French or English"], ["envoi", "Submission", ENVOI, null, true]] },
+  Pack: { ancien: ["3× feedback<br>pack", "3 full analyses", "180px,44px"], nom: "Progression <br>pack",
     accroche: "6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.",
     textes: ["Develop your taolu, specific sections or jumps with three personalized feedback rounds on 2 videos each, spaced out to fit your pace."],
     puces: ["A detailed technical analysis of each of your videos.", "Specific advice on technique, jumps, speed, presence, rhythm, style or transitions, depending on your needs.",
@@ -739,15 +739,15 @@ const FICHES = {
       ["Advice and focus on the B score, in addition to the A and C scores", "notes"],
       // Prix de l'Analyse technique au moment de l'achat : 49 € pendant l'offre de lancement, 99 € ensuite.
       "Already had a Technical Analysis? Its {{ prixSingle }} is deducted from the Pack if you get it within 30 days."],
-    bento: [["", "One-time payment"], ["Turnaround", "3 to 5 days per feedback round", "validite"], ["Feedback format", "Written or voice message"], ["Feedback language", "French or English"],
-      ["Submission", ENVOI + ", per round", null, true]] },
-  Prog: { ancien: ["Quarterly<br>program", "weekly coaching", "180px,44px"], nom: "The way of<br>performance", par: " / quarter",
+    bento: [["paiement", "", "One-time payment"], ["delai", "Turnaround", "3 to 5 days per feedback round", "validite"], ["format", "Feedback format", "Written or voice message"],
+      ["langue", "Feedback language", "French or English"], ["envoi", "Submission", ENVOI + ", per round", null, true]] },
+  Prog: { ancien: ["Quarterly<br>program", "weekly coaching", "180px,44px"], nom: "The way of <br>performance", par: " / quarter",
     accroche: "24 videos analyzed over 12 weeks, to develop your practice effectively.",
     textes: ["One-on-one coaching, week after week, to work on everything you want to improve and progress as effectively as possible."],
     puces: ["24 personalized analyses: 2 videos per week.", "Key areas to work on, defined at the start of the quarter.", "Ongoing support and weekly tracking of your corrections and progress.",
       "Training priorities and technical details set each week.", "Q&amp;A on WhatsApp after each feedback session.", "Final review with recommendations for what comes next."],
-    bento: [["", "Quarterly subscription", "abonnement"], ["Limited spots", "3 per quarter"], ["Turnaround", "Priority handling, within 48 to 72 hours", null, true],
-      ["Feedback format", "Written, voice or video"], ["Feedback language", "French or English"], ["Submission", ENVOI + ", per feedback session", "semaines", true]] },
+    bento: [["abonnement", "", "Quarterly subscription", "abonnement"], ["places", "Limited spots", "3 per quarter"], ["delai", "Turnaround", "Priority handling, within 48 to 72 hours", null, true],
+      ["format", "Feedback format", "Written, voice or video"], ["langue", "Feedback language", "French or English"], ["envoi", "Submission", ENVOI + ", per feedback session", "semaines", true]] },
 };
 // Noms des formules dans le texte (fenêtre de paiement, carte payée, fenêtre du 30/10, message WhatsApp : achat).
 const NOMS = {
@@ -760,7 +760,7 @@ const INFO = (cle) => { const i = INFOS[cle], id = "vf-i-" + ++nInfo;
   return `<span class="vf-i" role="button" tabindex="0" aria-label="More information" aria-expanded="false" aria-describedby="${id}"><span class="vf-i-o">i</span></span>` +
     `<span class="vf-i-txt" id="${id}"${i.genre ? ` data-genre="${i.genre}"` : ""}>${i.lignes.map(([l, t]) => `<span class="vf-i-l"><b>${l}</b><span>${t}</span></span>`).join("")}</span>`; };
 const PUCE = (p) => (Array.isArray(p) ? `<div class="vf-pt"><i></i><span>${p[0]}${INFO(p[1])}</span></div>\n` : `<div class="vf-pt"><i></i><span>${p}</span></div>\n`);
-const BENTO = ([titre, texte, info, large]) => `<div class="vf-bento__b${large ? " vf-bento__b--l" : ""}${titre ? "" : " vf-bento__b--seul"}">` +
+const BENTO = ([icone, titre, texte, info, large]) => `<div class="vf-bento__b${large ? " vf-bento__b--l" : ""}${titre ? "" : " vf-bento__b--seul"}" data-ic="${icone}">` +
   (titre ? `<b>${titre}</b>` : "") + `<span>${texte}${info ? INFO(info) : ""}</span></div>\n`;
 const PLACES = (k) => (k === "Single" ? "" : `<div class="vf-places"><span>Spots left</span><b>{{ places${k} }}</b></div>`);
 const PAYER = (k, bouton, taille) => `<div class="vf-payer" onPointerEnter="{{ armer${k} }}">\n` +
@@ -793,21 +793,45 @@ const CARTE_APRES = (k, i) => { const f = FICHES[k];
     '<div class="vf-texte">\n' + f.textes.map((t) => `<p>${t}</p>\n`).join("") + "</div>\n" +
     '<div class="vf-liste">\n' + f.puces.map(PUCE).join("") + "</div>\n" +
     '<div class="vf-agir">\n' + PAYER(k, BOUTONS[i][1], f.ancien[2]) + "</div>\n" +
-    '<div class="vf-bento">\n' + f.bento.map(BENTO).join("") + "</div>\n" +
-    "</sc-if>\n</article>\n</div>\n"; };
+    "</sc-if>\n</article>\n</div>\n" +
+    LIBRE(k) + `<div class="vf-bento" data-choisi="{{ choisi${k} }}">\n` + f.bento.map(BENTO).join("") + "</div></sc-if>\n"; };
 const TITRE_PLANCHE = '<h2 class="vf-titre vfk-ecrit" style="transition-delay:.3s;font-size:clamp(32px,4.2vw,56px)">Three ways to work together.</h2>\n';
 const LEDE_PLANCHE = (t) => `<p class="vf-lede vfk-ecrit" style="transition-delay:.7s;margin-inline:auto;text-align:center">${t}</p>`;
-// Réduction d'ensemble de la planche sur ordinateur : les cartes ne tiennent plus sur un écran (elles tenaient jusqu'au bas du
-// pack). Seuls le haut de la planche et l'en-tête des cartes (nom, prix, phrase) doivent tenir : textes à leur taille, lisibles.
-const ECHELLE_AVANT = "        const pr = pin.getBoundingClientRect(), br = bloc.getBoundingClientRect(), bas = C[1].c.getBoundingClientRect().bottom;\n";
-const ECHELLE_APRES = "        /* Correction du 30/10 (scripts/construire.mjs) : cartes plus longues ; doit tenir jusqu'à l'en-tête des cartes (nom, prix, phrase). */\n" +
-  '        const pr = pin.getBoundingClientRect(), br = bloc.getBoundingClientRect(), tP = C[1].front.querySelector(".vf-carte__tete"), bas = tP ? tP.getBoundingClientRect().bottom + 24 : C[1].c.getBoundingClientRect().top + 360;\n';
+// Planche II sur ordinateur : les cartes entières à l'écran, sans défiler (Loan, 30/10). Les textes des cartes (--vfk-k, de 1 à
+// 0,75) sont réduits juste assez (recherche par dichotomie : 7 essais, à chaque mesure) ; s'il manque encore de la place, réduction
+// d'ensemble de la planche (jusqu'à 0,8, au lieu de 0,68). Au-delà, la page défile comme avant.
+const ECHELLE_AVANT = "      /* Comme avant : tout tient sur un écran jusqu'au bas du 3× pack ; réduction d'ensemble si la hauteur manque. */\n" +
+  "      if (enRang) {\n" +
+  "        const pr = pin.getBoundingClientRect(), br = bloc.getBoundingClientRect(), bas = C[1].c.getBoundingClientRect().bottom;\n" +
+  "        const s = borne((window.innerHeight - (br.top - pr.top) - 18) / Math.max(1, bas - br.top), 0.68, 1);\n";
+const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : les cartes entières à l'écran ; textes des cartes réduits juste assez\n" +
+  "         (--vfk-k, 1 à 0,75), puis réduction d'ensemble si la hauteur manque encore (jusqu'à 0,8). */\n" +
+  "      if (enRang) {\n" +
+  "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16;\n" +
+  "        const basC = () => Math.max.apply(null, C.map((k) => { const b = k.c.querySelector(\".vf-bento\"); return Math.max(k.c.getBoundingClientRect().bottom, b ? b.getBoundingClientRect().bottom : 0); })) - pr.top; /* cartes et rectangles */\n" +
+  '        let lo = 0.75, hi = 1; bloc.style.setProperty("--vfk-k", "1");\n' +
+  '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); }\n' +
+  "        const br = bloc.getBoundingClientRect(), bas = basC() + pr.top;\n" +
+  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.8, 1);\n";
 const PLUS = "content: ''; flex: none; align-self: center; margin-left: auto; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(246,245,241,.42); " +
   "background: linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 11px 1px no-repeat, linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 1px 11px no-repeat;";
-const CARTES_CSS_30 = `/* Correction du 30/10 (scripts/construire.mjs) : cartes de la planche II (nom, prix et phrase, texte, puces, bouton, bento, ⓘ). */
-.vfk-offre { justify-content: center; margin: 16px 0 0; font-size: 12px; }
+// Petites icônes des rectangles (provisoires : Loan les choisira plus tard) : traits fins, couleur or (masque CSS).
+const PICTOS = {
+  paiement: "<rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='M3 10h18M7 15h3'/>",
+  abonnement: "<path d='M19.5 10.5A7.5 7.5 0 0 0 6 7M4.5 13.5A7.5 7.5 0 0 0 18 17'/><path d='M5.5 3.5V7.5H9.5M18.5 20.5v-4h-4'/>",
+  places: "<circle cx='12' cy='8' r='3.5'/><path d='M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5'/>",
+  delai: "<circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/>",
+  format: "<path d='M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z'/>",
+  langue: "<circle cx='12' cy='12' r='8.5'/><path d='M3.5 12h17M12 3.5c2.4 2.4 3.6 5.3 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.3-3.6-8.5s1.2-6.1 3.6-8.5z'/>",
+  envoi: "<rect x='3' y='6.5' width='12.5' height='11' rx='2'/><path d='M15.5 10.5l5-3v9l-5-3z'/>",
+};
+const ICONE_CSS = Object.entries(PICTOS).map(([k, d]) => `.vf-bento__b[data-ic="${k}"] { --ic: url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>${d}</svg>`)}"); }`).join("\n");
+const K = (v) => `calc(var(--vfk-k, 1) * ${v})`; // taille ajustée pour que les cartes tiennent à l'écran (ECHELLE_APRES)
+const CARTES_CSS_30 = `/* Correction du 30/10 (scripts/construire.mjs) : cartes de la planche II (nom, prix et phrase, texte, puces, bouton ; rectangles
+   « bento » à l'extérieur de la carte ; ⓘ). « Launch offer » à côté de la réduction, sur toutes les cartes. */
 .vfk-tete .vf-lede { text-wrap: balance; }
-.vfk-offre::after { content: ''; flex: none; width: 22px; height: 1px; background: linear-gradient(90deg, #C6A05E, rgba(198,160,94,0)); }
+.vf-remise-o { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; line-height: 1.2; letter-spacing: .2em; text-transform: uppercase; color: #C6A05E; }
+@media (max-width: 899px) { .vfp-c .vf-remise-o { display: none; } } /* vitrine sur mobile : l'offre est sous « See the options » */
 .vfk-c .vf-carte__tete { min-height: 0; gap: 14px; }
 .vfk-c .vf-remise { margin-bottom: 6px; }
 .vf-accroche { margin: 0; font-style: italic; font-size: 19.5px; line-height: 1.4; color: rgba(246,245,241,.88); text-wrap: pretty; }
@@ -817,12 +841,14 @@ const CARTES_CSS_30 = `/* Correction du 30/10 (scripts/construire.mjs) : cartes 
 .vf-agir { padding-top: 28px; }
 .vf-agir .vf-payer { max-width: 100%; }
 .vf-agir .ld-bouton { max-width: 100%; text-align: left; }
-/* Bento : petits rectangles, deux par ligne (titre en petites capitales, texte dessous) ; les plus longs sur toute la largeur. */
-.vf-bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 22px; }
-.vf-bento__b { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 11px 13px 12px; border: 1px solid rgba(246,245,241,.13); border-radius: 14px; background: rgba(246,245,241,.035); font-size: 16px; line-height: 1.35; color: rgba(246,245,241,.9); }
-.vf-bento__b > b { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9.5px; line-height: 1.3; letter-spacing: .14em; text-transform: uppercase; color: rgba(246,245,241,.52); }
-.vf-bento__b--l { grid-column: 1 / -1; }
-.vf-bento__b--seul > span { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: #C6A05E; }
+/* Bento : petites précisions, les unes sous les autres ; petite icône à côté du titre (petites capitales), texte dessous sur toute la largeur. */
+.vf-bento { display: flex; flex-direction: column; gap: 6px; }
+.vf-bento__b { display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: center; gap: 4px 8px; min-width: 0; padding: 9px 11px 10px; border: 1px solid rgba(246,245,241,.15); border-radius: 11px; background: rgba(24,23,21,.94); font-size: 14.5px; line-height: 1.32; color: rgba(246,245,241,.9); }
+.vf-bento__b::before { content: ''; grid-row: 1; grid-column: 1; width: 16px; height: 16px; background: #C6A05E; -webkit-mask: var(--ic) 50% 50% / contain no-repeat; mask: var(--ic) 50% 50% / contain no-repeat; }
+.vf-bento__b > b { grid-row: 1; grid-column: 2; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9px; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: rgba(246,245,241,.52); }
+.vf-bento__b > span { grid-column: 1 / -1; }
+.vf-bento__b--seul > span { grid-row: 1; grid-column: 2; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9.5px; line-height: 1.45; letter-spacing: .12em; text-transform: uppercase; color: #C6A05E; }
+${ICONE_CSS}
 /* ⓘ à la fin du texte, collé au dernier mot sans espace (élément en ligne : il ne passe jamais seul à la ligne ; écart = marge). */
 .vf-i { cursor: pointer; outline: none; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
 .vf-i-o { position: relative; top: -.1em; margin-left: .3em; padding: 0 .4em; border: 1px solid rgba(198,160,94,.7); border-radius: 1em; font: italic 600 .78em/1 'Cormorant', Georgia, serif; letter-spacing: 0; text-transform: none; color: #C6A05E; transition: background-color .2s ease, color .2s ease; }
@@ -838,25 +864,56 @@ const CARTES_CSS_30 = `/* Correction du 30/10 (scripts/construire.mjs) : cartes 
 .vf-bulle-i[data-notes] .vf-i-l { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px; }
 .vf-bulle-i[data-notes] .vf-i-l + .vf-i-l { margin-top: 5px; }
 .vf-bulle-i[data-notes] b { margin: 0; white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o { transition: none; } }
-/* Ordinateur : cartes de même hauteur ; bouton et rectangles alignés en bas des trois cartes. */
+@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o, .vfk-c > .vf-bento { transition: none !important; } }
+/* Ordinateur (Loan, 30/10) : titre sur une ligne, cartes montées, plus larges et plus espacées (l'écart accueille les rectangles),
+   textes plus grands, cartes de même hauteur (bouton aligné en bas), cartes entières à l'écran (--vfk-k : ECHELLE_APRES). */
 @media (min-width: 1000px) {
-  .vfk-rang { align-items: stretch; }
+  .vfk-bloc { --vfk-w: clamp(120px, 9vw, 210px); --vfk-g: calc(var(--vfk-w) + 36px); }
+  .vfk-plaque { max-width: calc(18vw - 16px); } /* à gauche du titre, désormais sur une ligne, sans le toucher */
+  .vfk-contenu { padding-top: calc(var(--hauteur-header, 72px) + clamp(2px, 1svh, 14px)); }
+  .vfk-tete { max-width: none; margin-bottom: clamp(14px, 2.6svh, 32px); }
+  .vfk-tete .vf-titre { white-space: nowrap; font-size: clamp(30px, 3.3vw, 54px) !important; }
+  .vfk-tete .vf-eyebrow > span { max-width: none; white-space: nowrap; } /* surtitre sur une ligne */
+  .vfk-rang { width: min(3 * 540px + 2 * var(--vfk-g), 100vw - 2 * clamp(20px, 2.4vw, 56px)); gap: var(--vfk-g); align-items: stretch; }
   .vfk-c { display: flex; flex-direction: column; }
   .vfk-flip { flex: 1 0 auto; display: flex; flex-direction: column; }
-  .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; }
-  .vfk-c .vf-agir { margin-top: auto; }
+  .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; padding: max(${K("26px")}, 7cqw) max(26px, 9.2cqw) max(${K("24px")}, 6.5cqw); } /* marges à la mesure de la carte : les ornements du cadre grandissent avec elle */
+  .vfk-c .vf-nom { font-size: ${K("clamp(28px, 1.1vw + 14px, 40px)")}; text-wrap: balance; }
+  .vfk-c .vf-nom br { display: none; } /* nom sur une ligne quand il tient */
+  .vfk-c .vf-carte__tete { gap: ${K("10px")}; }
+  .vfk-c .vf-remise { margin-bottom: ${K("4px")}; font-size: ${K("17px")}; }
+  .vfk-c .vf-prix { font-size: ${K("clamp(20px, .4vw + 15px, 26px)")}; }
+  .vfk-c .vf-accroche { font-size: ${K("clamp(17.5px, .45vw + 11px, 21.5px)")}; line-height: 1.32; }
+  .vfk-c .vf-texte { margin-top: ${K("14px")}; gap: ${K("6px")}; }
+  .vfk-c .vf-texte p { font-size: ${K("clamp(16px, .4vw + 10.5px, 19.5px)")}; line-height: 1.4; }
+  .vfk-c .vf-liste { margin-top: ${K("10px")}; gap: ${K("6px")}; }
+  .vfk-c .vf-pt { font-size: ${K("clamp(17.5px, .45vw + 11px, 21.5px)")}; line-height: 1.34; }
+  .vfk-c .vf-pt i { margin-top: .7em; }
+  .vfk-c .vf-agir { margin-top: auto; padding-top: ${K("22px")}; }
+  /* Rectangles à l'extérieur, en haut à droite de la carte (à gauche pour la 3e : à droite, il n'y a pas la place), seulement pour la
+     carte choisie ; au survol d'une autre carte, les siens apparaissent presque transparents (un clic les affiche). */
+  .vfk-c > .vf-bento { position: absolute; z-index: 2; top: 0; left: calc(100% + 18px); width: var(--vfk-w); opacity: 0; visibility: hidden; pointer-events: none; transform: translateX(-6px); transition: opacity .35s ease, transform .35s ease, visibility 0s .35s; } /* cachés : ni clic ni clavier */
+  .vfk-c[data-k="2"] > .vf-bento { left: auto; right: calc(100% + 18px); transform: translateX(6px); }
+  .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
+  .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("clamp(14px, .3vw + 10px, 16.5px)")}); } /* à côté de la carte : réduite moins que la carte */
+  /* La 2e et la 3e carte se partagent le même écart : pendant qu'on survole l'une, les rectangles de l'autre s'effacent. */
+  .vfk-rang:has(> .vfk-c[data-k="2"]:hover > .vf-bento[data-choisi="non"]) > .vfk-c[data-k="1"] > .vf-bento,
+  .vfk-rang:has(> .vfk-c[data-k="1"]:hover > .vf-bento[data-choisi="non"]) > .vfk-c[data-k="2"] > .vf-bento { opacity: 0; }
 }
-@media (min-width: 1000px) and (max-width: 1100px) { .vf-bento__b { padding: 10px 11px 11px; } }
-/* Petites cartes (mobile) : nom et prix, puis le bouton et le « + » ; le reste dans la carte ouverte. */
+@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .2; visibility: visible; transform: none; transition-delay: 0s; } }
+/* Mobile : petites cartes (nom et prix, puis le bouton et le « + ») ; le reste, et les rectangles, dans la carte ouverte. */
 @media (max-width: 999px) {
   .vfk .vfk-c:not([data-grand]) .vf-carte__tete::after { content: none; }
-  ${MINI} :is(.vf-accroche, .vf-texte, .vf-bento) { display: none; }
+  ${MINI} :is(.vf-accroche, .vf-texte) { display: none; }
   ${MINI} .vf-agir { display: flex; align-items: center; gap: 14px; padding-top: 12px; }
   ${MINI} .vf-agir .vf-payer { min-width: 0; }
   ${MINI} .vf-agir::after { ${PLUS} }
+  .vfk-c:not([data-grand]) > .vf-bento { display: none; }
+  .vfk-c[data-grand] > .vf-bento { flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: min(460px, 100%); margin-top: 14px; opacity: 0; transition: opacity .4s ease .25s; }
+  .vfk-c[data-grand="on"] > .vf-bento { opacity: 1; }
+  .vfk-c[data-grand] .vf-bento__b--l { grid-column: 1 / -1; }
 }
-@media (max-width: 359px) { .vf-bento__b { padding: 10px 10px 11px; } .vf-bento__b > b { font-size: 9px; letter-spacing: .1em; } }
+@media (max-width: 359px) { .vfk-c[data-grand] > .vf-bento { grid-template-columns: minmax(0, 1fr); } }
 /* Moins de 375 px (vitrine et petites cartes) : noms et boutons un peu resserrés ; « Performance » ne touche plus « Voir tous les
    détails », et les cartes de la vitrine grandissent moins (boutons plus longs que « Je commande »…). */
 @media (max-width: 374px) {
@@ -908,6 +965,87 @@ const INFO_JS = `<script>/* Correction du 30/10 (scripts/construire.mjs) : bulle
 })();
 </script>
 `;
+
+// CGV du 30/10 (demandées par Loan : « adapte les CGV, ajoute ce qu'il faut ») : nouveaux noms et contenu des formules
+// (textes des cartes), déduction de l'Analyse Technique sur le Pack (30 jours), Suivi Performance limité à 3, envoi de 2 vidéos de
+// 2 min ou 3 de 45 s, jusqu'à 2 semaines reportables, réponse sous 48 à 72 h, résiliation aussi par message, conseils de
+// tournage, retour par vidéo pour le Suivi Performance. [passage actuel, nouveau passage, occurrences].
+const DEDUCTION_EN = "<p><strong>Technical Analysis deducted from the Pack.</strong> If you order the Progression Pack within 30 days of a Technical Analysis, the price you paid for that Technical Analysis is deducted: I refund it to you within 14 days of the Pack payment, using the payment method you used for the Technical Analysis.</p>";
+const DEDUCTION_FR = "<p><strong>Analyse Technique déduite du Pack.</strong> Si vous prenez le Pack Évolution dans les 30 jours qui suivent une Analyse Technique, le prix payé pour cette Analyse Technique est déduit : je vous le rembourse dans les 14 jours suivant le paiement du Pack, sur le moyen de paiement utilisé pour l’Analyse Technique.</p>";
+const CGV_30 = [
+  // Anglais.
+  ["I watch your video and reply with a full analysis, written or by voice message: technique, rhythm, jumps, transitions, with corrections ranked by priority.",
+    "I analyze your videos based on your level and your goals, and reply in writing or by voice message (also by video for The Way of Performance): your strengths, technique, jumps, rhythm, transitions, with corrections ranked by priority."],
+  ["<h3>Single feedback — 99&nbsp;€</h3>\n<p>A full analysis of one routine.</p>",
+    "<h3>Technical Analysis — 99&nbsp;€</h3>\n<p>2 videos analyzed (your taolu, your jumps or a specific section): your strengths, your priority corrections and specific advice, mainly on the A and C scores.</p>"],
+  ["<h3>3× feedback pack — 249&nbsp;€</h3>\n<p>Three analyses, sent whenever you need them, with targeted exercises after each video and progress tracked from one video to the next. Valid 6 months from your first video.</p>",
+    "<h3>Progression Pack — 249&nbsp;€</h3>\n<p>6 videos analyzed across 3 feedback rounds of 2 videos each, spaced out to fit your pace: a detailed analysis of each video, explained corrections and targeted drills after each round, progress tracked from one round to the next, and advice on the B score in addition to the A and C scores. Valid 6 months from your first video.</p>\n" + DEDUCTION_EN],
+  ["<h3>Quarterly program — 990&nbsp;€ every 3 months (subscription)</h3>\n<p>One analysis every week, priorities set together, written check-ins whenever you need them, then a final review with a plan going forward.",
+    "<h3>The Way of Performance — 990&nbsp;€ every 3 months (subscription)</h3>\n<p>One-on-one coaching over 12 weeks: 24 personalized analyses (2 videos per week), key areas defined at the start of the quarter, weekly tracking of your corrections and progress, priorities set at each feedback, Q&amp;A on WhatsApp after each feedback, then a final review with recommendations for what comes next. Feedback in writing, by voice message or by video, with priority handling."],
+  ["the pack is limited to 6 clients at the same time and the program to 2.", "the pack is limited to 6 clients at the same time and The Way of Performance to 3."],
+  ["Per analysis: up to 3 videos under 30 seconds, or 2 videos under 2 minutes.", "Per feedback: 2 videos of up to 2 minutes each, or 3 videos of up to 45 seconds each."],
+  ["I reply on WhatsApp, in writing or by voice message, within the time given in article 7.", "I reply on WhatsApp, in writing or by voice message (also by video for The Way of Performance), within the time given in article 7."],
+  ["<li>Single feedback: 99&nbsp;€ · 3× feedback pack: 249&nbsp;€ · Quarterly program: 990&nbsp;€ per 3-month period.</li>",
+    "<li>Technical Analysis: 99&nbsp;€ · Progression Pack: 249&nbsp;€ · The Way of Performance: 990&nbsp;€ per 3-month period.</li>"],
+  ["Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period. A program taken out",
+    "Technical Analysis: 49&nbsp;€ · Progression Pack: 129&nbsp;€ · The Way of Performance: 499&nbsp;€ per 3-month period. A subscription taken out"],
+  ["<li>Single feedback: 4 to 6 days</li>\n<li>3× feedback pack: 3 to 5 days</li>\n<li>Quarterly program: 2 to 3 days</li>",
+    "<li>Technical Analysis: 4 to 6 days</li>\n<li>Progression Pack: 3 to 5 days per feedback round</li>\n<li>The Way of Performance: priority handling, within 48 to 72 hours</li>"],
+  ["<li><strong>Single feedback:</strong> send your video within 6 months of payment.</li>",
+    "<li><strong>Technical Analysis:</strong> send your videos within 6 months of payment.</li>"],
+  ["<li><strong>3× feedback pack:</strong> send your first video within 6 months of payment. The three analyses are then valid 6 months from the date of that first video.</li>",
+    "<li><strong>Progression Pack:</strong> send your first videos within 6 months of payment. The 3 feedback rounds are then valid 6 months from the date of your first video.</li>"],
+  ["<li><strong>Quarterly program:</strong> one analysis per week of the current 3-month period. A week without a video can be made up later in the same period; unused analyses do not carry over to the next period.</li>",
+    "<li><strong>The Way of Performance:</strong> one feedback (2 videos) per week, over 12 weeks of the current 3-month period. Up to 2 unused weeks can be carried over to another week of the same period; unused weeks do not carry over to the next period.</li>"],
+  ["<li><strong>Single feedback received:</strong>", "<li><strong>Technical Analysis received:</strong>"],
+  ["a third of the price paid per analysis received for the pack", "a third of the price paid per feedback round received for the pack"],
+  ["the share of the price matching the analyses received, out of the 13 planned for the period", "the share of the price matching the weeks of feedback received, out of the 12 planned for the period"],
+  ["the price paid for the single feedback, a third of the price paid per remaining analysis of the pack", "the price paid for the Technical Analysis, a third of the price paid per remaining feedback round of the pack"],
+  ["Quarterly program: renewal and cancellation", "The Way of Performance: renewal and cancellation", 2],
+  ["Stripe customer portal</a>, or by email.", "Stripe customer portal</a>, or simply by sending me a message (WhatsApp) or an email before the next renewal date."],
+  ["<li>Send usable videos: the whole routine, filmed front on, full body in frame, with good light and a steady camera.</li>",
+    "<li>Send usable videos: filmed horizontally, full body in frame, from the front or the side, with good light and a steady camera.</li>"],
+  ["<li>Respect the format: per analysis, up to 3 videos under 30 seconds or 2 videos under 2 minutes.</li>",
+    "<li>Respect the format: per feedback, 2 videos of up to 2 minutes each, or 3 videos of up to 45 seconds each.</li>"],
+  ["If a video cannot be used, I ask you once to send a new one;", "If a video cannot be used, I ask you once to send a new one, at no cost;"],
+  ["<span>Version of 29 October 2026</span>", "<span>Version of 30 October 2026</span>"],
+  // Français.
+  ["Je regarde votre vidéo et vous réponds par une analyse complète, écrite ou en message vocal : technique, rythme, sauts, transitions, avec des corrections classées par priorité.",
+    "J’analyse vos vidéos selon votre niveau et vos objectifs, et vous réponds par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance) : vos points forts, la technique, les sauts, le rythme, les transitions, avec des corrections classées par priorité."],
+  ["<h3>Single feedback — 99&nbsp;€</h3>\n<p>L’analyse complète d’un enchaînement.</p>",
+    "<h3>Analyse Technique — 99&nbsp;€</h3>\n<p>2 vidéos analysées (votre taolu, vos sauts ou une partie ciblée) : vos points forts, vos corrections prioritaires et des conseils précis, principalement axés sur les notes A et C.</p>"],
+  ["<h3>3× feedback pack — 249&nbsp;€</h3>\n<p>Trois analyses, à envoyer quand vous le souhaitez, avec des exercices ciblés après chaque vidéo et un suivi de vos progrès d’une vidéo à l’autre. Valable 6 mois à compter de votre première vidéo.</p>",
+    "<h3>Pack Évolution — 249&nbsp;€</h3>\n<p>6 vidéos analysées en 3 retours de 2 vidéos chacun, espacés selon votre rythme : une analyse détaillée de chaque vidéo, des corrections expliquées et des exercices ciblés après chaque retour, un suivi de vos progrès d’un retour à l’autre, et des conseils sur la note B en plus des notes A et C. Valable 6 mois à compter de votre première vidéo.</p>\n" + DEDUCTION_FR],
+  ["<h3>Quarterly program — 990&nbsp;€ tous les 3 mois (abonnement)</h3>\n<p>Une analyse chaque semaine, des priorités fixées ensemble, des échanges écrits quand vous en avez besoin, puis un bilan final avec un plan pour la suite.",
+    "<h3>Suivi Performance — 990&nbsp;€ tous les 3 mois (abonnement)</h3>\n<p>Un suivi individuel sur 12 semaines : 24 analyses personnalisées (2 vidéos par semaine), les axes à travailler définis au début du trimestre, un suivi continu de vos corrections et de votre progression chaque semaine, les points prioritaires à corriger identifiés à chaque retour, des questions-réponses sur WhatsApp après chaque retour, puis un bilan final avec des recommandations pour la suite. Retour écrit, vocal ou en vidéo, avec un traitement prioritaire."],
+  ["le pack est limité à 6 clients en même temps et le programme à 2.", "le pack est limité à 6 clients en même temps et le Suivi Performance à 3."],
+  ["Par analyse : jusqu’à 3 vidéos de moins de 30 secondes, ou 2 vidéos de moins de 2 minutes.", "Par retour : 2 vidéos de 2 minutes maximum chacune, ou 3 vidéos de 45 secondes maximum chacune."],
+  ["Je vous réponds sur WhatsApp, par écrit ou en message vocal, dans le délai indiqué à l’article 7.", "Je vous réponds sur WhatsApp, par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance), dans le délai indiqué à l’article 7."],
+  ["<li>Single feedback : 99&nbsp;€ · 3× feedback pack : 249&nbsp;€ · Quarterly program : 990&nbsp;€ par période de 3 mois.</li>",
+    "<li>Analyse Technique : 99&nbsp;€ · Pack Évolution : 249&nbsp;€ · Suivi Performance : 990&nbsp;€ par période de 3 mois.</li>"],
+  ["Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois. Un programme souscrit",
+    "Analyse Technique : 49&nbsp;€ · Pack Évolution : 129&nbsp;€ · Suivi Performance : 499&nbsp;€ par période de 3 mois. Un abonnement souscrit"],
+  ["<li>Single feedback : 4 à 6 jours</li>\n<li>3× feedback pack : 3 à 5 jours</li>\n<li>Quarterly program : 2 à 3 jours</li>",
+    "<li>Analyse Technique : 4 à 6 jours</li>\n<li>Pack Évolution : 3 à 5 jours par retour</li>\n<li>Suivi Performance : traitement prioritaire, sous 48 à 72 heures</li>"],
+  ["<li><strong>Single feedback :</strong> envoyez votre vidéo dans les 6 mois suivant le paiement.</li>",
+    "<li><strong>Analyse Technique :</strong> envoyez vos vidéos dans les 6 mois suivant le paiement.</li>"],
+  ["<li><strong>3× feedback pack :</strong> envoyez votre première vidéo dans les 6 mois suivant le paiement. Les trois analyses sont ensuite valables 6 mois à compter de la date de cette première vidéo.</li>",
+    "<li><strong>Pack Évolution :</strong> envoyez vos premières vidéos dans les 6 mois suivant le paiement. Les 3 retours sont ensuite utilisables pendant 6 mois à compter de la date de votre première vidéo.</li>"],
+  ["<li><strong>Quarterly program :</strong> une analyse par semaine pendant la période de 3 mois en cours. Une semaine sans vidéo peut être rattrapée plus tard dans la même période ; les analyses non utilisées ne sont pas reportées sur la période suivante.</li>",
+    "<li><strong>Suivi Performance :</strong> un retour (2 vidéos) par semaine, sur 12 semaines de la période de 3 mois en cours. Jusqu’à 2 semaines non utilisées peuvent être reportées sur une autre semaine de la même période ; les semaines non utilisées ne sont pas reportées sur la période suivante.</li>"],
+  ["<li><strong>Single feedback reçu :</strong>", "<li><strong>Analyse Technique reçue :</strong>"],
+  ["un tiers du prix payé par analyse reçue pour le pack", "un tiers du prix payé par retour reçu pour le pack"],
+  ["la part du prix correspondant aux analyses reçues, sur les 13 prévues dans la période", "la part du prix correspondant aux semaines de retour reçues, sur les 12 prévues dans la période"],
+  ["le prix payé pour le single feedback, un tiers du prix payé par analyse restante du pack", "le prix payé pour l’Analyse Technique, un tiers du prix payé par retour restant du pack"],
+  ["Programme trimestriel : reconduction et résiliation", "Suivi Performance : reconduction et résiliation", 2],
+  ["espace client Stripe</a>, ou par e-mail.", "espace client Stripe</a>, ou simplement en m’envoyant un message (WhatsApp) ou un e-mail avant la prochaine échéance."],
+  ["<li>Envoyer des vidéos exploitables : l’enchaînement complet, filmé de face, corps entier dans le cadre, avec une bonne lumière et une caméra stable.</li>",
+    "<li>Envoyer des vidéos exploitables : filmées à l’horizontale, le corps entier dans le cadre, de face ou de côté, avec une bonne lumière et une caméra stable.</li>"],
+  ["<li>Respecter le format : par analyse, jusqu’à 3 vidéos de moins de 30 secondes ou 2 vidéos de moins de 2 minutes.</li>",
+    "<li>Respecter le format : par retour, 2 vidéos de 2 minutes maximum chacune, ou 3 vidéos de 45 secondes maximum chacune.</li>"],
+  ["Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer ;", "Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer, sans frais ;"],
+  ["<span>Version du 29 octobre 2026</span>", "<span>Version du 30 octobre 2026</span>"],
+];
 
 // Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
 // ?apercu=single, pack ou prog l'affiche avec le faux numéro de l'aperçu de l'éditeur (apercuPaye), et ouvre la fenêtre.
@@ -1259,10 +1397,17 @@ const CORRECTIONS = [
     avant: "    if (this._offF) this._offF();\n", apres: "    if (this._offF) this._offF();\n    if (this._offGuide) this._offGuide(); /* Correction du 30/10 */\n" },
   // Retour de Loan du 30/10 : textes et structure des cartes (constantes plus haut : INFOS, FICHES, NOMS, CARTES_CSS_30, INFO_JS).
   ...Object.keys(FICHES).map((k, i) => ({ quoi: `Planche II : nouvelle carte ${k} (30/10)`, fichiers: VF, n: 1, avant: CARTE_AVANT(k, i), apres: CARTE_APRES(k, i) })),
-  { quoi: "Planche II : « Launch offer » une seule fois, sous le titre, et analyse adaptée au niveau et aux objectifs (30/10)", fichiers: VF, n: 1,
-    avant: TITRE_PLANCHE + LEDE_PLANCHE("The same analysis for all levels: beginner, intermediate, professional."),
-    apres: TITRE_PLANCHE + SI_OFFRE('<div class="vf-offre vfk-offre vfk-ecrit" style="transition-delay:.5s">Launch offer</div>') + "\n" +
-      LEDE_PLANCHE("An analysis tailored to your level and your goals: beginner, intermediate, professional.") },
+  { quoi: "Planche II : analyse adaptée au niveau et aux objectifs (30/10)", fichiers: VF, n: 1,
+    avant: LEDE_PLANCHE("The same analysis for all levels: beginner, intermediate, professional."),
+    apres: LEDE_PLANCHE("An analysis tailored to your level and your goals: beginner, intermediate, professional.") },
+  // « Launch offer » : à côté de la réduction, sur les 6 cartes (vitrine et planche II), plus au-dessus du nom.
+  { quoi: "Vitrine : « Launch offer » plus au-dessus du nom (30/10)", fichiers: VF, n: 3,
+    avant: '<div class="vf-carte__tete">\n' + OFFRE_TITRE, apres: '<div class="vf-carte__tete">\n' },
+  ...Object.keys(FICHES).map((k) => ({ quoi: `« Launch offer » à côté de la réduction, ${k} (30/10)`, fichiers: VF, n: 2,
+    avant: `<b>{{ remise${k} }}</b></span>`, apres: `<b>{{ remise${k} }}</b><span class="vf-remise-o">Launch offer</span></span>` })),
+  { quoi: "Planche II : cote réelle de l'écart entre deux cartes (30/10)", fichiers: VF, n: 1,
+    avant: 'ecrire((xa + xb) / 2, yd - 6, "28", gCotes, { "text-anchor": "middle" });',
+    apres: 'ecrire((xa + xb) / 2, yd - 6, String(Math.round(C[1].c.offsetLeft - C[0].c.offsetLeft - C[0].c.offsetWidth)), gCotes, { "text-anchor": "middle" }); /* Correction du 30/10 : écart réel */' },
   ...Object.values(FICHES).map((f) => ({ quoi: `Vitrine : nom « ${f.nom.replace("<br>", " ")} » (30/10)`, fichiers: VF, n: 1,
     avant: `<div class="vf-nom">${f.ancien[0]}</div>`, apres: `<div class="vf-nom">${f.nom}</div>` })),
   ...Object.entries(NOMS).map(([k, [avant, nom, achat]]) => ({ quoi: `Nom de la formule ${k} : « ${nom} » (30/10)`, fichiers: VF, n: 1,
@@ -1271,11 +1416,14 @@ const CORRECTIONS = [
     avant: '"Hi Loan, I just purchased the " + f.nom + ".', apres: '"Hi Loan, I just purchased " + f.achatEn + ".' },
   { quoi: "Carte payée : 2 vidéos de 2 min ou 3 de 45 s, comme sur les cartes (30/10)", fichiers: VF, n: 3,
     avant: "<span>3 videos under 30 s, or 2 under 2 minutes.</span>", apres: `<span>${ENVOI}.</span>` },
-  { quoi: "Planche II : réduction d'ensemble calculée sur l'en-tête des cartes (30/10)", fichiers: VF, n: 1, avant: ECHELLE_AVANT, apres: ECHELLE_APRES },
+  { quoi: "Planche II : cartes entières à l'écran, textes ajustés (30/10)", fichiers: VF, n: 1, avant: ECHELLE_AVANT, apres: ECHELLE_APRES },
   { quoi: "Styles du 30/10 : cartes de la planche II, bento et bulles ⓘ", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: CARTES_CSS_30 + SOMMAIRE_STYLE_FIN },
   { quoi: "Bulles ⓘ des cartes : script (30/10)", fichiers: VF, n: 1,
     avant: '<script src="./support.js"></script>', apres: INFO_JS + '<script src="./support.js"></script>' },
+  { quoi: "Suivi Performance : 3 places (capacité affichée avant la réponse de l'API, 30/10)", fichiers: VF, n: 1,
+    avant: "const PLACES = { pack: 6, prog: 2 };", apres: "const PLACES = { pack: 6, prog: 3 }; /* Correction du 30/10 : 3 places (cloudflare/api-worker.js) */" },
+  ...CGV_30.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 30/10 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------

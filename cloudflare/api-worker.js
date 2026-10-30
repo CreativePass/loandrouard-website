@@ -65,7 +65,7 @@ const PRELEVEMENT = {
 const VALIDE_JOURS = 180; // accès WhatsApp d'un achat unique
 const ABO_ACTIF = ["active", "trialing", "past_due"];
 // Places simultanées. Pack : achats des 180 derniers jours. Programme : abonnements en cours.
-const PLACES = { pack: { total: 6, jours: 180 }, prog: { total: 2 } };
+const PLACES = { pack: { total: 6, jours: 180 }, prog: { total: 3 } }; // programme : 3 places (Loan, 30/10 : « 3 par trimestre »)
 
 // E-mail de confirmation (option A) : Stripe joint une facture dont le mémo contient un lien d'accès
 // personnel, loandrouard.com/acces/<jeton>, qui rouvre la carte payée (bouton WhatsApp + QR code)

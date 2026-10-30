@@ -56,18 +56,18 @@ const TEXTES = [
   ["move by move", "geste par geste", 1],
   ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer.", 1],
   ["See the options", "Voir les options", 1], // 27/10 : « See pricing » / « Voir les tarifs », puis « Voir les formules » (28/10 : « Voir les options », demandé par Loan)
-  // Offre de lancement (29/10, scripts/construire.mjs) : « Launch offer » au-dessus du nom des cartes de la vitrine, sous See the
-  // options et, depuis le 30/10, une seule fois sur la planche II, sous « Three ways to work together. ».
-  ["Launch offer", "Offre de lancement", 5],
+  // Offre de lancement (29/10, scripts/construire.mjs) : « Launch offer » sous See the options et, depuis le 30/10, à côté de la
+  // réduction sur les 6 cartes (vitrine et planche II).
+  ["Launch offer", "Offre de lancement", 7],
   ["Three packages", "Trois formules", 1],
   [" · from {{ prixMin }}", " · dès {{ prixMin }}", 1],
   ["Scroll for everything included", "Faites défiler pour tout le détail", 1],
   ["Back to Loan", "Retour à Loan", 1],
   ["Scroll", "Défiler", 1],
   // Cartes (vitrine du projecteur et planche II). Noms des formules du 30/10 (Loan).
-  ["Technical<br>analysis", "Analyse<br>technique", 2],
-  ["Progression<br>pack", "Pack<br>évolution", 2],
-  ["The way of<br>performance", "Suivi<br>performance", 2],
+  ["Technical <br>analysis", "Analyse <br>technique", 2],
+  ["Progression <br>pack", "Pack <br>évolution", 2],
+  ["The way of <br>performance", "Suivi <br>performance", 2],
   [" · one full analysis", " · analyse complète", 1],
   [" · 3 full analyses", " · trois analyses", 1],
   [" · weekly coaching", " · coaching hebdo", 1],
