@@ -519,18 +519,18 @@ const VF_CSS_29 = `/* Correction du 29/10 (scripts/construire.mjs) : textes plus
 // « J'aimerais que ce message s'affiche quand ils ouvrent la page » : le texte de Loan sur le fonctionnement de WhatsApp
 // s'ouvre dans une fenêtre juste après le paiement (et au retour par le lien de l'e-mail, /acces/…), par-dessus la carte
 // payée ; un lien de la carte la rouvre. Un texte par formule (délais du site, une vidéo / trois / une par semaine) et par
-// langue (anglais traduit par Claude). Écrit pour convenir aussi à un client qui reprend une formule (« votre vidéo »,
-// pas « votre première vidéo »). Section : texte commun, ou { single, pack, prog } ; {delai} = délai de la formule (FORMULES).
+// langue (anglais traduit par Claude). Écrit pour convenir aussi à un client qui reprend une formule (« vos vidéos »,
+// pas « votre première vidéo ») ; 2 vidéos par analyse, partout (Loan, 30/10). Section : texte commun, ou { single, pack, prog } ; {delai} = délai de la formule (FORMULES).
 // Version d'essai, à faire valider par Loan sur l'adresse de test (aperçu : ?apercu=single, pack ou prog).
 const GUIDE = {
   fr: {
     titre: "Il est l’heure de passer au niveau supérieur 🤸‍♂️",
     intro: "Je suis heureux de vous accompagner dans votre progression. Voici comment nous allons travailler ensemble sur WhatsApp :",
     sections: [
-      { icone: "🎥", titre: "Votre vidéo", texte: {
-        single: "Envoyez-moi votre vidéo. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
-        pack: "Envoyez-moi une vidéo pour chacune de vos 3 analyses, valables 6 mois à partir de la première. Je vous transmettrai à chaque fois une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
-        prog: "Envoyez-moi une vidéo par semaine. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités." } },
+      { icone: "🎥", titre: "Vos vidéos", texte: {
+        single: "Envoyez-moi vos 2 vidéos. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
+        pack: "Envoyez-moi 2 vidéos pour chacune de vos 3 analyses, valables 6 mois à partir de la première. Je vous transmettrai à chaque fois une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
+        prog: "Envoyez-moi 2 vidéos par semaine. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités." } },
       { icone: "💬", titre: "Vos questions", texte: {
         single: "Après l’analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète.",
         pack: "Après chaque analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète.",
@@ -538,12 +538,12 @@ const GUIDE = {
       { icone: "⏳", titre: "Mes réponses",
         texte: "Je consulte WhatsApp sur des créneaux dédiés et vous réponds sous {delai}, du lundi au dimanche. Vous pouvez m’écrire au moment qui vous convient ; les échanges se font en différé." },
       { icone: "📈", titre: { single: "Après l’analyse", pack: "Entre deux analyses", prog: "Entre deux analyses" }, texte: {
-        single: "Prenez le temps de pratiquer les exercices et de noter vos observations. Pour faire analyser une nouvelle vidéo, il vous suffira de reprendre une formule sur le site.",
+        single: "Prenez le temps de pratiquer les exercices et de noter vos observations. Pour faire analyser de nouvelles vidéos, il vous suffira de reprendre une formule sur le site.",
         pack: "Prenez le temps de pratiquer les exercices et de noter vos observations. Les nouvelles vidéos et les sujets nécessitant une analyse complémentaire seront traités lors de votre prochaine analyse.",
         prog: "Prenez le temps de pratiquer les exercices et de noter vos observations. Les nouvelles vidéos et les sujets nécessitant une analyse complémentaire seront traités lors du prochain rendez-vous hebdomadaire." } },
     ],
     fin: "Ce fonctionnement me permet de consacrer toute l’attention nécessaire à votre progression.",
-    bientot: "À très bientôt pour votre vidéo !",
+    bientot: "À très bientôt pour vos vidéos !",
     signature: "Loan ☀️",
     lien: "Comment nous allons travailler", fermer: "Fermer", whatsapp: "Ouvrir WhatsApp",
   },
@@ -551,10 +551,10 @@ const GUIDE = {
     titre: "Time to level up 🤸‍♂️",
     intro: "I’m happy to support you in your progress. Here’s how we’ll work together on WhatsApp:",
     sections: [
-      { icone: "🎥", titre: "Your video", texte: {
-        single: "Send me your video. I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
-        pack: "Send me one video for each of your 3 analyses, valid for 6 months from the first one. Each time, I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
-        prog: "Send me one video a week. I’ll send you a personalized analysis and targeted exercises, based on your priorities." } },
+      { icone: "🎥", titre: "Your videos", texte: {
+        single: "Send me your 2 videos. I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
+        pack: "Send me 2 videos for each of your 3 analyses, valid for 6 months from the first one. Each time, I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
+        prog: "Send me 2 videos a week. I’ll send you a personalized analysis and targeted exercises, based on your priorities." } },
       { icone: "💬", titre: "Your questions", texte: {
         single: "After the analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer.",
         pack: "After each analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer.",
@@ -562,12 +562,12 @@ const GUIDE = {
       { icone: "⏳", titre: "My replies",
         texte: "I check WhatsApp at set times and reply within {delai}, Monday to Sunday. You can write to me whenever suits you; we don’t need to be online at the same time." },
       { icone: "📈", titre: { single: "After the analysis", pack: "Between analyses", prog: "Between analyses" }, texte: {
-        single: "Take the time to practice the exercises and note what you observe. To have a new video analyzed, simply get another package on the site.",
+        single: "Take the time to practice the exercises and note what you observe. To have new videos analyzed, simply get another package on the site.",
         pack: "Take the time to practice the exercises and note what you observe. New videos and topics that need further analysis will be covered in your next analysis.",
         prog: "Take the time to practice the exercises and note what you observe. New videos and topics that need further analysis will be covered at our next weekly session." } },
     ],
     fin: "Working this way lets me give your progress all the attention it deserves.",
-    bientot: "Looking forward to your video!",
+    bientot: "Looking forward to your videos!",
     signature: "Loan ☀️",
     lien: "How we’ll work together", fermer: "Close", whatsapp: "Open WhatsApp",
   },
@@ -602,7 +602,7 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
 .vf-guide__fin { margin-top: 0; }
 .vf-guide__fin + .vf-guide__fin { margin-top: 6px; }
 .vf-guide__signature { margin: 6px 0 0; font-style: italic; font-size: 20px; }
-.vf-guide__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: 24px; }
+.vf-guide__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 24px; margin-top: 24px; }
 .vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
 /* Téléphone et tablette en portrait : fond opaque (la grande carte payée, ouverte dessous, et son bouton Fermer se voyaient entre les rectangles). */
@@ -618,8 +618,11 @@ const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre «
   .vf-guide__accueil { grid-area: accueil; }
   .vf-guide__blocs { grid-area: blocs; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 0; }
   .vf-guide__bloc p { font-size: 17.5px; line-height: 1.5; }
-  .vf-guide__pied { grid-area: pied; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 40px; margin-top: 16px; }
-  .vf-guide__actions { flex: none; margin-top: 0; }
+  /* « Ouvrir WhatsApp » centré horizontalement dans le rectangle du bas (Loan, 30/10), en bas, à hauteur de la signature ;
+     le texte garde toute la largeur (ses deux dernières lignes sont courtes : le bouton ne les touche pas). */
+  .vf-guide__pied { grid-area: pied; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; margin-top: 16px; }
+  .vf-guide__mot { grid-area: 1 / 1 / 2 / 4; }
+  .vf-guide__actions { grid-area: 1 / 2 / 2 / 3; margin-top: 0; }
   /* Plus serré, pour que tout tienne sans défiler jusqu'à 1280 × 720 et 1024 × 768 (iPad en paysage), en français aussi. */
   .vf-guide__defile { padding: 8px 32px 32px; }
   .vf-guide .vf-modale__tete { margin-bottom: 12px; }
