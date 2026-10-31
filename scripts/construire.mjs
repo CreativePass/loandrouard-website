@@ -792,11 +792,23 @@ const CARTE_APRES = (k, i) => { const f = FICHES[k];
   return LIBRE(k) + PLACES(k) + '\n<div class="vf-carte__tete">\n' + `<div class="vf-nom">${f.nom}</div>\n` +
     `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}${f.par ? `<span class="vf-prix-d">${f.par}</span>` : ""}</span></div>\n</div>\n` +
     '<div class="vf-agir">\n' + PAYER(k, BOUTONS[i][1], f.ancien[2]) + "</div>\n" +
+    '<div class="vf-details">\n' +
     '<div class="vf-bento">\n' + f.bento.map(BENTO).join("") + "</div>\n" +
     '<div class="vf-sep" aria-hidden="true"></div>\n' +
     '<div class="vf-texte">\n' + `<p class="vf-accroche">${f.accroche}</p>\n` + f.textes.map((t) => `<p>${t}</p>\n`).join("") + "</div>\n" +
     '<div class="vf-liste">\n' + f.puces.map(PUCE).join("") + "</div>\n" +
-    "</sc-if>\n</article>\n</div>\n"; };
+    "</div>\n</sc-if>\n</article>\n</div>\n"; };
+// Cartes du bas sur ordinateur (31/10, à comparer par Loan sur l'adresse de test) : même taille de texte que les cartes du haut.
+//  - "defilement" : chaque carte tient à l'écran, ses détails (rectangles, texte, puces) défilent à l'intérieur ;
+//  - "epure" : sans les rectangles ni le paragraphe de texte (phrase et puces gardées), textes réduits si besoin pour tenir ;
+//  - "tout" : tout le contenu, textes réduits pour tenir (version du 31/10 au matin, textes trop petits).
+// Adresse de test : ?cartes=defilement, epure ou tout ; sinon CARTES_VARIANTE.
+const CARTES_VARIANTE = "defilement";
+const VARIANTE_JS = `<script>/* Correction du 31/10 (scripts/construire.mjs) : présentation des cartes du bas sur ordinateur (CARTES_VARIANTE). */
+(() => { let v = "${CARTES_VARIANTE}";${ESSAI ? ` try { const q = new URLSearchParams(location.search).get("cartes"); if (["defilement", "epure", "tout"].includes(q)) v = q; } catch (e) {} /* adresse de test seulement */` : ""}
+  document.documentElement.setAttribute("data-cartes", v); })();
+</script>
+`;
 // Cartes du haut (vitrine, 31/10) : les puces sont remplacées par une phrase de la formule, en bas de la carte.
 const VITRINE_PUCES = {
   Single: ["Written or voice feedback"],
@@ -814,8 +826,13 @@ const ECHELLE_AVANT = "      /* Comme avant : tout tient sur un écran jusqu'au 
   "        const pr = pin.getBoundingClientRect(), br = bloc.getBoundingClientRect(), bas = C[1].c.getBoundingClientRect().bottom;\n" +
   "        const s = borne((window.innerHeight - (br.top - pr.top) - 18) / Math.max(1, bas - br.top), 0.68, 1);\n";
 const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : les cartes entières à l'écran ; textes des cartes réduits juste assez\n" +
-  "         (--vfk-k, 1 à 0,75), puis réduction d'ensemble si la hauteur manque encore (jusqu'à 0,8). */\n" +
-  "      if (enRang) {\n" +
+  "         (--vfk-k, 1 à 0,75), puis réduction d'ensemble si la hauteur manque encore (jusqu'à 0,8). 31/10, version « défilement » :\n" +
+  "         textes à leur taille, carte limitée à la hauteur de l'écran (--vfk-hmax), ses détails défilent à l'intérieur. */\n" +
+  "      bloc.style.removeProperty(\"--vfk-hmax\");\n" +
+  "      if (enRang && document.documentElement.getAttribute(\"data-cartes\") === \"defilement\") {\n" +
+  "        const pr = pin.getBoundingClientRect(); bloc.style.setProperty(\"--vfk-k\", \"1\");\n" +
+  "        bloc.style.setProperty(\"--vfk-hmax\", Math.max(320, Math.floor(window.innerHeight - 24 - (C[0].c.getBoundingClientRect().top - pr.top))) + \"px\");\n" +
+  "      } else if (enRang) {\n" +
   "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16;\n" +
   "        const basC = () => Math.max.apply(null, C.map((k) => { const b = k.c.querySelector(\".vf-bento\"); return Math.max(k.c.getBoundingClientRect().bottom, b ? b.getBoundingClientRect().bottom : 0); })) - pr.top; /* cartes et rectangles */\n" +
   '        let lo = 0.75, hi = 1; bloc.style.setProperty("--vfk-k", "1");\n' +
@@ -842,7 +859,7 @@ const CARTES_CSS_30 = `/* Corrections des 30 et 31/10 (scripts/construire.mjs) :
 @media (max-width: 899px) { .vfp-c .vf-remise-o { display: none; } } /* vitrine sur mobile : l'offre est sous « See the options » */
 /* Cartes du haut : bouton centré, phrase de la formule en bas (cachée sur mobile, comme les puces qu'elle remplace). */
 .vfp-c .vf-payer { align-self: center; }
-.vfp-phrase { margin: 0; font-style: italic; font-size: 18px; line-height: 1.45; color: rgba(246,245,241,.82); text-wrap: pretty; }
+.vfp-phrase { margin: 0; font-size: 18px; line-height: 1.45; color: rgba(246,245,241,.86); text-wrap: pretty; } /* sans italique (Loan, 31/10 : plus lisible) */
 @media (max-width: 899px) { .vfp-c .vf-payer { flex-basis: 100%; justify-content: center; } }
 /* Cartes du bas. */
 .vfk-c .vf-carte__tete { min-height: 0; gap: 14px; }
@@ -863,7 +880,7 @@ ${ICONE_CSS}
 .vf-sep { height: 1px; margin: 20px 6% 16px; background: linear-gradient(90deg, rgba(246,245,241,0), rgba(246,245,241,.22), rgba(246,245,241,0)); }
 .vf-texte { display: grid; gap: 8px; }
 .vf-texte p { margin: 0; font-size: 17.5px; line-height: 1.5; color: rgba(246,245,241,.72); text-wrap: pretty; }
-.vf-texte .vf-accroche { font-style: italic; font-size: 19px; line-height: 1.38; color: rgba(246,245,241,.9); }
+.vf-texte .vf-accroche { font-weight: 500; font-size: 19px; line-height: 1.38; color: rgba(246,245,241,.92); } /* sans italique (Loan, 31/10) */
 .vfk-c .vf-liste { margin-top: 14px; }
 /* ⓘ à la fin du texte, collé au dernier mot sans espace (élément en ligne : il ne passe jamais seul à la ligne ; écart = marge). */
 .vf-i { cursor: pointer; outline: none; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
@@ -881,6 +898,16 @@ ${ICONE_CSS}
 .vf-bulle-i[data-notes] .vf-i-l + .vf-i-l { margin-top: 5px; }
 .vf-bulle-i[data-notes] b { margin: 0; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o { transition: none !important; } }
+/* Tailles des cartes, à la mesure de l'écran (Loan, 31/10) : les mêmes en haut (vitrine) et en bas (planche II) ; égales aux
+   anciennes tailles fixes à 1440 px de large, plus grandes au-delà. */
+@media (min-width: 900px) {
+  .vf { --c-nom: clamp(28px, 2.7vw, 40px); --c-prix: clamp(20px, .25vw + 18.4px, 22.5px); /* prix plafonné : « 49 € · analyse complète » tient sur une ligne en haut */ --c-remise: clamp(16px, .4vw + 12.2px, 20px);
+    --c-texte: clamp(16.5px, .55vw + 9.6px, 21px); --c-accroche: clamp(17.5px, .6vw + 10.4px, 22.5px); --c-bento: clamp(13.5px, .35vw + 9.5px, 16px); }
+  .vfp-c .vf-nom { font-size: var(--c-nom); }
+  .vfp-c .vf-prix { font-size: var(--c-prix); }
+  .vfp-c .vf-remise { font-size: var(--c-remise); }
+  .vfp-phrase { font-size: var(--c-texte); }
+}
 /* Ordinateur : titre sur une ligne ; surtitre à la verticale, à gauche de l'écran (Loan, 31/10), ce qui remonte tout ; cartes
    resserrées au centre (comme les cartes du haut, un peu plus espacées), de même hauteur ; tailles de texte des cartes du haut,
    réduites juste assez pour que les cartes tiennent entières à l'écran (--vfk-k : ECHELLE_APRES). */
@@ -896,25 +923,35 @@ ${ICONE_CSS}
   .vfk-c { display: flex; flex-direction: column; }
   .vfk-flip { flex: 1 0 auto; display: flex; flex-direction: column; }
   .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; padding: max(${K("30px")}, 7cqw) max(26px, 8.6cqw) max(${K("26px")}, 6.4cqw); } /* marges à la mesure de la carte : les ornements du cadre grandissent avec elle */
-  .vfk-c .vf-nom { font-size: ${K("clamp(28px, 2.7vw, 38px)")}; }
+  .vfk-c .vf-nom { font-size: ${K("var(--c-nom)")}; }
   .vfk-c .vf-carte__tete { gap: ${K("12px")}; }
-  .vfk-c .vf-remise { margin-bottom: ${K("4px")}; font-size: ${K("18px")}; }
-  .vfk-c .vf-prix { font-size: ${K("22px")}; }
+  .vfk-c .vf-remise { margin-bottom: ${K("4px")}; font-size: ${K("var(--c-remise)")}; }
+  .vfk-c .vf-prix { font-size: ${K("var(--c-prix)")}; }
   .vfk-c .vf-agir { padding-top: ${K("20px")}; }
   .vfk-c .vf-bento { margin-top: ${K("16px")}; gap: ${K("6px")}; }
-  .vfk-c .vf-bento__b { font-size: max(12px, ${K("14.5px")}); }
+  .vfk-c .vf-bento__b { font-size: max(12px, ${K("var(--c-bento)")}); }
   .vfk-c .vf-sep { margin-top: ${K("18px")}; margin-bottom: ${K("14px")}; }
   .vfk-c .vf-texte { gap: ${K("6px")}; }
-  .vfk-c .vf-texte p { font-size: ${K("17.5px")}; line-height: 1.42; }
-  .vfk-c .vf-texte .vf-accroche { font-size: ${K("19px")}; line-height: 1.34; }
+  .vfk-c .vf-texte p { font-size: ${K("var(--c-texte)")}; line-height: 1.42; }
+  .vfk-c .vf-texte .vf-accroche { font-size: ${K("var(--c-accroche)")}; line-height: 1.34; }
   .vfk-c .vf-liste { margin-top: ${K("10px")}; gap: ${K("7px")}; }
-  .vfk-c .vf-pt { font-size: ${K("17.5px")}; line-height: 1.38; }
+  .vfk-c .vf-pt { font-size: ${K("var(--c-texte)")}; line-height: 1.38; }
   .vfk-c .vf-pt i { margin-top: .7em; }
+  /* Version « défilement » : la carte ne dépasse pas l'écran ; nom, prix et bouton restent, les détails défilent dans la carte
+     (fine barre or ; fondu en bas tant qu'il reste du texte, la fin du texte n'est jamais masquée). */
+  html[data-cartes="defilement"] .vfk-c .vf-carte { max-height: var(--vfk-hmax, none); }
+  html[data-cartes="defilement"] .vfk-c :is(.vf-carte__tete, .vf-agir) { flex-shrink: 0; } /* nom, prix et bouton jamais comprimés */
+  html[data-cartes="defilement"] .vfk-c .vf-details { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-right: -14px; padding: 0 14px 30px 0; scrollbar-width: thin; scrollbar-color: rgba(198,160,94,.55) transparent; -webkit-mask-image: linear-gradient(#000 calc(100% - 32px), transparent); mask-image: linear-gradient(#000 calc(100% - 32px), transparent); }
+  html[data-cartes="defilement"] .vfk-c .vf-details::-webkit-scrollbar { width: 4px; }
+  html[data-cartes="defilement"] .vfk-c .vf-details::-webkit-scrollbar-thumb { border-radius: 4px; background: rgba(198,160,94,.55); }
+  /* Version « épurée » : sans les rectangles ni le paragraphe de texte. */
+  html[data-cartes="epure"] .vfk-c :is(.vf-bento, .vf-sep, .vf-texte p:not(.vf-accroche)) { display: none; }
+  html[data-cartes="epure"] .vfk-c .vf-texte { margin-top: ${K("22px")}; }
 }
 /* Mobile : petites cartes (nom et prix, bouton centré comme sur les autres cartes, « + » en haut à droite) ; le reste dans la carte ouverte. */
 @media (max-width: 999px) {
   .vfk .vfk-c:not([data-grand]) .vf-carte__tete::after { position: absolute; top: 18px; right: 18px; margin: 0; }
-  ${MINI} :is(.vf-bento, .vf-sep, .vf-texte) { display: none; }
+  ${MINI} .vf-details { display: none; }
   ${MINI} .vf-agir { padding-top: 14px; }
 }
 @media (max-width: 359px) { .vf-bento { grid-template-columns: minmax(0, 1fr); } }
@@ -1426,7 +1463,7 @@ const CORRECTIONS = [
   { quoi: "Styles du 30/10 : cartes de la planche II, bento et bulles ⓘ", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: CARTES_CSS_30 + SOMMAIRE_STYLE_FIN },
   { quoi: "Bulles ⓘ des cartes : script (30/10)", fichiers: VF, n: 1,
-    avant: '<script src="./support.js"></script>', apres: INFO_JS + '<script src="./support.js"></script>' },
+    avant: '<script src="./support.js"></script>', apres: VARIANTE_JS + INFO_JS + '<script src="./support.js"></script>' },
   { quoi: "Suivi Performance : 3 places (capacité affichée avant la réponse de l'API, 30/10)", fichiers: VF, n: 1,
     avant: "const PLACES = { pack: 6, prog: 2 };", apres: "const PLACES = { pack: 6, prog: 3 }; /* Correction du 30/10 : 3 places (cloudflare/api-worker.js) */" },
   ...CGV_30.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 30/10 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
