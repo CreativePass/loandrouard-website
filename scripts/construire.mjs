@@ -786,15 +786,24 @@ const CARTE_AVANT = (k, i) => { const [nom, quoi, taille] = FICHES[k].ancien;
     `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}<span class="vf-prix-d"> · ${quoi}</span></span></div>\n` +
     PAYER(k, BOUTONS[i][1], taille) + "</div>\n" + '<div class="vf-liste">\n' + ANCIENNES_PUCES[k].map(PUCE).join("") + "</div>\n" + ANCIENS_TIERS[k] +
     "</sc-if>\n</article>\n</div>\n" + DELAI(`libre${k}`, ANCIENS_DELAIS[k]); };
+// 31/10 (Loan) : même structure et même ordre que les cartes du haut (nom, prix, bouton centré), puis les rectangles, une fine
+// ligne de séparation, et ce que contient la formule (phrase, texte, puces).
 const CARTE_APRES = (k, i) => { const f = FICHES[k];
   return LIBRE(k) + PLACES(k) + '\n<div class="vf-carte__tete">\n' + `<div class="vf-nom">${f.nom}</div>\n` +
-    `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}${f.par ? `<span class="vf-prix-d">${f.par}</span>` : ""}</span></div>\n` +
-    `<p class="vf-accroche">${f.accroche}</p>\n</div>\n` +
-    '<div class="vf-texte">\n' + f.textes.map((t) => `<p>${t}</p>\n`).join("") + "</div>\n" +
-    '<div class="vf-liste">\n' + f.puces.map(PUCE).join("") + "</div>\n" +
+    `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}${f.par ? `<span class="vf-prix-d">${f.par}</span>` : ""}</span></div>\n</div>\n` +
     '<div class="vf-agir">\n' + PAYER(k, BOUTONS[i][1], f.ancien[2]) + "</div>\n" +
-    "</sc-if>\n</article>\n</div>\n" +
-    LIBRE(k) + `<div class="vf-bento" data-choisi="{{ choisi${k} }}">\n` + f.bento.map(BENTO).join("") + "</div></sc-if>\n"; };
+    '<div class="vf-bento">\n' + f.bento.map(BENTO).join("") + "</div>\n" +
+    '<div class="vf-sep" aria-hidden="true"></div>\n' +
+    '<div class="vf-texte">\n' + `<p class="vf-accroche">${f.accroche}</p>\n` + f.textes.map((t) => `<p>${t}</p>\n`).join("") + "</div>\n" +
+    '<div class="vf-liste">\n' + f.puces.map(PUCE).join("") + "</div>\n" +
+    "</sc-if>\n</article>\n</div>\n"; };
+// Cartes du haut (vitrine, 31/10) : les puces sont remplacées par une phrase de la formule, en bas de la carte.
+const VITRINE_PUCES = {
+  Single: ["Written or voice feedback"],
+  Pack: ["Three analyses, progress tracked between them"],
+  Prog: ["One analysis every week, priorities set together", "Renews automatically, cancel anytime"],
+};
+const VITRINE_PHRASE = { Single: FICHES.Single.textes[0], Pack: FICHES.Pack.accroche, Prog: FICHES.Prog.accroche };
 const TITRE_PLANCHE = '<h2 class="vf-titre vfk-ecrit" style="transition-delay:.3s;font-size:clamp(32px,4.2vw,56px)">Three ways to work together.</h2>\n';
 const LEDE_PLANCHE = (t) => `<p class="vf-lede vfk-ecrit" style="transition-delay:.7s;margin-inline:auto;text-align:center">${t}</p>`;
 // Planche II sur ordinateur : les cartes entières à l'écran, sans défiler (Loan, 30/10). Les textes des cartes (--vfk-k, de 1 à
@@ -813,8 +822,6 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); }\n' +
   "        const br = bloc.getBoundingClientRect(), bas = basC() + pr.top;\n" +
   "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.8, 1);\n";
-const PLUS = "content: ''; flex: none; align-self: center; margin-left: auto; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(246,245,241,.42); " +
-  "background: linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 11px 1px no-repeat, linear-gradient(rgba(246,245,241,.85), rgba(246,245,241,.85)) 50% 50% / 1px 11px no-repeat;";
 // Petites icônes des rectangles (provisoires : Loan les choisira plus tard) : traits fins, couleur or (masque CSS).
 const PICTOS = {
   paiement: "<rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='M3 10h18M7 15h3'/>",
@@ -827,28 +834,37 @@ const PICTOS = {
 };
 const ICONE_CSS = Object.entries(PICTOS).map(([k, d]) => `.vf-bento__b[data-ic="${k}"] { --ic: url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>${d}</svg>`)}"); }`).join("\n");
 const K = (v) => `calc(var(--vfk-k, 1) * ${v})`; // taille ajustée pour que les cartes tiennent à l'écran (ECHELLE_APRES)
-const CARTES_CSS_30 = `/* Correction du 30/10 (scripts/construire.mjs) : cartes de la planche II (nom, prix et phrase, texte, puces, bouton ; rectangles
-   « bento » à l'extérieur de la carte ; ⓘ). « Launch offer » à côté de la réduction, sur toutes les cartes. */
+const CARTES_CSS_30 = `/* Corrections des 30 et 31/10 (scripts/construire.mjs) : cartes de la planche II avec la structure des cartes du haut (nom,
+   prix, bouton centré), puis rectangles « bento », fine ligne, ce que contient la formule ; ⓘ ; « Launch offer » à côté de la
+   réduction ; cartes du haut : phrase de la formule en bas, bouton centré. */
 .vfk-tete .vf-lede { text-wrap: balance; }
 .vf-remise-o { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; line-height: 1.2; letter-spacing: .2em; text-transform: uppercase; color: #C6A05E; }
 @media (max-width: 899px) { .vfp-c .vf-remise-o { display: none; } } /* vitrine sur mobile : l'offre est sous « See the options » */
+/* Cartes du haut : bouton centré, phrase de la formule en bas (cachée sur mobile, comme les puces qu'elle remplace). */
+.vfp-c .vf-payer { align-self: center; }
+.vfp-phrase { margin: 0; font-style: italic; font-size: 18px; line-height: 1.45; color: rgba(246,245,241,.82); text-wrap: pretty; }
+@media (max-width: 899px) { .vfp-c .vf-payer { flex-basis: 100%; justify-content: center; } }
+/* Cartes du bas. */
 .vfk-c .vf-carte__tete { min-height: 0; gap: 14px; }
 .vfk-c .vf-remise { margin-bottom: 6px; }
-.vf-accroche { margin: 0; font-style: italic; font-size: 19.5px; line-height: 1.4; color: rgba(246,245,241,.88); text-wrap: pretty; }
-.vf-texte { display: grid; gap: 10px; margin-top: 20px; }
-.vf-texte p { margin: 0; font-size: 17.5px; line-height: 1.5; color: rgba(246,245,241,.72); text-wrap: pretty; }
-.vfk-c .vf-liste { margin-top: 14px; }
-.vf-agir { padding-top: 28px; }
+.vf-agir { display: flex; justify-content: center; padding-top: 22px; }
 .vf-agir .vf-payer { max-width: 100%; }
 .vf-agir .ld-bouton { max-width: 100%; text-align: left; }
-/* Bento : petites précisions, les unes sous les autres ; petite icône à côté du titre (petites capitales), texte dessous sur toute la largeur. */
-.vf-bento { display: flex; flex-direction: column; gap: 6px; }
-.vf-bento__b { display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: center; gap: 4px 8px; min-width: 0; padding: 9px 11px 10px; border: 1px solid rgba(246,245,241,.15); border-radius: 11px; background: rgba(24,23,21,.94); font-size: 14.5px; line-height: 1.32; color: rgba(246,245,241,.9); }
-.vf-bento__b::before { content: ''; grid-row: 1; grid-column: 1; width: 16px; height: 16px; background: #C6A05E; -webkit-mask: var(--ic) 50% 50% / contain no-repeat; mask: var(--ic) 50% 50% / contain no-repeat; }
+/* Bento : petites précisions, deux par ligne, sous le bouton ; petite icône (provisoire) à côté du titre, texte dessous. */
+.vf-bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 18px; }
+.vf-bento__b { display: grid; grid-template-columns: 15px minmax(0, 1fr); align-items: center; gap: 3px 7px; min-width: 0; padding: 8px 10px 9px; border: 1px solid rgba(246,245,241,.14); border-radius: 11px; background: rgba(246,245,241,.035); font-size: 14.5px; line-height: 1.3; color: rgba(246,245,241,.9); }
+.vf-bento__b::before { content: ''; grid-row: 1; grid-column: 1; width: 15px; height: 15px; background: #C6A05E; -webkit-mask: var(--ic) 50% 50% / contain no-repeat; mask: var(--ic) 50% 50% / contain no-repeat; }
 .vf-bento__b > b { grid-row: 1; grid-column: 2; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9px; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: rgba(246,245,241,.52); }
 .vf-bento__b > span { grid-column: 1 / -1; }
+.vf-bento__b--l { grid-column: 1 / -1; }
 .vf-bento__b--seul > span { grid-row: 1; grid-column: 2; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9.5px; line-height: 1.45; letter-spacing: .12em; text-transform: uppercase; color: #C6A05E; }
 ${ICONE_CSS}
+/* Fine ligne de séparation, discrète, entre les rectangles et le contenu de la formule. */
+.vf-sep { height: 1px; margin: 20px 6% 16px; background: linear-gradient(90deg, rgba(246,245,241,0), rgba(246,245,241,.22), rgba(246,245,241,0)); }
+.vf-texte { display: grid; gap: 8px; }
+.vf-texte p { margin: 0; font-size: 17.5px; line-height: 1.5; color: rgba(246,245,241,.72); text-wrap: pretty; }
+.vf-texte .vf-accroche { font-style: italic; font-size: 19px; line-height: 1.38; color: rgba(246,245,241,.9); }
+.vfk-c .vf-liste { margin-top: 14px; }
 /* ⓘ à la fin du texte, collé au dernier mot sans espace (élément en ligne : il ne passe jamais seul à la ligne ; écart = marge). */
 .vf-i { cursor: pointer; outline: none; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
 .vf-i-o { position: relative; top: -.1em; margin-left: .3em; padding: 0 .4em; border: 1px solid rgba(198,160,94,.7); border-radius: 1em; font: italic 600 .78em/1 'Cormorant', Georgia, serif; letter-spacing: 0; text-transform: none; color: #C6A05E; transition: background-color .2s ease, color .2s ease; }
@@ -864,58 +880,46 @@ ${ICONE_CSS}
 .vf-bulle-i[data-notes] .vf-i-l { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px; }
 .vf-bulle-i[data-notes] .vf-i-l + .vf-i-l { margin-top: 5px; }
 .vf-bulle-i[data-notes] b { margin: 0; white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o, .vfk-c > .vf-bento { transition: none !important; } }
-/* Ordinateur (Loan, 30/10) : titre sur une ligne, cartes montées, plus larges et plus espacées (l'écart accueille les rectangles),
-   textes plus grands, cartes de même hauteur (bouton aligné en bas), cartes entières à l'écran (--vfk-k : ECHELLE_APRES). */
+@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o { transition: none !important; } }
+/* Ordinateur : titre sur une ligne ; surtitre à la verticale, à gauche de l'écran (Loan, 31/10), ce qui remonte tout ; cartes
+   resserrées au centre (comme les cartes du haut, un peu plus espacées), de même hauteur ; tailles de texte des cartes du haut,
+   réduites juste assez pour que les cartes tiennent entières à l'écran (--vfk-k : ECHELLE_APRES). */
 @media (min-width: 1000px) {
-  .vfk-bloc { --vfk-w: clamp(120px, 9vw, 210px); --vfk-g: calc(var(--vfk-w) + 36px); }
-  .vfk-plaque { max-width: calc(18vw - 16px); } /* à gauche du titre, désormais sur une ligne, sans le toucher */
+  .vfk-bloc { position: relative; }
   .vfk-contenu { padding-top: calc(var(--hauteur-header, 72px) + clamp(2px, 1svh, 14px)); }
-  .vfk-tete { max-width: none; margin-bottom: clamp(14px, 2.6svh, 32px); }
+  .vfk-tete { max-width: none; margin-bottom: clamp(14px, 2.4svh, 30px); }
   .vfk-tete .vf-titre { white-space: nowrap; font-size: clamp(30px, 3.3vw, 54px) !important; }
-  .vfk-tete .vf-eyebrow > span { max-width: none; white-space: nowrap; } /* surtitre sur une ligne */
-  .vfk-rang { width: min(3 * 540px + 2 * var(--vfk-g), 100vw - 2 * clamp(20px, 2.4vw, 56px)); gap: var(--vfk-g); align-items: stretch; }
+  .vfk-tete .vf-eyebrow { position: absolute; left: max(30px, 2.3vw); top: 58%; margin: 0 !important; font-size: clamp(11px, .2vw + 8.5px, 13.5px); white-space: nowrap; transform-origin: 0 0; transform: rotate(-90deg) translateX(-50%); }
+  .vfk-tete .vf-eyebrow > span { max-width: none; white-space: nowrap; }
+  .vfk-plaque { max-width: calc(18vw - 16px); } /* à gauche du titre, désormais sur une ligne, sans le toucher */
+  .vfk-rang { width: min(1320px, 100vw - 2 * max(48px, 4.5vw)); gap: clamp(32px, 2.8vw, 56px); align-items: stretch; }
   .vfk-c { display: flex; flex-direction: column; }
   .vfk-flip { flex: 1 0 auto; display: flex; flex-direction: column; }
-  .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; padding: max(${K("26px")}, 7cqw) max(26px, 9.2cqw) max(${K("24px")}, 6.5cqw); } /* marges à la mesure de la carte : les ornements du cadre grandissent avec elle */
-  .vfk-c .vf-nom { font-size: ${K("clamp(28px, 1.1vw + 14px, 40px)")}; text-wrap: balance; }
-  .vfk-c .vf-nom br { display: none; } /* nom sur une ligne quand il tient */
-  .vfk-c .vf-carte__tete { gap: ${K("10px")}; }
-  .vfk-c .vf-remise { margin-bottom: ${K("4px")}; font-size: ${K("17px")}; }
-  .vfk-c .vf-prix { font-size: ${K("clamp(20px, .4vw + 15px, 26px)")}; }
-  .vfk-c .vf-accroche { font-size: ${K("clamp(17.5px, .45vw + 11px, 21.5px)")}; line-height: 1.32; }
-  .vfk-c .vf-texte { margin-top: ${K("14px")}; gap: ${K("6px")}; }
-  .vfk-c .vf-texte p { font-size: ${K("clamp(16px, .4vw + 10.5px, 19.5px)")}; line-height: 1.4; }
-  .vfk-c .vf-liste { margin-top: ${K("10px")}; gap: ${K("6px")}; }
-  .vfk-c .vf-pt { font-size: ${K("clamp(17.5px, .45vw + 11px, 21.5px)")}; line-height: 1.34; }
+  .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; padding: max(${K("30px")}, 7cqw) max(26px, 8.6cqw) max(${K("26px")}, 6.4cqw); } /* marges à la mesure de la carte : les ornements du cadre grandissent avec elle */
+  .vfk-c .vf-nom { font-size: ${K("clamp(28px, 2.7vw, 38px)")}; }
+  .vfk-c .vf-carte__tete { gap: ${K("12px")}; }
+  .vfk-c .vf-remise { margin-bottom: ${K("4px")}; font-size: ${K("18px")}; }
+  .vfk-c .vf-prix { font-size: ${K("22px")}; }
+  .vfk-c .vf-agir { padding-top: ${K("20px")}; }
+  .vfk-c .vf-bento { margin-top: ${K("16px")}; gap: ${K("6px")}; }
+  .vfk-c .vf-bento__b { font-size: max(12px, ${K("14.5px")}); }
+  .vfk-c .vf-sep { margin-top: ${K("18px")}; margin-bottom: ${K("14px")}; }
+  .vfk-c .vf-texte { gap: ${K("6px")}; }
+  .vfk-c .vf-texte p { font-size: ${K("17.5px")}; line-height: 1.42; }
+  .vfk-c .vf-texte .vf-accroche { font-size: ${K("19px")}; line-height: 1.34; }
+  .vfk-c .vf-liste { margin-top: ${K("10px")}; gap: ${K("7px")}; }
+  .vfk-c .vf-pt { font-size: ${K("17.5px")}; line-height: 1.38; }
   .vfk-c .vf-pt i { margin-top: .7em; }
-  .vfk-c .vf-agir { margin-top: auto; padding-top: ${K("22px")}; }
-  /* Rectangles à l'extérieur, en haut à droite de la carte (à gauche pour la 3e : à droite, il n'y a pas la place), seulement pour la
-     carte choisie ; au survol d'une autre carte, les siens apparaissent presque transparents (un clic les affiche). */
-  .vfk-c > .vf-bento { position: absolute; z-index: 2; top: 0; left: calc(100% + 18px); width: var(--vfk-w); opacity: 0; visibility: hidden; pointer-events: none; transform: translateX(-6px); transition: opacity .35s ease, transform .35s ease, visibility 0s .35s; } /* cachés : ni clic ni clavier */
-  .vfk-c[data-k="2"] > .vf-bento { left: auto; right: calc(100% + 18px); transform: translateX(6px); }
-  .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
-  .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("clamp(14px, .3vw + 10px, 16.5px)")}); } /* à côté de la carte : réduite moins que la carte */
-  /* La 2e et la 3e carte se partagent le même écart : pendant qu'on survole l'une, les rectangles de l'autre s'effacent. */
-  .vfk-rang:has(> .vfk-c[data-k="2"]:hover > .vf-bento[data-choisi="non"]) > .vfk-c[data-k="1"] > .vf-bento,
-  .vfk-rang:has(> .vfk-c[data-k="1"]:hover > .vf-bento[data-choisi="non"]) > .vfk-c[data-k="2"] > .vf-bento { opacity: 0; }
 }
-@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .2; visibility: visible; transform: none; transition-delay: 0s; } }
-/* Mobile : petites cartes (nom et prix, puis le bouton et le « + ») ; le reste, et les rectangles, dans la carte ouverte. */
+/* Mobile : petites cartes (nom et prix, bouton centré comme sur les autres cartes, « + » en haut à droite) ; le reste dans la carte ouverte. */
 @media (max-width: 999px) {
-  .vfk .vfk-c:not([data-grand]) .vf-carte__tete::after { content: none; }
-  ${MINI} :is(.vf-accroche, .vf-texte) { display: none; }
-  ${MINI} .vf-agir { display: flex; align-items: center; gap: 14px; padding-top: 12px; }
-  ${MINI} .vf-agir .vf-payer { min-width: 0; }
-  ${MINI} .vf-agir::after { ${PLUS} }
-  .vfk-c:not([data-grand]) > .vf-bento { display: none; }
-  .vfk-c[data-grand] > .vf-bento { flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: min(460px, 100%); margin-top: 14px; opacity: 0; transition: opacity .4s ease .25s; }
-  .vfk-c[data-grand="on"] > .vf-bento { opacity: 1; }
-  .vfk-c[data-grand] .vf-bento__b--l { grid-column: 1 / -1; }
+  .vfk .vfk-c:not([data-grand]) .vf-carte__tete::after { position: absolute; top: 18px; right: 18px; margin: 0; }
+  ${MINI} :is(.vf-bento, .vf-sep, .vf-texte) { display: none; }
+  ${MINI} .vf-agir { padding-top: 14px; }
 }
-@media (max-width: 359px) { .vfk-c[data-grand] > .vf-bento { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 359px) { .vf-bento { grid-template-columns: minmax(0, 1fr); } }
 /* Moins de 375 px (vitrine et petites cartes) : noms et boutons un peu resserrés ; « Performance » ne touche plus « Voir tous les
-   détails », et les cartes de la vitrine grandissent moins (boutons plus longs que « Je commande »…). */
+   détails », et les cartes de la vitrine grandissent moins. */
 @media (max-width: 374px) {
   :is(.vfp-c, ${MINI}) .vf-nom { font-size: 21px; }
   :is(.vfp-c, ${MINI}) .ld-bouton { padding-left: 16px; padding-right: 18px; letter-spacing: .05em; }
@@ -1399,7 +1403,7 @@ const CORRECTIONS = [
   ...Object.keys(FICHES).map((k, i) => ({ quoi: `Planche II : nouvelle carte ${k} (30/10)`, fichiers: VF, n: 1, avant: CARTE_AVANT(k, i), apres: CARTE_APRES(k, i) })),
   { quoi: "Planche II : analyse adaptée au niveau et aux objectifs (30/10)", fichiers: VF, n: 1,
     avant: LEDE_PLANCHE("The same analysis for all levels: beginner, intermediate, professional."),
-    apres: LEDE_PLANCHE("An analysis tailored to your level and your goals: beginner, intermediate, professional.") },
+    apres: LEDE_PLANCHE("An analysis tailored to your level and your goals: beginner, intermediate or professional.") },
   // « Launch offer » : à côté de la réduction, sur les 6 cartes (vitrine et planche II), plus au-dessus du nom.
   { quoi: "Vitrine : « Launch offer » plus au-dessus du nom (30/10)", fichiers: VF, n: 3,
     avant: '<div class="vf-carte__tete">\n' + OFFRE_TITRE, apres: '<div class="vf-carte__tete">\n' },
@@ -1408,6 +1412,8 @@ const CORRECTIONS = [
   { quoi: "Planche II : cote réelle de l'écart entre deux cartes (30/10)", fichiers: VF, n: 1,
     avant: 'ecrire((xa + xb) / 2, yd - 6, "28", gCotes, { "text-anchor": "middle" });',
     apres: 'ecrire((xa + xb) / 2, yd - 6, String(Math.round(C[1].c.offsetLeft - C[0].c.offsetLeft - C[0].c.offsetWidth)), gCotes, { "text-anchor": "middle" }); /* Correction du 30/10 : écart réel */' },
+  ...Object.keys(VITRINE_PUCES).map((k) => ({ quoi: `Vitrine : phrase de la formule au lieu des puces, ${k} (31/10)`, fichiers: VF, n: 1,
+    avant: '<div class="vf-liste">\n' + VITRINE_PUCES[k].map(PUCE).join("") + "</div>", apres: `<div class="vf-liste">\n<p class="vfp-phrase">${VITRINE_PHRASE[k]}</p>\n</div>` })),
   ...Object.values(FICHES).map((f) => ({ quoi: `Vitrine : nom « ${f.nom.replace("<br>", " ")} » (30/10)`, fichiers: VF, n: 1,
     avant: `<div class="vf-nom">${f.ancien[0]}</div>`, apres: `<div class="vf-nom">${f.nom}</div>` })),
   ...Object.entries(NOMS).map(([k, [avant, nom, achat]]) => ({ quoi: `Nom de la formule ${k} : « ${nom} » (30/10)`, fichiers: VF, n: 1,

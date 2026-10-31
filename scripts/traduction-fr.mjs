@@ -26,12 +26,12 @@ const LIRE_FR = '(() => { try { return new URLSearchParams(location.search).get(
 // Textes courts : sur mobile, le bouton tient à côté du « + » de la petite carte dès 360 px de large (« Recevoir mon analyse »
 // ou « Commencer le programme » n'y tenaient qu'à partir de 390 px). Essais écartés : « Select · 49 € », « Choose this package ».
 // (« Get a feedback » demandé : « Get feedback », feedback ne prenant pas d'article en anglais.)
-// 30/10, nouveaux textes des cartes (Loan) : « Analyser mes vidéos », « Obtenir le Pack », « Commencer mon Suivi Performance » ;
+// 30/10, nouveaux textes des cartes (Loan) : « Analyser mes vidéos », « Obtenir le Pack », « Commencer mon Suivi » (31/10) ;
 // sur les petites cartes mobiles, le texte passe sur deux lignes s'il ne tient pas à côté du « + ».
 export const BOUTONS = [
   ["49", "Analyze My Videos", "Analyser mes vidéos"],
   ["129", "Get the Pack", "Obtenir le Pack"],
-  ["499", "Start My Performance Coaching", "Commencer mon Suivi Performance"],
+  ["499", "Start My Coaching", "Commencer mon Suivi"], // 31/10 : « Commencer mon Suivi Performance » faisait un bouton trop gros
 ];
 // Envoi des vidéos (cartes et carte payée, 30/10).
 const ENVOI_FR = `2 vidéos de 2${NB}minutes maximum chacune ou 3 vidéos de 45${NB}secondes maximum chacune`;
@@ -75,10 +75,6 @@ const TEXTES = [
   ...BOUTONS.map(([, en, fr]) => [en, fr, 2]), // vitrine et planche II
   ["See full details", "Voir tous les détails", 3], // 27/10 : sous les cartes de la vitrine
   ["Spots left", "Places restantes", 4],
-  ["Written or voice feedback", "Retour écrit ou vocal", 1],
-  ["Three analyses, progress tracked between them", "Trois analyses, avec le suivi de vos progrès de l’une à l’autre", 1],
-  ["One analysis every week, priorities set together", "Une analyse chaque semaine, des priorités définies ensemble", 1],
-  ["Renews automatically, cancel anytime", `Renouvelé automatiquement, ${INSECABLE("résiliable à tout moment")}`, 1],
   // Étude : dessin.
   ["CENTRE OF MASS", "CENTRE DE GRAVITÉ", 1],
   ["PL. I — STUDY OF A JUMP", "PL. I — ÉTUDE D’UN SAUT", 1],
@@ -148,13 +144,13 @@ const TEXTES = [
   ["Choose · send · receive professional feedback", "Choisissez · envoyez · recevez un retour professionnel", 1],
   ["Three ways to work together.", "Trois façons de travailler ensemble.", 1],
   // 30/10 (Loan) : « Une analyse adaptée à votre niveau et à vos objectifs » au lieu de « Une même analyse pour tous ».
-  ["An analysis tailored to your level and your goals: beginner, intermediate, professional.", `Une analyse adaptée à votre niveau et à vos objectifs${NB}: débutant, intermédiaire, professionnel.`, 1],
+  ["An analysis tailored to your level and your goals: beginner, intermediate or professional.", `Une analyse adaptée à votre niveau et à vos objectifs${NB}: débutant, intermédiaire ou professionnel.`, 1],
   // Cartes de la planche II, textes de Loan du 30/10 (anglais de Loan ; structure : scripts/construire.mjs, FICHES).
   [" / quarter", " / trimestre", 1],
   ["2 videos analyzed so you know what to improve and how.", "2 vidéos analysées pour savoir quoi améliorer et comment.", 1],
-  ["6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.", "6 vidéos analysées en 3 retours, pour pratiquer, ajuster et progresser.", 1],
-  ["24 videos analyzed over 12 weeks, to develop your practice effectively.", `24 vidéos analysées en 12${NB}semaines, pour faire évoluer votre pratique efficacement.`, 1],
-  ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "Envoyez votre taolu, vos sauts ou une partie ciblée pour plus de détails sur des éléments spécifiques.", 1],
+  ["6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.", "6 vidéos analysées en 3 retours, pour pratiquer, ajuster et progresser.", 2], // carte et vitrine (31/10)
+  ["24 videos analyzed over 12 weeks, to develop your practice effectively.", `24 vidéos analysées en 12${NB}semaines, pour faire évoluer votre pratique efficacement.`, 2], // carte et vitrine (31/10)
+  ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "Envoyez votre taolu, vos sauts ou une partie ciblée pour plus de détails sur des éléments spécifiques.", 2], // carte et vitrine (31/10)
   ["I analyze your videos based on your level and your goals:", `J’analyse vos vidéos selon votre niveau et vos objectifs${NB}:`, 1],
   ["Your strengths and your priority corrections.", "Vos points forts et vos corrections prioritaires.", 1],
   ["Specific advice on technique, jumps, rhythm or transitions, depending on your needs.", "Des conseils précis sur la technique, les sauts, le rythme ou les transitions, selon vos besoins.", 1],
