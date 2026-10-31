@@ -825,7 +825,10 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   "         haute), pour que bouton, ligne et puces commencent au même niveau ; recalculé à chaque taille de texte essayée. */\n" +
   "      const egaliser = () => { [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].forEach((q) => {\n" +
   "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
-  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } }); };\n" +
+  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } });\n" +
+  "        /* 31/10 : place réservée au-dessus des cartes pour les rectangles du Pack Évolution (Loan). */\n" +
+  "        const pb = C[1] && C[1].c.querySelector(\":scope > .vf-bento\"), rg = C[0] && C[0].c.parentNode;\n" +
+  "        if (rg) rg.style.marginTop = enRang && pb ? (pb.offsetHeight + 16) + \"px\" : \"\"; };\n" +
   "      egaliser();\n" +
   "      if (enRang) {\n" +
   "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16, wa = sec.querySelector(\".vfk-whatsapp\");\n" +
@@ -833,7 +836,7 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   '        let lo = 0.75, hi = 1; bloc.style.setProperty("--vfk-k", "1");\n' +
   '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); egaliser(); }\n' +
   "        const br = bloc.getBoundingClientRect(), bas = basC() + pr.top;\n" +
-  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.8, 1);\n";
+  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.7, 1); /* 0,7 au plus (31/10 : bande des rectangles du Pack) */\n";
 // Petites icônes des rectangles (provisoires : Loan les choisira plus tard) : traits fins, couleur or (masque CSS).
 const PICTOS = {
   paiement: "<rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='M3 10h18M7 15h3'/>",
@@ -920,7 +923,7 @@ ${ICONE_CSS}
   .vfk-whatsapp { display: block; margin: ${K("18px")} 0 0; text-align: center; font-style: italic; font-weight: 500; font-size: clamp(17px, .5vw + 10px, 21px); color: rgba(246,245,241,.7); opacity: 0; transition: opacity 1.2s ease; }
   .vfk-bloc:has(.vfk-note[data-on]) .vfk-whatsapp { opacity: 1; }
   @supports not selector(:has(*)) { .vfk-whatsapp { opacity: 1; } }
-  .vfk-rang { width: min(1320px, 100vw - 2 * (var(--vfk-bord) + var(--vfk-w) + 16px)); gap: clamp(28px, 2.6vw, 52px); align-items: stretch; }
+  .vfk-rang { --vfk-gap: clamp(28px, 2.6vw, 52px); width: min(1320px, 100vw - 2 * (var(--vfk-bord) + var(--vfk-w) + 16px)); gap: var(--vfk-gap); align-items: stretch; }
   .vfk-c { display: flex; flex-direction: column; }
   .vfk-flip { flex: 1 0 auto; display: flex; flex-direction: column; }
   .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; padding: max(${K("30px")}, 7cqw) max(26px, 8.6cqw) max(${K("26px")}, 6.4cqw); } /* marges à la mesure de la carte : les ornements du cadre grandissent avec elle */
@@ -940,7 +943,10 @@ ${ICONE_CSS}
   .vfk-c > .vf-bento { position: absolute; z-index: 2; top: 0; width: var(--vfk-w); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .35s ease, transform .35s ease, visibility 0s .35s; } /* cachés : ni clic ni clavier */
   .vfk-c[data-k="0"] > .vf-bento { right: calc(100% + 16px); transform: translateX(6px); }
   .vfk-c[data-k="2"] > .vf-bento { left: calc(100% + 16px); transform: translateX(-6px); }
-  .vfk-c[data-k="1"] > .vf-bento { display: none; }
+  /* Pack Évolution (Loan, 31/10) : au-dessus de la carte, sur une ligne, dans une bande réservée entre la phrase du titre et les cartes
+     (sa hauteur : ECHELLE_APRES) ; centrés sur la carte, sur la largeur des trois cartes. */
+  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 12px); left: calc(-100% - var(--vfk-gap)); width: calc(300% + 2 * var(--vfk-gap)); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.8fr); align-items: stretch; transform: translateY(6px); }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b--l { grid-column: auto; }
   .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
   .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("var(--c-bento)")}); }
 }
@@ -983,13 +989,21 @@ const EGALISER_JS = `<script>/* Correction du 31/10 (scripts/construire.mjs) : c
   const mq = window.matchMedia("(min-width: 900px)"), GROUPES = [".vfp-c .vf-carte__tete .vf-nom", ".vfp-c .vf-carte__tete .vf-prix", ".vfp-c .vfp-phrase"];
   const egaliser = () => GROUPES.forEach((q) => { const g = [...document.querySelectorAll(q)]; g.forEach((e) => { e.style.minHeight = ""; });
     if (mq.matches && g.length > 1) { const h = Math.max(...g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + "px"; }); } });
-  let ro = null;
-  const brancher = () => { const c = document.querySelectorAll(".vfp-c .vf-carte"); if (c.length < 3) return false;
-    if (window.ResizeObserver) { ro = new ResizeObserver(() => egaliser()); GROUPES.forEach((q) => document.querySelectorAll(q).forEach((e) => ro.observe(e))); }
-    egaliser(); return true; };
-  const t = setInterval(() => { if (brancher()) clearInterval(t); }, 250); setTimeout(() => clearInterval(t), 60000);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(egaliser);
-  if (mq.addEventListener) mq.addEventListener("change", egaliser);
+  /* Chaque élément est observé (taille) ; les cartes aussi (contenu recréé par le moteur de la page) : égalisation à l'image suivante. */
+  let ro = null, raf = 0;
+  const plus_tard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; egaliser(); if (ro) GROUPES.forEach((q) => document.querySelectorAll(q).forEach((e) => ro.observe(e))); }); };
+  /* Toute la page est surveillée (et pas seulement les cartes du haut) : le moteur peut recréer tout le bloc des cartes. */
+  const brancher = () => { if (!document.body) return false;
+    if (window.ResizeObserver) ro = new ResizeObserver(plus_tard);
+    const vitrine = (n) => { const e = n && (n.nodeType === 1 ? n : n.parentElement); return !!e && (!!e.closest(".vfp-cartes") || (e.querySelector && !!e.querySelector(".vfp-c"))); };
+    if (window.MutationObserver) new MutationObserver((l) => { if (l.some((r) => vitrine(r.target) || [...r.addedNodes].some(vitrine))) plus_tard(); })
+      .observe(document.body, { childList: true, subtree: true, characterData: true }); /* seulement ce qui touche les cartes du haut */
+    plus_tard(); return true; };
+  if (!brancher()) document.addEventListener("DOMContentLoaded", brancher);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(plus_tard);
+  if (mq.addEventListener) mq.addEventListener("change", plus_tard);
+  addEventListener("resize", plus_tard);
+  document.addEventListener("click", plus_tard, true); /* « See the options » : cartes affichées */
 })();
 </script>
 `;
