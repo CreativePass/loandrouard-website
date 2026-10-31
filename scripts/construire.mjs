@@ -821,11 +821,17 @@ const ECHELLE_AVANT = "      /* Comme avant : tout tient sur un écran jusqu'au 
 const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : les cartes entières à l'écran ; textes des cartes réduits juste assez\n" +
   "         (--vfk-k, 1 à 0,75), puis réduction d'ensemble si la hauteur manque encore (jusqu'à 0,8). 31/10 : avec les rectangles et la\n" +
   "         phrase « Tous les échanges se font sur WhatsApp » sous les cartes. */\n" +
+  "      /* 31/10 (Loan : « tous les textes au même niveau ») : nom, prix, bouton et phrase d'accroche de même hauteur dans les 3 cartes (la plus\n" +
+  "         haute), pour que bouton, ligne et puces commencent au même niveau ; recalculé à chaque taille de texte essayée. */\n" +
+  "      const egaliser = () => { [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].forEach((q) => {\n" +
+  "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
+  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } }); };\n" +
+  "      egaliser();\n" +
   "      if (enRang) {\n" +
   "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16, wa = sec.querySelector(\".vfk-whatsapp\");\n" +
-  "        const basC = () => Math.max.apply(null, C.map((k) => { const b = k.c.querySelector(\".vf-bento\"); return Math.max(k.c.getBoundingClientRect().bottom, b ? b.getBoundingClientRect().bottom : 0); }).concat(wa ? [wa.getBoundingClientRect().bottom] : [])) - pr.top; /* cartes, rectangles, phrase WhatsApp */\n" +
+  "        const basC = () => { egaliser(); return Math.max.apply(null, C.map((k) => { const b = k.c.querySelector(\".vf-bento\"); return Math.max(k.c.getBoundingClientRect().bottom, b ? b.getBoundingClientRect().bottom : 0); }).concat(wa ? [wa.getBoundingClientRect().bottom] : [])) - pr.top; }; /* cartes, rectangles, phrase WhatsApp */\n" +
   '        let lo = 0.75, hi = 1; bloc.style.setProperty("--vfk-k", "1");\n' +
-  '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); }\n' +
+  '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); egaliser(); }\n' +
   "        const br = bloc.getBoundingClientRect(), bas = basC() + pr.top;\n" +
   "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.8, 1);\n";
 // Petites icônes des rectangles (provisoires : Loan les choisira plus tard) : traits fins, couleur or (masque CSS).
@@ -853,7 +859,7 @@ const CARTES_CSS_30 = `/* Corrections des 30 et 31/10 (scripts/construire.mjs) :
 /* Cartes du bas. */
 .vfk-c .vf-carte__tete { min-height: 0; gap: 14px; }
 .vfk-c .vf-remise { margin-bottom: 6px; }
-.vf-agir { display: flex; justify-content: center; padding-top: 22px; }
+.vf-agir { display: flex; justify-content: center; align-items: center; padding-top: 22px; } /* boutons centrés aussi en hauteur (hauteurs égalisées) */
 .vf-agir .vf-payer { max-width: 100%; }
 .vf-agir .ld-bouton { max-width: 100%; text-align: left; }
 /* Phrase d'accroche : Cormorant SC (police des titres du design system), droite (pas d'italique : Loan, 31/10). */
@@ -938,7 +944,7 @@ ${ICONE_CSS}
   .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
   .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("var(--c-bento)")}); }
 }
-@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .2; visibility: visible; transform: none; transition-delay: 0s; } }
+@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
 /* Grands écrans : le titre monte dans la bande de l'en-tête (ses liens sont effacés dès qu'on descend ; le nom et les langues sont
    sur les côtés). En dessous de 1 100 px, il reste sous l'en-tête (il toucherait le nom). */
 @media (min-width: 1100px) { .vfk-contenu { padding-top: clamp(16px, 2.6svh, 30px); } }
@@ -954,12 +960,38 @@ ${ICONE_CSS}
   .vfk-c[data-grand] .vf-bento__b--l { grid-column: 1 / -1; }
 }
 @media (max-width: 359px) { .vfk-c[data-grand] > .vf-bento { grid-template-columns: minmax(0, 1fr); } }
+/* Carte ouverte (mobile, Loan, 31/10 : « on voit un bout de l'autre bouton en fond ») : sous la barre flottante de Safari (iOS 26), la
+   page derrière restait visible. Les autres cartes et les traits sont cachés une fois le fond sombre posé (0,5 s), et réapparaissent
+   dès la fermeture ; le fond sombre déborde de l'écran. */
+@media (max-width: 999px) {
+  .vfk[data-grand] .vfk-cam { visibility: hidden; transition: visibility 0s .5s; }
+  .vfk[data-grand] .vfk-c[data-grand] { visibility: visible; }
+  .vfk:has(.vfk-c[data-grand="ferme"]) .vfk-cam { visibility: visible; transition: none; }
+  .vfk .vfk-c[data-grand]::before { inset: -30vh 0; }
+}
 /* Moins de 375 px (vitrine et petites cartes) : noms et boutons un peu resserrés ; « Performance » ne touche plus « Voir tous les
    détails », et les cartes de la vitrine grandissent moins. */
 @media (max-width: 374px) {
   :is(.vfp-c, ${MINI}) .vf-nom { font-size: 21px; }
   :is(.vfp-c, ${MINI}) .ld-bouton { padding-left: 16px; padding-right: 18px; letter-spacing: .05em; }
 }
+`;
+const EGALISER_JS = `<script>/* Correction du 31/10 (scripts/construire.mjs) : cartes du haut (vitrine), sur ordinateur : nom, prix et paragraphe de
+   même hauteur dans les 3 cartes (la plus haute), pour que tous les textes soient au même niveau. Recalculé quand une carte change de
+   taille (fenêtre, polices). */
+(() => { if (window.__ldEgal) return; window.__ldEgal = 1;
+  const mq = window.matchMedia("(min-width: 900px)"), GROUPES = [".vfp-c .vf-carte__tete .vf-nom", ".vfp-c .vf-carte__tete .vf-prix", ".vfp-c .vfp-phrase"];
+  const egaliser = () => GROUPES.forEach((q) => { const g = [...document.querySelectorAll(q)]; g.forEach((e) => { e.style.minHeight = ""; });
+    if (mq.matches && g.length > 1) { const h = Math.max(...g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + "px"; }); } });
+  let ro = null;
+  const brancher = () => { const c = document.querySelectorAll(".vfp-c .vf-carte"); if (c.length < 3) return false;
+    if (window.ResizeObserver) { ro = new ResizeObserver(() => egaliser()); GROUPES.forEach((q) => document.querySelectorAll(q).forEach((e) => ro.observe(e))); }
+    egaliser(); return true; };
+  const t = setInterval(() => { if (brancher()) clearInterval(t); }, 250); setTimeout(() => clearInterval(t), 60000);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(egaliser);
+  if (mq.addEventListener) mq.addEventListener("change", egaliser);
+})();
+</script>
 `;
 const INFO_JS = `<script>/* Correction du 30/10 (scripts/construire.mjs) : bulles ⓘ des cartes. Souris : au survol (un clic la garde ouverte) ;
    toucher : un toucher l'ouvre ou la ferme ; clavier : au focus, Entrée ou Espace. Échap ou un clic ailleurs la ferme ; elle suit
@@ -1462,7 +1494,7 @@ const CORRECTIONS = [
   { quoi: "Styles du 30/10 : cartes de la planche II, bento et bulles ⓘ", fichiers: VF, n: 1,
     avant: SOMMAIRE_STYLE_FIN, apres: CARTES_CSS_30 + SOMMAIRE_STYLE_FIN },
   { quoi: "Bulles ⓘ des cartes : script (30/10)", fichiers: VF, n: 1,
-    avant: '<script src="./support.js"></script>', apres: INFO_JS + '<script src="./support.js"></script>' },
+    avant: '<script src="./support.js"></script>', apres: EGALISER_JS + INFO_JS + '<script src="./support.js"></script>' },
   { quoi: "« Tous les échanges se font sur WhatsApp » sous les cartes (31/10)", fichiers: VF, n: 1, avant: WHATSAPP_AVANT, apres: WHATSAPP_APRES },
   { quoi: "Suivi Performance : 3 places (capacité affichée avant la réponse de l'API, 30/10)", fichiers: VF, n: 1,
     avant: "const PLACES = { pack: 6, prog: 2 };", apres: "const PLACES = { pack: 6, prog: 3 }; /* Correction du 30/10 : 3 places (cloudflare/api-worker.js) */" },
