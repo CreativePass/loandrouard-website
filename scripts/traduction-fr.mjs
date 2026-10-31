@@ -140,7 +140,7 @@ const TEXTES = [
   ["0.25× · slow motion", "0,25× · ralenti", 1],
   // Planche II.
   ["Pl. II — The packages", "Pl. II — Les formules", 1],
-  ["All exchanges take place on WhatsApp.", "Tous les échanges se font sur WhatsApp.", 1],
+  ["All exchanges take place on WhatsApp.", "Tous les échanges se font sur WhatsApp.", 2], // plaque (mobile) et sous les cartes (ordinateur, 31/10)
   ["Choose · send · receive professional feedback", "Choisissez · envoyez · recevez un retour professionnel", 1],
   ["Three ways to work together.", "Trois façons de travailler ensemble.", 1],
   // 30/10 (Loan) : « Une analyse adaptée à votre niveau et à vos objectifs » au lieu de « Une même analyse pour tous ».
@@ -148,15 +148,15 @@ const TEXTES = [
   // Cartes de la planche II, textes de Loan du 30/10 (anglais de Loan ; structure : scripts/construire.mjs, FICHES).
   [" / quarter", " / trimestre", 1],
   ["2 videos analyzed so you know what to improve and how.", "2 vidéos analysées pour savoir quoi améliorer et comment.", 1],
-  ["6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.", "6 vidéos analysées en 3 retours, pour pratiquer, ajuster et progresser.", 2], // carte et vitrine (31/10)
-  ["24 videos analyzed over 12 weeks, to develop your practice effectively.", `24 vidéos analysées en 12${NB}semaines, pour faire évoluer votre pratique efficacement.`, 2], // carte et vitrine (31/10)
+  ["6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.", "6 vidéos analysées en 3 retours, pour pratiquer, ajuster et progresser.", 1],
+  ["24 videos analyzed over 12 weeks, to develop your practice effectively.", `24 vidéos analysées en 12${NB}semaines, pour faire évoluer votre pratique efficacement.`, 1],
   ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "Envoyez votre taolu, vos sauts ou une partie ciblée pour plus de détails sur des éléments spécifiques.", 2], // carte et vitrine (31/10)
   ["I analyze your videos based on your level and your goals:", `J’analyse vos vidéos selon votre niveau et vos objectifs${NB}:`, 1],
   ["Your strengths and your priority corrections.", "Vos points forts et vos corrections prioritaires.", 1],
   ["Specific advice on technique, jumps, rhythm or transitions, depending on your needs.", "Des conseils précis sur la technique, les sauts, le rythme ou les transitions, selon vos besoins.", 1],
   ["Advice mainly focused on the A and C scores", "Conseils principalement axés sur les notes A et C", 1],
   ["Develop your taolu, specific sections or jumps with three personalized feedback rounds on 2 videos each, spaced out to fit your pace.",
-    "Faites évoluer votre taolu, des parties ou des sauts ciblés grâce à trois retours personnalisés sur 2 vidéos chacun, espacés selon votre rythme.", 1],
+    "Faites évoluer votre taolu, des parties ou des sauts ciblés grâce à trois retours personnalisés sur 2 vidéos chacun, espacés selon votre rythme.", 2], // carte et vitrine (31/10)
   ["A detailed technical analysis of each of your videos.", "Une analyse technique détaillée de chacune de vos vidéos.", 1],
   ["Specific advice on technique, jumps, speed, presence, rhythm, style or transitions, depending on your needs.",
     "Des conseils précis sur la technique, les sauts, la vitesse, la présence, le rythme, le style ou les transitions, selon vos besoins.", 1],
@@ -166,7 +166,7 @@ const TEXTES = [
   ["Already had a Technical Analysis? Its {{ prixSingle }} is deducted from the Pack if you get it within 30 days.",
     `Vous avez déjà pris une Analyse Technique${NB}? Ses {{ prixSingle }} sont déduits du Pack si vous le prenez dans les 30${NB}jours.`, 1],
   ["One-on-one coaching, week after week, to work on everything you want to improve and progress as effectively as possible.",
-    "Un suivi individuel, semaine après semaine, pour travailler tout ce que vous souhaitez améliorer et faire progresser de manière optimale.", 1],
+    "Un suivi individuel, semaine après semaine, pour travailler tout ce que vous souhaitez améliorer et faire progresser de manière optimale.", 2], // carte et vitrine (31/10)
   ["24 personalized analyses: 2 videos per week.", `24 analyses personnalisées${NB}: 2 vidéos par semaine.`, 1],
   ["Key areas to work on, defined at the start of the quarter.", "Définition des axes à travailler au début du trimestre.", 1],
   ["Ongoing support and weekly tracking of your corrections and progress.", "Accompagnement &amp; suivi continu des corrections et de la progression chaque semaine.", 1],
