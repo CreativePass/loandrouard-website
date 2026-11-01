@@ -826,9 +826,15 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   "      const egaliser = () => { [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].forEach((q) => {\n" +
   "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
   "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } });\n" +
-  "        /* 31/10 : place réservée au-dessus des cartes pour les rectangles du Pack Évolution (Loan). */\n" +
+  "        /* 01/11 (Loan) : rectangles du Pack Évolution au-dessus de la carte, dans sa largeur. Quand ils s'affichent, le titre et sa\n" +
+  "           phrase remontent (--vfk-monte, jusqu'en haut de l'écran) ; une bande au-dessus des cartes complète si besoin. 12 px d'air\n" +
+  "           au-dessus et au-dessous des rectangles. */\n" +
   "        const pb = C[1] && C[1].c.querySelector(\":scope > .vf-bento\"), rg = C[0] && C[0].c.parentNode;\n" +
-  "        if (rg) rg.style.marginTop = enRang && pb ? (pb.offsetHeight + 16) + \"px\" : \"\"; };\n" +
+  "        if (rg) rg.style.marginTop = \"\"; bloc.style.setProperty(\"--vfk-monte\", \"0px\"); bloc.style.setProperty(\"--vfk-repos\", \"0px\");\n" +
+  "        if (enRang && pb && rg) { const tq = tete.getBoundingClientRect(), besoin = pb.offsetHeight + 28, libre = C[1].c.getBoundingClientRect().top - tq.bottom;\n" +
+  "          const monte = Math.max(0, Math.min(besoin - libre, tq.top - pin.getBoundingClientRect().top - 6)), bande = Math.max(0, Math.ceil(besoin - libre - monte));\n" +
+  "          bloc.style.setProperty(\"--vfk-monte\", Math.round(monte) + \"px\"); if (bande) rg.style.marginTop = bande + \"px\";\n" +
+  "          bloc.style.setProperty(\"--vfk-repos\", Math.round(bande / 2) + \"px\"); } }; /* sans les rectangles : titre et phrase au milieu de la place libre */\n" +
   "      egaliser();\n" +
   "      if (enRang) {\n" +
   "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16, wa = sec.querySelector(\".vfk-whatsapp\");\n" +
@@ -897,7 +903,7 @@ ${ICONE_CSS}
 .vf-bulle-i[data-notes] .vf-i-l { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px; }
 .vf-bulle-i[data-notes] .vf-i-l + .vf-i-l { margin-top: 5px; }
 .vf-bulle-i[data-notes] b { margin: 0; white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o, .vfk-c > .vf-bento, .vfk-whatsapp { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o, .vfk-c > .vf-bento, .vfk-whatsapp, .vfk-tete > :is(.vf-titre, .vf-lede) { transition: none !important; } }
 /* Tailles des cartes, à la mesure de l'écran (Loan, 31/10) : les mêmes en haut (vitrine) et en bas (planche II) ; égales aux
    anciennes tailles fixes à 1440 px de large, plus grandes au-delà. */
 @media (min-width: 900px) {
@@ -943,14 +949,23 @@ ${ICONE_CSS}
   .vfk-c > .vf-bento { position: absolute; z-index: 2; top: 0; width: var(--vfk-w); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .35s ease, transform .35s ease, visibility 0s .35s; } /* cachés : ni clic ni clavier */
   .vfk-c[data-k="0"] > .vf-bento { right: calc(100% + 16px); transform: translateX(6px); }
   .vfk-c[data-k="2"] > .vf-bento { left: calc(100% + 16px); transform: translateX(-6px); }
-  /* Pack Évolution (Loan, 31/10) : au-dessus de la carte, sur une ligne, dans une bande réservée entre la phrase du titre et les cartes
-     (sa hauteur : ECHELLE_APRES) ; centrés sur la carte, sur la largeur des trois cartes. */
-  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 12px); left: calc(-100% - var(--vfk-gap)); width: calc(300% + 2 * var(--vfk-gap)); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.8fr); align-items: stretch; transform: translateY(6px); }
-  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b--l { grid-column: auto; }
+  /* Pack Évolution (Loan, 31/10 et 01/11) : au-dessus de la carte, jamais plus large qu'elle ; compacts (icône et texte, deux par
+     ligne, l'envoi sur toute la largeur ; le titre de chaque rectangle reste lu par les lecteurs d'écran). Quand ils s'affichent (clic,
+     ou aperçu au survol), le titre et sa phrase remontent juste assez (--vfk-monte : ECHELLE_APRES). */
+  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 12px); left: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: stretch; transform: translateY(6px); }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b { position: relative; padding: 7px 10px 8px; }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > span { grid-row: 1; grid-column: 2; }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b--l { grid-column: 1 / -1; }
+  .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(var(--vfk-repos, 0px)); } /* au repos : au milieu de la place gardée pour les rectangles du Pack */
+  .vfk-tete > .vf-titre { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .3s, .3s, .3s, 0s !important; }
+  .vfk-tete > .vf-lede { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .7s, .7s, .7s, 0s !important; }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu] > .vf-bento[data-choisi="oui"]) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
   .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
   .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("var(--c-bento)")}); }
 }
-@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
+@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); } }
 /* Grands écrans : le titre monte dans la bande de l'en-tête (ses liens sont effacés dès qu'on descend ; le nom et les langues sont
    sur les côtés). En dessous de 1 100 px, il reste sous l'en-tête (il toucherait le nom). */
 @media (min-width: 1100px) { .vfk-contenu { padding-top: clamp(16px, 2.6svh, 30px); } }
