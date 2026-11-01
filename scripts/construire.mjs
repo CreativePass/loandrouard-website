@@ -1085,9 +1085,9 @@ const INFO_JS = `<script>/* Correction du 30/10 (scripts/construire.mjs) : bulle
 // s'élargit d'autant : la largeur de la carte décide de l'agrandissement (≈ ×1,17 : les lignes les plus longues occupent déjà toute
 // la largeur ; marges de la carte utilisées jusqu'à 6 px du bord). Troisième retour du 01/11 (« comme le Dock, grossissement et
 // rétrécissement continus entre les lignes ») : la taille de chaque puce dépend en continu de la distance entre la souris et la puce
-// (pleine taille sur toutes ses lignes, puis décroissance douce sur ≈ 3 lignes de texte) ; le point sous la souris reste sous la
-// souris : ce qui est au-dessus est poussé vers le haut, ce qui est en dessous vers le bas, comme les icônes du Dock. Rien ne bouge
-// dans la mise en page (cartes, bas de page) : seulement des zooms et des déplacements, à chaque image.
+// (pleine taille sur toutes ses lignes, puis décroissance douce sur ≈ 3 lignes de texte). Quatrième retour du 01/11 (« des petits
+// haut-bas en permanence sur tout le texte ») : le haut de la liste reste fixe, seules les lignes sous la partie agrandie sont poussées
+// vers le bas. Rien ne bouge dans la mise en page (cartes, bas de page) : seulement des zooms et des déplacements, à chaque image.
 const LOUPE = { max: 1.3, portee: 3, tau: 55, lacher: 150, bord: 6, cadre: 0.7 }; // ×1,3 au plus ; portée : 3 lignes de texte ; amorti 55 ms (150 ms quand la souris s'en va) ; 6 px du bord ; cadre atténué de 70 % au plus
 const LOUPE_CSS = `/* Correction du 01/11 (scripts/construire.mjs) : effet loupe des puces des cartes (LOUPE_JS). */
 .vfk-c .vf-liste[data-loupe] > .vf-pt { position: relative; z-index: 1; } /* devant le cadre de la carte */
@@ -1096,8 +1096,8 @@ const LOUPE_CSS = `/* Correction du 01/11 (scripts/construire.mjs) : effet loupe
 .vfk-c .vf-carte[data-loupe-carte][data-choisi="oui"] .vf-or { opacity: calc(.95 * (1 - ${LOUPE.cadre} * var(--loupe, 0))); }
 `;
 const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effet loupe façon Dock de macOS sur les puces des cartes de la planche II
-   (ordinateur, souris). La taille de chaque puce suit en continu la distance à la souris ; le point sous la souris reste sous la
-   souris (le haut est poussé vers le haut, le bas vers le bas). Zoom sans nouvelle mise en page : chaque puce garde ses retours à la
+   (ordinateur, souris). La taille de chaque puce suit en continu la distance à la souris ; le haut de la liste reste fixe, les lignes
+   sous la partie agrandie sont poussées vers le bas. Zoom sans nouvelle mise en page : chaque puce garde ses retours à la
    ligne, la carte et la page ne bougent pas. Même agrandissement dans les 3 cartes : le plus grand qui garde toutes les lignes dans la
    carte (${LOUPE.bord} px du bord au moins), ×${LOUPE.max} au plus. */
 (() => { if (window.__ldLoupe) return; window.__ldLoupe = 1;
@@ -1106,6 +1106,11 @@ const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effe
   const etats = new Map(); /* liste → { f (mesures), c (zoom actuel de chaque puce), y (point sous la souris), g (décalage d'ensemble) } */
   let commun = null, active = null, py = 0, raf = 0, tPrec = 0;
   const puces = (l) => Array.prototype.filter.call(l.children, (e) => e.classList.contains("vf-pt"));
+  /* Effet (1 à 0) d'une puce selon la distance (px) entre la souris et ses lignes : décroissance douce (cos²) sur R px. */
+  const effet = (d, R) => (d >= R ? 0 : Math.pow(Math.cos(Math.PI / 2 * d / R), 2));
+  const distance = (f, j, y) => Math.max(0, f.top[j] + f.a[j] - y, y - (f.top[j] + f.h[j] - f.a[j]));
+  const zoom = (f, j, y) => 1 + (commun.S - 1) * effet(distance(f, j, y), f.R);
+  const croissance = (f, y) => f.p.reduce((t, _, j) => t + f.h[j] * (zoom(f, j, y) - 1), 0);
   /* Mesures au repos, en px de mise en page, des 3 listes ensemble (même agrandissement partout) ; refaites si la largeur ou la taille
      du texte change. Ligne la plus large de chaque puce : rectangles du texte, ramenés en px de mise en page (zoom de la caméra). */
   const mesurer = () => {
@@ -1130,42 +1135,66 @@ const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effe
       let prec = l.previousElementSibling; while (prec && !prec.getClientRects().length) prec = prec.previousElementSibling; /* élément affiché au-dessus (le paragraphe est caché sur ordinateur) */
       const H0 = l.offsetHeight, L = parseFloat(getComputedStyle(p[0]).lineHeight) || 20;
       const h = p.map((e) => e.offsetHeight), top = p.map((e) => e.offsetTop - l.offsetTop);
-      fiches.set(l, { l, carte, p, h, top, H0, R: PORTEE * L,
+      fiches.set(l, { l, carte, p, h, top, H0, R: PORTEE * L, g0: p.length > 1 ? top[1] - top[0] - h[0] : 0,
         a: h.map((x) => Math.min(x / 2, L / 2)), /* pleine taille tant que la souris est sur une des lignes de la puce */
         ox: larg.map((x) => { const g = G, d = D(x); return g + d > 0 ? x * g / (g + d) : x / 2; }), /* la place est partagée à gauche et à droite */
         bas: Math.max(0, carte.clientHeight - haut - H0 - Math.max(BORD, pb * 0.3)), /* place sous la liste, jusqu'à la marge du bas */
         dessus: prec ? Math.max(0, l.offsetTop - prec.offsetTop - prec.offsetHeight - 7) : 0 });
     });
-    commun = { cle, ls, S: Math.max(1, S), fiches }; return commun;
+    commun = { cle, ls, S: Math.max(1, S), fiches };
+    /* Croissance moyenne de chaque liste quand la souris la parcourt : les lignes éloignées sont poussées de cette valeur, fixe. */
+    fiches.forEach((f) => { const n = f.p.length, y0 = f.top[0] + f.a[0], y1 = f.top[n - 1] + f.h[n - 1] - f.a[n - 1]; let somme = 0, nb = 0;
+      for (let y = y0; y <= y1; y += 2) { somme += croissance(f, y); nb++; } f.Gm = nb ? somme / nb : 0; f.y0 = y0; f.y1 = y1; });
+    return commun;
   };
-  /* Zoom visé d'une puce selon la distance (px) entre la souris et ses lignes : 1 à 0, décroissance douce (cos²) sur R px. */
-  const effet = (d, R) => (d >= R ? 0 : Math.pow(Math.cos(Math.PI / 2 * d / R), 2));
+  /* Position de chaque puce : le haut de la liste ne bouge pas ; chaque puce est poussée vers le bas par l'agrandissement de celles du
+     dessus (4e retour du 01/11 : avec le point sous la souris fixe, tout le texte montait et descendait sans cesse en déplaçant la souris). */
+  const positions = (s) => { const f = s.f, t = []; let bas = 0; f.p.forEach((_, j) => { t[j] = bas + s.g; bas += f.h[j] * (s.c[j] - 1) + (s.e[j] || 0); }); return { t, croissance: bas - (s.e[f.p.length - 1] || 0) }; };
   const appliquer = (s) => {
-    const f = s.f, n = f.p.length, o = f.p.map((_, j) => Math.max(0, Math.min(f.h[j], s.y - f.top[j]))); /* point fixe de chaque puce : le plus proche de la souris */
-    const D = f.p.map((_, j) => (s.c[j] - 1) * (f.h[j] - o[j])), U = f.p.map((_, j) => (s.c[j] - 1) * o[j]);
-    const t = []; let bas = 0; for (let j = 0; j < n; j++) { t[j] = bas; bas += D[j]; } let haut = 0; for (let j = n - 1; j >= 0; j--) { t[j] -= haut; haut += U[j]; }
-    /* Décalage d'ensemble : la liste agrandie ne touche ni la ligne fine au-dessus ni le bas de la carte. */
-    const sommet = t[0] + o[0] * (1 - s.c[0]), debord = f.top[n - 1] + o[n - 1] + s.c[n - 1] * (f.h[n - 1] - o[n - 1]) + t[n - 1] - f.H0;
-    s.g = Math.max(-f.dessus - sommet, Math.min(0, f.bas - debord));
+    const f = s.f;
+    /* Décalage d'ensemble, seulement si la place manque sous la liste (bas de la carte) : la liste remonte juste assez, sans toucher la
+       ligne fine au-dessus. */
+    s.g = 0; const { croissance } = positions(s); s.g = Math.max(-f.dessus, Math.min(0, f.bas - croissance));
+    const { t } = positions(s);
     f.p.forEach((e, j) => { const c = s.c[j];
-      if (Math.abs(c - 1) < 0.0005 && Math.abs(t[j] + s.g) < 0.05) { e.style.transform = ""; return; }
-      e.style.transformOrigin = f.ox[j].toFixed(1) + "px " + o[j].toFixed(1) + "px";
-      e.style.transform = "translateY(" + (t[j] + s.g).toFixed(2) + "px) scale(" + c.toFixed(4) + ")"; });
+      if (Math.abs(c - 1) < 0.0005 && Math.abs(t[j]) < 0.05) { e.style.transform = ""; return; }
+      e.style.transformOrigin = f.ox[j].toFixed(1) + "px 0";
+      e.style.transform = "translateY(" + t[j].toFixed(2) + "px) scale(" + c.toFixed(4) + ")"; });
     const v = Math.max.apply(null, s.c.map((c) => (c - 1) / Math.max(0.001, commun.S - 1)));
     f.carte.style.setProperty("--loupe", Math.max(0, Math.min(1, v)).toFixed(3));
+  };
+  /* Point de la liste au repos qui est affiché sous la souris (Y : px de mise en page depuis le haut de la liste) : dans une puce agrandie,
+     on divise par son zoom ; entre deux puces, l'espace n'est pas agrandi. Ainsi la puce sous la souris est bien celle qui grossit. */
+  const auRepos = (s, Y) => {
+    const f = s.f, n = f.p.length, { t } = positions(s);
+    if (Y < f.top[0] + t[0]) return Y - t[0];
+    for (let j = 0; j < n; j++) { const haut = f.top[j] + t[j], hauteur = f.h[j] * s.c[j];
+      if (Y <= haut + hauteur) return f.top[j] + Math.max(0, Y - haut) / s.c[j];
+      if (j === n - 1) return f.top[j] + f.h[j] + (Y - haut - hauteur);
+      if (Y < f.top[j + 1] + t[j + 1]) { const e = f.top[j + 1] + t[j + 1] - haut - hauteur; return f.top[j] + f.h[j] + (e > 0.01 ? (Y - haut - hauteur) * f.g0 / e : 0); } }
+    return Y;
   };
   const finir = (l, s) => { s.f.p.forEach((e) => { e.style.transform = e.style.transformOrigin = ""; }); l.removeAttribute("data-loupe");
     s.f.carte.removeAttribute("data-loupe-carte"); s.f.carte.style.removeProperty("--loupe"); etats.delete(l); };
   const image = (t) => {
     raf = 0; const dt = tPrec ? Math.min(250, t - tPrec) : 16; tPrec = t;
     if (active && commun && commun.fiches.has(active) && !etats.has(active)) { const f = commun.fiches.get(active);
-      etats.set(active, { f, c: f.p.map(() => 1), y: 0, g: 0 }); active.setAttribute("data-loupe", ""); f.carte.setAttribute("data-loupe-carte", ""); }
+      etats.set(active, { f, c: f.p.map(() => 1), e: f.p.map(() => 0), y: 0, g: 0 }); active.setAttribute("data-loupe", ""); f.carte.setAttribute("data-loupe-carte", ""); }
     let encore = false;
     etats.forEach((s, l) => { const f = s.f;
-      if (l === active) { const r = l.getBoundingClientRect(), kY = r.height / (f.H0 || 1) || 1; s.y = (py - r.top) / kY - s.g; } /* point de la liste (au repos) sous la souris */
-      const vise = f.p.map((_, j) => { if (l !== active) return 1; const d = Math.max(0, f.top[j] + f.a[j] - s.y, s.y - (f.top[j] + f.h[j] - f.a[j])); return 1 + (commun.S - 1) * effet(d, f.R); });
+      if (l === active) { const r = l.getBoundingClientRect(), kY = r.height / (f.H0 || 1) || 1; s.y = auRepos(s, (py - r.top) / kY); } /* point de la liste (au repos) sous la souris */
+      const vise = f.p.map((_, j) => (l === active ? zoom(f, j, s.y) : 1));
+      /* Écarts entre puces sous la souris : ils absorbent la différence entre la croissance réelle et la croissance moyenne, pour que les
+         lignes éloignées restent immobiles pendant qu'on parcourt la liste (sans cela, elles montaient et descendaient à chaque puce,
+         les puces n'ayant pas toutes la même hauteur). L'écart d'une puce agrandie n'est pas touché ; 40 % à 200 % de l'écart normal. */
+      const ecarts = f.p.map(() => 0);
+      if (l === active && f.g0 > 0) { const n = f.p.length, A = effet(Math.max(0, f.y0 - s.y, s.y - f.y1), f.R);
+        const reste = A * f.Gm - vise.reduce((t, c, j) => t + f.h[j] * (c - 1), 0), poids = f.p.map((_, j) => (j < n - 1 && f.top[j + 1] > s.y ? 1 - effet(distance(f, j + 1, s.y), f.R) : 0));
+        const W = Math.max(1, poids.reduce((t, x) => t + x, 0)); /* moins d'un écart libre sous la souris (bas de la liste) : compensation partielle, qui s'éteint en douceur */
+        poids.forEach((w, j) => { ecarts[j] = Math.max(-0.6 * f.g0, Math.min(f.g0, reste * w / W)); }); }
       const a = calme.matches ? 1 : 1 - Math.exp(-dt / (l === active ? TAU : TAU_LACHER));
       let bouge = false; s.c = s.c.map((c, j) => { const e = vise[j] - c; if (Math.abs(e) < 0.0015) return vise[j]; bouge = true; return c + e * a; });
+      s.e = s.e.map((x, j) => { const e = ecarts[j] - x; if (Math.abs(e) < 0.05) return ecarts[j]; bouge = true; return x + e * a; });
       appliquer(s); if (bouge) encore = true; else if (l !== active && vise.every((x) => x === 1)) finir(l, s); });
     document.dispatchEvent(new Event("ld-loupe")); /* la bulle ⓘ suit sa ligne */
     if (encore) raf = requestAnimationFrame(image); else tPrec = 0; /* tout est arrivé : on attend le prochain mouvement de la souris */
