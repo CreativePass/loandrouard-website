@@ -859,7 +859,7 @@ const PICTOS = {
   envoi: "<rect x='3' y='6.5' width='12.5' height='11' rx='2'/><path d='M15.5 10.5l5-3v9l-5-3z'/>",
 };
 const ICONE_CSS = Object.entries(PICTOS).map(([k, d]) => `.vf-bento__b[data-ic="${k}"] { --ic: url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>${d}</svg>`)}"); }`).join("\n");
-const APERCU_DELAI = 0.45; // 01/11 : attente (s) avant l'aperçu des rectangles au survol d'une carte non choisie
+const APERCU_DELAI = 0.45; // 01/11 : attente (s) avant l'aperçu des rectangles du Pack Évolution (non choisi) au survol
 const K = (v) => `calc(var(--vfk-k, 1) * ${v})`; // taille ajustée pour que les cartes tiennent à l'écran (ECHELLE_APRES)
 const CARTES_CSS_30 = `/* Corrections des 30 et 31/10 (scripts/construire.mjs) : cartes de la planche II avec la structure des cartes du haut (nom,
    prix, bouton centré), phrase d'accroche, fine ligne, puces ; rectangles « bento » à l'extérieur ; ⓘ ; « Launch offer » à côté de
@@ -970,9 +970,11 @@ ${ICONE_CSS}
   .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
   .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("var(--c-bento)")}); }
 }
-/* 01/11 (Loan : « quand je passe la souris rapidement sur le Pack, on pourrait croire que ça bugue ») : l'aperçu au survol attend
-   ${APERCU_DELAI} s que la souris reste sur la carte (rectangles, et titre qui remonte pour le Pack) ; il disparaît sans attendre. */
-@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: ${APERCU_DELAI}s; } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
+/* 01/11 (Loan : « quand je passe la souris rapidement sur le Pack, on pourrait croire que ça bugue ») : l'aperçu du Pack Évolution au
+   survol attend ${APERCU_DELAI} s que la souris reste sur la carte (rectangles et titre qui remonte) ; il disparaît sans attendre. Cartes de
+   gauche et de droite : aperçu instantané, comme avant (Loan, 01/11). */
+@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
+  .vfk-c[data-k="1"][data-vu]:hover > .vf-bento[data-choisi="non"] { transition-delay: ${APERCU_DELAI}s; }
   .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
   .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento[data-choisi="non"]) .vfk-tete > .vf-titre { transition-delay: .3s, .3s, ${APERCU_DELAI}s, ${APERCU_DELAI}s !important; }
   .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento[data-choisi="non"]) .vfk-tete > .vf-lede { transition-delay: .7s, .7s, ${APERCU_DELAI}s, ${APERCU_DELAI}s !important; }
@@ -1088,12 +1090,12 @@ const INFO_JS = `<script>/* Correction du 30/10 (scripts/construire.mjs) : bulle
 // (pleine taille sur toutes ses lignes, puis décroissance douce sur ≈ 3 lignes de texte). Quatrième retour du 01/11 (« des petits
 // haut-bas en permanence sur tout le texte ») : le haut de la liste reste fixe, seules les lignes sous la partie agrandie sont poussées
 // vers le bas. Rien ne bouge dans la mise en page (cartes, bas de page) : seulement des zooms et des déplacements, à chaque image.
-const LOUPE = { max: 1.3, portee: 3, tau: 55, lacher: 150, bord: 6, cadre: 0.7 }; // ×1,3 au plus ; portée : 3 lignes de texte ; amorti 55 ms (150 ms quand la souris s'en va) ; 6 px du bord ; cadre atténué de 70 % au plus
+const LOUPE = { max: 1.3, portee: 3, tau: 55, lacher: 150, bord: 6 }; // ×1,3 au plus ; portée : 3 lignes de texte ; amorti 55 ms (150 ms quand la souris s'en va) ; 6 px du bord
 const LOUPE_CSS = `/* Correction du 01/11 (scripts/construire.mjs) : effet loupe des puces des cartes (LOUPE_JS). */
 .vfk-c .vf-liste[data-loupe] > .vf-pt { position: relative; z-index: 1; } /* devant le cadre de la carte */
-/* Pendant la lecture, le cadre de la carte s'atténue (jusqu'à 30 %) : la ligne agrandie passe sur ses petits médaillons (haut de la liste). */
-.vfk-c .vf-carte[data-loupe-carte]::before { opacity: calc(1 - ${LOUPE.cadre} * var(--loupe, 0)); }
-.vfk-c .vf-carte[data-loupe-carte][data-choisi="oui"] .vf-or { opacity: calc(.95 * (1 - ${LOUPE.cadre} * var(--loupe, 0))); }
+/* Le cadre garde tout son éclat (Loan, 01/11 : « la carte perd de sa brillance » quand il s'atténuait) ; là où une ligne agrandie passe
+   sur ses petits médaillons (haut de la liste), un léger halo sombre autour des lettres les garde lisibles (invisible sur le fond). */
+.vfk-c .vf-liste[data-loupe] > .vf-pt { text-shadow: 0 0 3px rgba(20,19,17,.95), 0 0 7px rgba(20,19,17,.8); }
 `;
 const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effet loupe façon Dock de macOS sur les puces des cartes de la planche II
    (ordinateur, souris). La taille de chaque puce suit en continu la distance à la souris ; le haut de la liste reste fixe, les lignes
@@ -1160,8 +1162,6 @@ const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effe
       if (Math.abs(c - 1) < 0.0005 && Math.abs(t[j]) < 0.05) { e.style.transform = ""; return; }
       e.style.transformOrigin = f.ox[j].toFixed(1) + "px 0";
       e.style.transform = "translateY(" + t[j].toFixed(2) + "px) scale(" + c.toFixed(4) + ")"; });
-    const v = Math.max.apply(null, s.c.map((c) => (c - 1) / Math.max(0.001, commun.S - 1)));
-    f.carte.style.setProperty("--loupe", Math.max(0, Math.min(1, v)).toFixed(3));
   };
   /* Point de la liste au repos qui est affiché sous la souris (Y : px de mise en page depuis le haut de la liste) : dans une puce agrandie,
      on divise par son zoom ; entre deux puces, l'espace n'est pas agrandi. Ainsi la puce sous la souris est bien celle qui grossit. */
@@ -1175,11 +1175,11 @@ const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effe
     return Y;
   };
   const finir = (l, s) => { s.f.p.forEach((e) => { e.style.transform = e.style.transformOrigin = ""; }); l.removeAttribute("data-loupe");
-    s.f.carte.removeAttribute("data-loupe-carte"); s.f.carte.style.removeProperty("--loupe"); etats.delete(l); };
+    etats.delete(l); };
   const image = (t) => {
     raf = 0; const dt = tPrec ? Math.min(250, t - tPrec) : 16; tPrec = t;
     if (active && commun && commun.fiches.has(active) && !etats.has(active)) { const f = commun.fiches.get(active);
-      etats.set(active, { f, c: f.p.map(() => 1), e: f.p.map(() => 0), y: 0, g: 0 }); active.setAttribute("data-loupe", ""); f.carte.setAttribute("data-loupe-carte", ""); }
+      etats.set(active, { f, c: f.p.map(() => 1), e: f.p.map(() => 0), y: 0, g: 0 }); active.setAttribute("data-loupe", ""); }
     let encore = false;
     etats.forEach((s, l) => { const f = s.f;
       if (l === active) { const r = l.getBoundingClientRect(), kY = r.height / (f.H0 || 1) || 1; s.y = auRepos(s, (py - r.top) / kY); } /* point de la liste (au repos) sous la souris */
