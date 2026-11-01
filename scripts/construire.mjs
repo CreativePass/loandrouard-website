@@ -833,7 +833,7 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   "        const pb = C[1] && C[1].c.querySelector(\":scope > .vf-bento\"), rg = C[0] && C[0].c.parentNode;\n" +
   "        bloc.style.setProperty(\"--vfk-monte\", \"0px\"); if (rg) rg.style.marginTop = \"\";\n" +
   "        if (enRang && pb && rg) { const haut = C[1].c.getBoundingClientRect().top - pin.getBoundingClientRect().top - 10 - pb.offsetHeight;\n" +
-  "          if (haut < 20) rg.style.marginTop = Math.ceil(20 - haut) + \"px\"; /* 20 : le léger zoom de la caméra (≈ 1,4 %) remonte les rectangles de quelques px */\n" +
+  "          if (haut < 16) rg.style.marginTop = Math.ceil(16 - haut) + \"px\"; /* 16 : le léger zoom de la caméra (≈ 1,4 %) remonte les rectangles de quelques px */\n" +
   "          const besoin = pb.offsetHeight + 22, libre = C[1].c.getBoundingClientRect().top - tete.getBoundingClientRect().bottom;\n" +
   "          const monte = Math.max(0, Math.round(besoin - libre)); bloc.style.setProperty(\"--vfk-monte\", monte + \"px\");\n" +
   "          /* Une ligne qui sortirait en partie de l'écran s'efface en fondu (une ligne coupée ne fait pas soigné). */\n" +
@@ -957,8 +957,8 @@ ${ICONE_CSS}
   /* Pack Évolution (Loan, 31/10 et 01/11) : au-dessus de la carte, jamais plus large qu'elle ; compacts (icône et texte, deux par
      ligne, l'envoi sur toute la largeur ; le titre de chaque rectangle reste lu par les lecteurs d'écran). Quand ils s'affichent (clic,
      ou aperçu au survol), le titre et sa phrase remontent autant qu'il faut, même hors de l'écran (--vfk-monte : ECHELLE_APRES). */
-  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 10px); left: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; align-items: stretch; transform: translateY(6px); }
-  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b { position: relative; padding: 5px 9px 6px; column-gap: 6px; font-size: 13px; line-height: 1.26; } /* compacts : ils doivent tenir au-dessus de la carte */
+  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 10px); left: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; align-items: stretch; transform: translateY(6px); }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b { position: relative; padding: 4px 8px 5px; column-gap: 6px; font-size: 12px; line-height: 1.2; } /* compacts : ils tiennent au-dessus de la carte sans réduire le texte des cartes (Loan, 01/11) */
   .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > span { grid-row: 1; grid-column: 2; }
   .vfk-c[data-k="1"] > .vf-bento .vf-bento__b--l { grid-column: 1 / -1; }
