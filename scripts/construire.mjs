@@ -1079,29 +1079,32 @@ const INFO_JS = `<script>/* Correction du 30/10 (scripts/construire.mjs) : bulle
 </script>
 `;
 // 01/11 (Loan) : effet « Dock de macOS » sur les puces des cartes de la planche II (ordinateur, souris), pour rendre le texte des
-// cartes, assez petit, plus lisible : la ligne survolée grossit et pousse les autres, ses voisines grossissent un peu, tout revient à
-// la normale en passant à une autre ligne ou en quittant la liste. Second retour du 01/11 : le texte grossit sans changer de lignes
-// (zoom, pas de nouvelle mise en page : plus de mots qui sautent d'une ligne à l'autre) ; même agrandissement dans les 3 cartes ; le
-// texte peut sortir de sa place habituelle tant qu'il reste dans la carte. Une ligne qui garde ses retours à la ligne s'élargit
-// d'autant : la largeur de la carte décide de l'agrandissement (≈ ×1,16 : les lignes les plus longues occupent déjà toute la largeur ;
-// marges de la carte utilisées jusqu'à 6 px du bord). Rien ne bouge dans la mise en page (cartes, bas de page) : seulement des zooms
-// et des déplacements, animés comme le Dock (amorti, à chaque image).
-const LOUPE = { max: 1.3, voisine: 0.35, tau: 80, bord: 6, cadre: 0.3 }; // ×1,3 au plus ; voisines : 35 % de l'agrandissement ; amorti 80 ms ; 6 px du bord de la carte ; cadre à 30 % pendant la lecture
+// cartes, assez petit, plus lisible : la ligne sous la souris grossit et pousse les autres, ses voisines grossissent un peu.
+// Second retour du 01/11 : le texte grossit sans changer de lignes (zoom, pas de nouvelle mise en page) ; même agrandissement dans les
+// 3 cartes ; le texte peut sortir de sa place habituelle tant qu'il reste dans la carte. Une ligne qui garde ses retours à la ligne
+// s'élargit d'autant : la largeur de la carte décide de l'agrandissement (≈ ×1,17 : les lignes les plus longues occupent déjà toute
+// la largeur ; marges de la carte utilisées jusqu'à 6 px du bord). Troisième retour du 01/11 (« comme le Dock, grossissement et
+// rétrécissement continus entre les lignes ») : la taille de chaque puce dépend en continu de la distance entre la souris et la puce
+// (pleine taille sur toutes ses lignes, puis décroissance douce sur ≈ 3 lignes de texte) ; le point sous la souris reste sous la
+// souris : ce qui est au-dessus est poussé vers le haut, ce qui est en dessous vers le bas, comme les icônes du Dock. Rien ne bouge
+// dans la mise en page (cartes, bas de page) : seulement des zooms et des déplacements, à chaque image.
+const LOUPE = { max: 1.3, portee: 3, tau: 55, lacher: 150, bord: 6, cadre: 0.7 }; // ×1,3 au plus ; portée : 3 lignes de texte ; amorti 55 ms (150 ms quand la souris s'en va) ; 6 px du bord ; cadre atténué de 70 % au plus
 const LOUPE_CSS = `/* Correction du 01/11 (scripts/construire.mjs) : effet loupe des puces des cartes (LOUPE_JS). */
 .vfk-c .vf-liste[data-loupe] > .vf-pt { position: relative; z-index: 1; } /* devant le cadre de la carte */
-/* Pendant la lecture, le cadre de la carte s'atténue : la ligne agrandie passe sur ses petits médaillons (haut de la liste). */
-.vfk-c .vf-carte[data-loupe-carte]::before { opacity: ${LOUPE.cadre}; }
-.vfk-c .vf-carte[data-loupe-carte] .vf-or { opacity: ${LOUPE.cadre}; }
+/* Pendant la lecture, le cadre de la carte s'atténue (jusqu'à 30 %) : la ligne agrandie passe sur ses petits médaillons (haut de la liste). */
+.vfk-c .vf-carte[data-loupe-carte]::before { opacity: calc(1 - ${LOUPE.cadre} * var(--loupe, 0)); }
+.vfk-c .vf-carte[data-loupe-carte][data-choisi="oui"] .vf-or { opacity: calc(.95 * (1 - ${LOUPE.cadre} * var(--loupe, 0))); }
 `;
 const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effet loupe façon Dock de macOS sur les puces des cartes de la planche II
-   (ordinateur, souris). La ligne survolée grossit, ses voisines un peu ; les lignes du dessous sont poussées. Zoom sans nouvelle mise
-   en page : chaque puce garde ses retours à la ligne, la carte et la page ne bougent pas. Même agrandissement dans les 3 cartes : le
-   plus grand qui garde toutes les lignes dans la carte (${LOUPE.bord} px du bord au moins), ×${LOUPE.max} au plus. */
+   (ordinateur, souris). La taille de chaque puce suit en continu la distance à la souris ; le point sous la souris reste sous la
+   souris (le haut est poussé vers le haut, le bas vers le bas). Zoom sans nouvelle mise en page : chaque puce garde ses retours à la
+   ligne, la carte et la page ne bougent pas. Même agrandissement dans les 3 cartes : le plus grand qui garde toutes les lignes dans la
+   carte (${LOUPE.bord} px du bord au moins), ×${LOUPE.max} au plus. */
 (() => { if (window.__ldLoupe) return; window.__ldLoupe = 1;
   const mq = matchMedia("(min-width: 1000px) and (hover: hover) and (pointer: fine)"), calme = matchMedia("(prefers-reduced-motion: reduce)");
-  const MAX = ${LOUPE.max}, VOISINE = ${LOUPE.voisine}, TAU = ${LOUPE.tau}, BORD = ${LOUPE.bord}, LISTES = ".vfk-c .vf-details .vf-liste";
-  const etats = new Map(); /* liste → { p, h, ox, c (zoom actuel), t (zoom visé), bas, haut } */
-  let commun = null, liste = null, actif = -1, raf = 0, tPrec = 0;
+  const MAX = ${LOUPE.max}, PORTEE = ${LOUPE.portee}, TAU = ${LOUPE.tau}, TAU_LACHER = ${LOUPE.lacher}, BORD = ${LOUPE.bord}, LISTES = ".vfk-c .vf-details .vf-liste";
+  const etats = new Map(); /* liste → { f (mesures), c (zoom actuel de chaque puce), y (point sous la souris), g (décalage d'ensemble) } */
+  let commun = null, active = null, py = 0, raf = 0, tPrec = 0;
   const puces = (l) => Array.prototype.filter.call(l.children, (e) => e.classList.contains("vf-pt"));
   /* Mesures au repos, en px de mise en page, des 3 listes ensemble (même agrandissement partout) ; refaites si la largeur ou la taille
      du texte change. Ligne la plus large de chaque puce : rectangles du texte, ramenés en px de mise en page (zoom de la caméra). */
@@ -1124,56 +1127,67 @@ const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effe
       const G = Math.max(0, pg - BORD), D = (x) => Math.max(0, W - x + pd - BORD);
       larg.forEach((x) => { S = Math.min(S, 1 + (G + D(x)) / x); });
       let haut = 0; for (let e = l; e && e !== carte; e = e.offsetParent) haut += e.offsetTop;
-      const prec = l.previousElementSibling, H0 = l.offsetHeight;
-      fiches.set(l, { p, larg, G, D, h: p.map((e) => e.offsetHeight),
+      let prec = l.previousElementSibling; while (prec && !prec.getClientRects().length) prec = prec.previousElementSibling; /* élément affiché au-dessus (le paragraphe est caché sur ordinateur) */
+      const H0 = l.offsetHeight, L = parseFloat(getComputedStyle(p[0]).lineHeight) || 20;
+      const h = p.map((e) => e.offsetHeight), top = p.map((e) => e.offsetTop - l.offsetTop);
+      fiches.set(l, { l, carte, p, h, top, H0, R: PORTEE * L,
+        a: h.map((x) => Math.min(x / 2, L / 2)), /* pleine taille tant que la souris est sur une des lignes de la puce */
+        ox: larg.map((x) => { const g = G, d = D(x); return g + d > 0 ? x * g / (g + d) : x / 2; }), /* la place est partagée à gauche et à droite */
         bas: Math.max(0, carte.clientHeight - haut - H0 - Math.max(BORD, pb * 0.3)), /* place sous la liste, jusqu'à la marge du bas */
-        dessus: prec ? Math.max(0, l.offsetTop - prec.offsetTop - prec.offsetHeight - 4) : 0 });
+        dessus: prec ? Math.max(0, l.offsetTop - prec.offsetTop - prec.offsetHeight - 7) : 0 });
     });
-    fiches.forEach((f) => { f.ox = f.larg.map((x) => { const g = f.G, d = f.D(x); return g + d > 0 ? x * g / (g + d) : x / 2; }); }); /* origine du zoom : la place est partagée à gauche et à droite */
     commun = { cle, ls, S: Math.max(1, S), fiches }; return commun;
   };
-  const appliquer = (l, s) => {
-    let y = 0; const f = s.f, delta = s.c.reduce((t, c, j) => t + f.h[j] * (c - 1), 0), u = Math.min(f.dessus, Math.max(0, delta - f.bas));
+  /* Zoom visé d'une puce selon la distance (px) entre la souris et ses lignes : 1 à 0, décroissance douce (cos²) sur R px. */
+  const effet = (d, R) => (d >= R ? 0 : Math.pow(Math.cos(Math.PI / 2 * d / R), 2));
+  const appliquer = (s) => {
+    const f = s.f, n = f.p.length, o = f.p.map((_, j) => Math.max(0, Math.min(f.h[j], s.y - f.top[j]))); /* point fixe de chaque puce : le plus proche de la souris */
+    const D = f.p.map((_, j) => (s.c[j] - 1) * (f.h[j] - o[j])), U = f.p.map((_, j) => (s.c[j] - 1) * o[j]);
+    const t = []; let bas = 0; for (let j = 0; j < n; j++) { t[j] = bas; bas += D[j]; } let haut = 0; for (let j = n - 1; j >= 0; j--) { t[j] -= haut; haut += U[j]; }
+    /* Décalage d'ensemble : la liste agrandie ne touche ni la ligne fine au-dessus ni le bas de la carte. */
+    const sommet = t[0] + o[0] * (1 - s.c[0]), debord = f.top[n - 1] + o[n - 1] + s.c[n - 1] * (f.h[n - 1] - o[n - 1]) + t[n - 1] - f.H0;
+    s.g = Math.max(-f.dessus - sommet, Math.min(0, f.bas - debord));
     f.p.forEach((e, j) => { const c = s.c[j];
-      e.style.transform = Math.abs(c - 1) < 0.0005 && Math.abs(y - u) < 0.05 ? "" : "translateY(" + (y - u).toFixed(2) + "px) scale(" + c.toFixed(4) + ")";
-      y += f.h[j] * (c - 1); });
+      if (Math.abs(c - 1) < 0.0005 && Math.abs(t[j] + s.g) < 0.05) { e.style.transform = ""; return; }
+      e.style.transformOrigin = f.ox[j].toFixed(1) + "px " + o[j].toFixed(1) + "px";
+      e.style.transform = "translateY(" + (t[j] + s.g).toFixed(2) + "px) scale(" + c.toFixed(4) + ")"; });
+    const v = Math.max.apply(null, s.c.map((c) => (c - 1) / Math.max(0.001, commun.S - 1)));
+    f.carte.style.setProperty("--loupe", Math.max(0, Math.min(1, v)).toFixed(3));
   };
-  const finir = (l, s) => { s.f.p.forEach((e) => { e.style.transform = e.style.transformOrigin = ""; }); l.removeAttribute("data-loupe"); etats.delete(l);
-    const carte = l.closest(".vf-carte"); if (carte) carte.removeAttribute("data-loupe-carte"); };
+  const finir = (l, s) => { s.f.p.forEach((e) => { e.style.transform = e.style.transformOrigin = ""; }); l.removeAttribute("data-loupe");
+    s.f.carte.removeAttribute("data-loupe-carte"); s.f.carte.style.removeProperty("--loupe"); etats.delete(l); };
   const image = (t) => {
-    const dt = tPrec ? Math.min(250, t - tPrec) : 16; /* en temps réel, même si les images sont rares */ tPrec = t; const a = calme.matches ? 1 : 1 - Math.exp(-dt / TAU);
+    raf = 0; const dt = tPrec ? Math.min(250, t - tPrec) : 16; tPrec = t;
+    if (active && commun && commun.fiches.has(active) && !etats.has(active)) { const f = commun.fiches.get(active);
+      etats.set(active, { f, c: f.p.map(() => 1), y: 0, g: 0 }); active.setAttribute("data-loupe", ""); f.carte.setAttribute("data-loupe-carte", ""); }
     let encore = false;
-    etats.forEach((s, l) => { let bouge = false;
-      s.c = s.c.map((c, j) => { const d = s.t[j] - c; if (Math.abs(d) < 0.0008) return s.t[j]; bouge = true; return c + d * a; });
-      appliquer(l, s); if (bouge) encore = true; else if (s.t.every((x) => x === 1)) finir(l, s); });
+    etats.forEach((s, l) => { const f = s.f;
+      if (l === active) { const r = l.getBoundingClientRect(), kY = r.height / (f.H0 || 1) || 1; s.y = (py - r.top) / kY - s.g; } /* point de la liste (au repos) sous la souris */
+      const vise = f.p.map((_, j) => { if (l !== active) return 1; const d = Math.max(0, f.top[j] + f.a[j] - s.y, s.y - (f.top[j] + f.h[j] - f.a[j])); return 1 + (commun.S - 1) * effet(d, f.R); });
+      const a = calme.matches ? 1 : 1 - Math.exp(-dt / (l === active ? TAU : TAU_LACHER));
+      let bouge = false; s.c = s.c.map((c, j) => { const e = vise[j] - c; if (Math.abs(e) < 0.0015) return vise[j]; bouge = true; return c + e * a; });
+      appliquer(s); if (bouge) encore = true; else if (l !== active && vise.every((x) => x === 1)) finir(l, s); });
     document.dispatchEvent(new Event("ld-loupe")); /* la bulle ⓘ suit sa ligne */
-    if (encore) raf = requestAnimationFrame(image); else { raf = 0; tPrec = 0; }
+    if (encore) raf = requestAnimationFrame(image); else tPrec = 0; /* tout est arrivé : on attend le prochain mouvement de la souris */
   };
-  const viser = (l, i) => {
-    const m = commun; if (!m || !m.fiches.has(l)) return; const f = m.fiches.get(l);
-    let s = etats.get(l);
-    if (!s) { if (i < 0) return; s = { f, c: f.p.map(() => 1), t: null }; etats.set(l, s); l.setAttribute("data-loupe", "");
-      f.p.forEach((e, j) => { e.style.transformOrigin = f.ox[j].toFixed(1) + "px 0"; }); }
-    s.t = f.p.map((_, j) => (i < 0 ? 1 : j === i ? m.S : Math.abs(j - i) === 1 ? 1 + (m.S - 1) * VOISINE : 1));
-    const carte = l.closest(".vf-carte"); if (carte) carte.toggleAttribute("data-loupe-carte", i >= 0);
-    if (!raf) raf = requestAnimationFrame(image);
-  };
-  const lacher = () => { if (liste) viser(liste, -1); liste = null; actif = -1; };
-  document.addEventListener("pointerover", (e) => {
+  const relancer = () => { if (!raf) raf = requestAnimationFrame(image); };
+  const lacher = () => { if (active) { active = null; relancer(); } };
+  /* Liste active : celle de la carte où se trouve la souris (en largeur), quand la souris est à moins de la portée de ses lignes (en
+     hauteur, même un peu sous la carte) : l'effet commence et finit en douceur, sans dépendre du bord de la carte (qui s'incline). */
+  document.addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse") return;
-    const t = e.target && e.target.closest ? e.target : null, l = mq.matches && t ? t.closest(LISTES) : null;
-    if (liste && l !== liste) lacher();
-    if (!l) return;
-    const pt = t.closest(".vf-pt"); if (!pt || pt.parentNode !== l) return; /* entre deux puces : la ligne grossie reste grossie */
-    if (!etats.size) mesurer(); /* au repos seulement : les mesures lisent la mise en page sans zoom */
-    const f = commun && commun.fiches.get(l); if (!f) return;
-    const i = f.p.indexOf(pt); if (i < 0 || (l === liste && i === actif)) return;
-    liste = l; actif = i; viser(l, i);
-  });
+    if (!mq.matches) { if (active) lacher(); return; }
+    if (!etats.size && e.target && e.target.closest && e.target.closest(".vfk-c .vf-carte")) mesurer(); /* au repos seulement : les mesures lisent la mise en page sans zoom */
+    let n = null;
+    if (commun) commun.fiches.forEach((f, l) => { if (n) return; const cr = f.carte.getBoundingClientRect(); if (e.clientX < cr.left || e.clientX > cr.right) return;
+      const r = l.getBoundingClientRect(), m = f.R * r.height / (f.H0 || 1); if (e.clientY > r.top - m && e.clientY < r.bottom + m) n = l; });
+    if (n !== active || n) { active = n; py = e.clientY; relancer(); }
+  }, { passive: true });
+  addEventListener("scroll", () => { if (active) relancer(); }, { passive: true, capture: true }); /* la page défile sous la souris immobile */
   document.addEventListener("pointerout", (e) => { if (e.pointerType === "mouse" && !e.relatedTarget) lacher(); }); /* sortie de la fenêtre */
   addEventListener("blur", lacher);
   /* Changement de taille de la fenêtre : retour immédiat à la normale, mesures à refaire. */
-  addEventListener("resize", () => { liste = null; actif = -1; etats.forEach((s, l) => finir(l, s)); commun = null; });
+  addEventListener("resize", () => { active = null; etats.forEach((s, l) => finir(l, s)); commun = null; });
 })();
 </script>
 `;
