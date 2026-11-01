@@ -825,7 +825,21 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   "         haute), pour que bouton, ligne et puces commencent au même niveau ; recalculé à chaque taille de texte essayée. */\n" +
   "      const egaliser = () => { [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].forEach((q) => {\n" +
   "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
-  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } }); };\n" +
+  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } });\n" +
+  "        /* 01/11 (Loan) : rectangles du Pack Évolution au-dessus de la carte, dans sa largeur. Quand ils s'affichent, le titre et sa\n" +
+  "           phrase remontent autant qu'il faut (--vfk-monte), même hors de l'écran : aucune place réservée, la taille du texte des\n" +
+  "           cartes passe avant (Loan, 01/11). Seule exception, sur les petits écrans : si les rectangles sortaient par le haut de\n" +
+  "           l'écran, les cartes descendent juste assez (bande au-dessus des cartes, souvent 0). 12 px d'air sous la phrase, 10 sur la carte. */\n" +
+  "        const pb = C[1] && C[1].c.querySelector(\":scope > .vf-bento\"), rg = C[0] && C[0].c.parentNode;\n" +
+  "        bloc.style.setProperty(\"--vfk-monte\", \"0px\"); if (rg) rg.style.marginTop = \"\";\n" +
+  "        if (enRang && pb && rg) { const haut = C[1].c.getBoundingClientRect().top - pin.getBoundingClientRect().top - 10 - pb.offsetHeight;\n" +
+  "          if (haut < 16) rg.style.marginTop = Math.ceil(16 - haut) + \"px\"; /* 16 : le léger zoom de la caméra (≈ 1,4 %) remonte les rectangles de quelques px */\n" +
+  "          const besoin = pb.offsetHeight + 22, libre = C[1].c.getBoundingClientRect().top - tete.getBoundingClientRect().bottom;\n" +
+  "          const monte = Math.max(0, Math.round(besoin - libre)); bloc.style.setProperty(\"--vfk-monte\", monte + \"px\");\n" +
+  "          /* Une ligne qui sortirait en partie de l'écran s'efface en fondu (une ligne coupée ne fait pas soigné). */\n" +
+  "          tete.querySelectorAll(\":scope > .vf-titre, :scope > .vf-lede\").forEach((e) => { const op = e.offsetParent;\n" +
+  "            e.toggleAttribute(\"data-sort\", !!op && op.getBoundingClientRect().top + e.offsetTop - pin.getBoundingClientRect().top - monte < 28); }); } /* 28 : marge pour le zoom de la caméra */\n" +
+  "        else tete.querySelectorAll(\"[data-sort]\").forEach((e) => e.removeAttribute(\"data-sort\")); };\n" +
   "      egaliser();\n" +
   "      if (enRang) {\n" +
   "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16, wa = sec.querySelector(\".vfk-whatsapp\");\n" +
@@ -833,7 +847,7 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   '        let lo = 0.75, hi = 1; bloc.style.setProperty("--vfk-k", "1");\n' +
   '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); egaliser(); }\n' +
   "        const br = bloc.getBoundingClientRect(), bas = basC() + pr.top;\n" +
-  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.8, 1);\n";
+  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.75, 1); /* 0,75 au plus (petits écrans, rectangles du Pack) */\n";
 // Petites icônes des rectangles (provisoires : Loan les choisira plus tard) : traits fins, couleur or (masque CSS).
 const PICTOS = {
   paiement: "<rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='M3 10h18M7 15h3'/>",
@@ -894,7 +908,7 @@ ${ICONE_CSS}
 .vf-bulle-i[data-notes] .vf-i-l { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px; }
 .vf-bulle-i[data-notes] .vf-i-l + .vf-i-l { margin-top: 5px; }
 .vf-bulle-i[data-notes] b { margin: 0; white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o, .vfk-c > .vf-bento, .vfk-whatsapp { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o, .vfk-c > .vf-bento, .vfk-whatsapp, .vfk-tete > :is(.vf-titre, .vf-lede) { transition: none !important; } }
 /* Tailles des cartes, à la mesure de l'écran (Loan, 31/10) : les mêmes en haut (vitrine) et en bas (planche II) ; égales aux
    anciennes tailles fixes à 1440 px de large, plus grandes au-delà. */
 @media (min-width: 900px) {
@@ -920,7 +934,7 @@ ${ICONE_CSS}
   .vfk-whatsapp { display: block; margin: ${K("18px")} 0 0; text-align: center; font-style: italic; font-weight: 500; font-size: clamp(17px, .5vw + 10px, 21px); color: rgba(246,245,241,.7); opacity: 0; transition: opacity 1.2s ease; }
   .vfk-bloc:has(.vfk-note[data-on]) .vfk-whatsapp { opacity: 1; }
   @supports not selector(:has(*)) { .vfk-whatsapp { opacity: 1; } }
-  .vfk-rang { width: min(1320px, 100vw - 2 * (var(--vfk-bord) + var(--vfk-w) + 16px)); gap: clamp(28px, 2.6vw, 52px); align-items: stretch; }
+  .vfk-rang { --vfk-gap: clamp(28px, 2.6vw, 52px); width: min(1320px, 100vw - 2 * (var(--vfk-bord) + var(--vfk-w) + 16px)); gap: var(--vfk-gap); align-items: stretch; }
   .vfk-c { display: flex; flex-direction: column; }
   .vfk-flip { flex: 1 0 auto; display: flex; flex-direction: column; }
   .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; padding: max(${K("30px")}, 7cqw) max(26px, 8.6cqw) max(${K("26px")}, 6.4cqw); } /* marges à la mesure de la carte : les ornements du cadre grandissent avec elle */
@@ -940,11 +954,24 @@ ${ICONE_CSS}
   .vfk-c > .vf-bento { position: absolute; z-index: 2; top: 0; width: var(--vfk-w); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .35s ease, transform .35s ease, visibility 0s .35s; } /* cachés : ni clic ni clavier */
   .vfk-c[data-k="0"] > .vf-bento { right: calc(100% + 16px); transform: translateX(6px); }
   .vfk-c[data-k="2"] > .vf-bento { left: calc(100% + 16px); transform: translateX(-6px); }
-  .vfk-c[data-k="1"] > .vf-bento { display: none; }
+  /* Pack Évolution (Loan, 31/10 et 01/11) : au-dessus de la carte, jamais plus large qu'elle ; compacts (icône et texte, deux par
+     ligne, l'envoi sur toute la largeur ; le titre de chaque rectangle reste lu par les lecteurs d'écran). Quand ils s'affichent (clic,
+     ou aperçu au survol), le titre et sa phrase remontent autant qu'il faut, même hors de l'écran (--vfk-monte : ECHELLE_APRES). */
+  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 10px); left: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; align-items: stretch; transform: translateY(6px); }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b { position: relative; padding: 4px 8px 5px; column-gap: 6px; font-size: 12px; line-height: 1.2; } /* compacts : ils tiennent au-dessus de la carte sans réduire le texte des cartes (Loan, 01/11) */
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > span { grid-row: 1; grid-column: 2; }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b--l { grid-column: 1 / -1; }
+  .vfk-tete > .vf-titre { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .3s, .3s, 0s, 0s !important; }
+  .vfk-tete > .vf-lede { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .7s, .7s, 0s, 0s !important; }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu] > .vf-bento[data-choisi="oui"]) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu] > .vf-bento[data-choisi="oui"]) .vfk-tete > [data-sort] { opacity: 0; }
   .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
   .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("var(--c-bento)")}); }
 }
-@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
+@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > [data-sort] { opacity: 0; } }
 /* Grands écrans : le titre monte dans la bande de l'en-tête (ses liens sont effacés dès qu'on descend ; le nom et les langues sont
    sur les côtés). En dessous de 1 100 px, il reste sous l'en-tête (il toucherait le nom). */
 @media (min-width: 1100px) { .vfk-contenu { padding-top: clamp(16px, 2.6svh, 30px); } }
@@ -983,13 +1010,21 @@ const EGALISER_JS = `<script>/* Correction du 31/10 (scripts/construire.mjs) : c
   const mq = window.matchMedia("(min-width: 900px)"), GROUPES = [".vfp-c .vf-carte__tete .vf-nom", ".vfp-c .vf-carte__tete .vf-prix", ".vfp-c .vfp-phrase"];
   const egaliser = () => GROUPES.forEach((q) => { const g = [...document.querySelectorAll(q)]; g.forEach((e) => { e.style.minHeight = ""; });
     if (mq.matches && g.length > 1) { const h = Math.max(...g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + "px"; }); } });
-  let ro = null;
-  const brancher = () => { const c = document.querySelectorAll(".vfp-c .vf-carte"); if (c.length < 3) return false;
-    if (window.ResizeObserver) { ro = new ResizeObserver(() => egaliser()); GROUPES.forEach((q) => document.querySelectorAll(q).forEach((e) => ro.observe(e))); }
-    egaliser(); return true; };
-  const t = setInterval(() => { if (brancher()) clearInterval(t); }, 250); setTimeout(() => clearInterval(t), 60000);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(egaliser);
-  if (mq.addEventListener) mq.addEventListener("change", egaliser);
+  /* Chaque élément est observé (taille) ; les cartes aussi (contenu recréé par le moteur de la page) : égalisation à l'image suivante. */
+  let ro = null, raf = 0;
+  const plus_tard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; egaliser(); if (ro) GROUPES.forEach((q) => document.querySelectorAll(q).forEach((e) => ro.observe(e))); }); };
+  /* Toute la page est surveillée (et pas seulement les cartes du haut) : le moteur peut recréer tout le bloc des cartes. */
+  const brancher = () => { if (!document.body) return false;
+    if (window.ResizeObserver) ro = new ResizeObserver(plus_tard);
+    const vitrine = (n) => { const e = n && (n.nodeType === 1 ? n : n.parentElement); return !!e && (!!e.closest(".vfp-cartes") || (e.querySelector && !!e.querySelector(".vfp-c"))); };
+    if (window.MutationObserver) new MutationObserver((l) => { if (l.some((r) => vitrine(r.target) || [...r.addedNodes].some(vitrine))) plus_tard(); })
+      .observe(document.body, { childList: true, subtree: true, characterData: true }); /* seulement ce qui touche les cartes du haut */
+    plus_tard(); return true; };
+  if (!brancher()) document.addEventListener("DOMContentLoaded", brancher);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(plus_tard);
+  if (mq.addEventListener) mq.addEventListener("change", plus_tard);
+  addEventListener("resize", plus_tard);
+  document.addEventListener("click", plus_tard, true); /* « See the options » : cartes affichées */
 })();
 </script>
 `;
