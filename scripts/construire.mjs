@@ -827,14 +827,19 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
   "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } });\n" +
   "        /* 01/11 (Loan) : rectangles du Pack Évolution au-dessus de la carte, dans sa largeur. Quand ils s'affichent, le titre et sa\n" +
-  "           phrase remontent (--vfk-monte, jusqu'en haut de l'écran) ; une bande au-dessus des cartes complète si besoin. 12 px d'air\n" +
-  "           au-dessus et au-dessous des rectangles. */\n" +
+  "           phrase remontent autant qu'il faut (--vfk-monte), même hors de l'écran : aucune place réservée, la taille du texte des\n" +
+  "           cartes passe avant (Loan, 01/11). Seule exception, sur les petits écrans : si les rectangles sortaient par le haut de\n" +
+  "           l'écran, les cartes descendent juste assez (bande au-dessus des cartes, souvent 0). 12 px d'air sous la phrase, 10 sur la carte. */\n" +
   "        const pb = C[1] && C[1].c.querySelector(\":scope > .vf-bento\"), rg = C[0] && C[0].c.parentNode;\n" +
-  "        if (rg) rg.style.marginTop = \"\"; bloc.style.setProperty(\"--vfk-monte\", \"0px\"); bloc.style.setProperty(\"--vfk-repos\", \"0px\");\n" +
-  "        if (enRang && pb && rg) { const tq = tete.getBoundingClientRect(), besoin = pb.offsetHeight + 28, libre = C[1].c.getBoundingClientRect().top - tq.bottom;\n" +
-  "          const monte = Math.max(0, Math.min(besoin - libre, tq.top - pin.getBoundingClientRect().top - 6)), bande = Math.max(0, Math.ceil(besoin - libre - monte));\n" +
-  "          bloc.style.setProperty(\"--vfk-monte\", Math.round(monte) + \"px\"); if (bande) rg.style.marginTop = bande + \"px\";\n" +
-  "          bloc.style.setProperty(\"--vfk-repos\", Math.round(bande / 2) + \"px\"); } }; /* sans les rectangles : titre et phrase au milieu de la place libre */\n" +
+  "        bloc.style.setProperty(\"--vfk-monte\", \"0px\"); if (rg) rg.style.marginTop = \"\";\n" +
+  "        if (enRang && pb && rg) { const haut = C[1].c.getBoundingClientRect().top - pin.getBoundingClientRect().top - 10 - pb.offsetHeight;\n" +
+  "          if (haut < 20) rg.style.marginTop = Math.ceil(20 - haut) + \"px\"; /* 20 : le léger zoom de la caméra (≈ 1,4 %) remonte les rectangles de quelques px */\n" +
+  "          const besoin = pb.offsetHeight + 22, libre = C[1].c.getBoundingClientRect().top - tete.getBoundingClientRect().bottom;\n" +
+  "          const monte = Math.max(0, Math.round(besoin - libre)); bloc.style.setProperty(\"--vfk-monte\", monte + \"px\");\n" +
+  "          /* Une ligne qui sortirait en partie de l'écran s'efface en fondu (une ligne coupée ne fait pas soigné). */\n" +
+  "          tete.querySelectorAll(\":scope > .vf-titre, :scope > .vf-lede\").forEach((e) => { const op = e.offsetParent;\n" +
+  "            e.toggleAttribute(\"data-sort\", !!op && op.getBoundingClientRect().top + e.offsetTop - pin.getBoundingClientRect().top - monte < 28); }); } /* 28 : marge pour le zoom de la caméra */\n" +
+  "        else tete.querySelectorAll(\"[data-sort]\").forEach((e) => e.removeAttribute(\"data-sort\")); };\n" +
   "      egaliser();\n" +
   "      if (enRang) {\n" +
   "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16, wa = sec.querySelector(\".vfk-whatsapp\");\n" +
@@ -842,7 +847,7 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   '        let lo = 0.75, hi = 1; bloc.style.setProperty("--vfk-k", "1");\n' +
   '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); egaliser(); }\n' +
   "        const br = bloc.getBoundingClientRect(), bas = basC() + pr.top;\n" +
-  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.7, 1); /* 0,7 au plus (31/10 : bande des rectangles du Pack) */\n";
+  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.75, 1); /* 0,75 au plus (petits écrans, rectangles du Pack) */\n";
 // Petites icônes des rectangles (provisoires : Loan les choisira plus tard) : traits fins, couleur or (masque CSS).
 const PICTOS = {
   paiement: "<rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='M3 10h18M7 15h3'/>",
@@ -951,21 +956,22 @@ ${ICONE_CSS}
   .vfk-c[data-k="2"] > .vf-bento { left: calc(100% + 16px); transform: translateX(-6px); }
   /* Pack Évolution (Loan, 31/10 et 01/11) : au-dessus de la carte, jamais plus large qu'elle ; compacts (icône et texte, deux par
      ligne, l'envoi sur toute la largeur ; le titre de chaque rectangle reste lu par les lecteurs d'écran). Quand ils s'affichent (clic,
-     ou aperçu au survol), le titre et sa phrase remontent juste assez (--vfk-monte : ECHELLE_APRES). */
-  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 12px); left: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: stretch; transform: translateY(6px); }
-  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b { position: relative; padding: 7px 10px 8px; }
+     ou aperçu au survol), le titre et sa phrase remontent autant qu'il faut, même hors de l'écran (--vfk-monte : ECHELLE_APRES). */
+  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 10px); left: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; align-items: stretch; transform: translateY(6px); }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b { position: relative; padding: 5px 9px 6px; column-gap: 6px; font-size: 13px; line-height: 1.26; } /* compacts : ils doivent tenir au-dessus de la carte */
   .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > span { grid-row: 1; grid-column: 2; }
   .vfk-c[data-k="1"] > .vf-bento .vf-bento__b--l { grid-column: 1 / -1; }
-  .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(var(--vfk-repos, 0px)); } /* au repos : au milieu de la place gardée pour les rectangles du Pack */
-  .vfk-tete > .vf-titre { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .3s, .3s, .3s, 0s !important; }
-  .vfk-tete > .vf-lede { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .7s, .7s, .7s, 0s !important; }
+  .vfk-tete > .vf-titre { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .3s, .3s, 0s, 0s !important; }
+  .vfk-tete > .vf-lede { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .7s, .7s, 0s, 0s !important; }
   .vfk-bloc:has(.vfk-c[data-k="1"][data-vu] > .vf-bento[data-choisi="oui"]) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu] > .vf-bento[data-choisi="oui"]) .vfk-tete > [data-sort] { opacity: 0; }
   .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
   .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("var(--c-bento)")}); }
 }
 @media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
-  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); } }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > [data-sort] { opacity: 0; } }
 /* Grands écrans : le titre monte dans la bande de l'en-tête (ses liens sont effacés dès qu'on descend ; le nom et les langues sont
    sur les côtés). En dessous de 1 100 px, il reste sous l'en-tête (il toucherait le nom). */
 @media (min-width: 1100px) { .vfk-contenu { padding-top: clamp(16px, 2.6svh, 30px); } }
