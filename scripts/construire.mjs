@@ -545,7 +545,17 @@ const RALENTI_APRES = RALENTI_AVANT +
   "  return x - R; };\n" +
   "/* Correction du 30/10 (scripts/construire.mjs) : écran tactile (téléphone, tablette), pour l'inertie de la caméra. */\n" +
   "let mqTactile = null;\n" +
-  "const tactile = () => { if (mqTactile === null) mqTactile = window.matchMedia ? window.matchMedia(\"(pointer: coarse)\") : false; return !!(mqTactile && mqTactile.matches); };\n";
+  "const tactile = () => { if (mqTactile === null) mqTactile = window.matchMedia ? window.matchMedia(\"(pointer: coarse)\") : false; return !!(mqTactile && mqTactile.matches); };\n" +
+  "/* Correction du 02/11 (scripts/construire.mjs) : sur mobile, bascule yin-yang au ralenti. Défilement xr → progression x de l'étude :\n" +
+  "   vitesse en courbe douce, 80 % pendant le tour, la séparation et le vol des moitiés (u 6,9 → 7,4), 33 % quand tout est posé\n" +
+  "   (u 7,4 → 7,56), puis retour à 100 %. E : défilement ajouté (section allongée d'autant sur mobile). */\n" +
+  "const basculeLente = (() => { const vc = 0.8, vp = 0.33, c0 = depuisU(6.9), c1 = depuisU(7.4), c2 = depuisU(7.56);\n" +
+  "  const S = [[0.8, 1, vc], [0, vc, vc], [0.6, vc, vp], [(c2 - c1) / vp, vp, vp], [1, vp, 1]];\n" +
+  "  S[1][0] = (c1 - c0 - S[2][0] * (vc + vp) / 2) / vc;\n" +
+  "  const A = c0 - S[0][0] * (1 + vc) / 2;\n" +
+  "  let x = A, y = A; const P = S.map(([L, a, b]) => { const p = { x, y, L, a, b }; x += L; y += L * (a + b) / 2; return p; });\n" +
+  "  return { E: x - y, f: (xr) => { if (xr <= A) return xr; for (const p of P) if (xr < p.x + p.L) { const t = (xr - p.x) / p.L; return p.y + p.L * (p.a * t + (p.b - p.a) * t * t * t * (1 - t / 2)); } return xr - (x - y); } };\n" +
+  "})();\n";
 // Troisième retour de Loan du 30/10 (« en fait sur mobile je ne vois pas les courbes, il y a toujours ces arrêts nets ») : sur
 // téléphone, un coup de doigt fait défiler 1 à 2 écrans en une demi-seconde ; les courbes, tracées sur ≈ 1,8 écran de défilement,
 // passaient en un instant (simulé : vitesse du zoom 323 → 91 → 33 → 14 % par seconde en 0,6 s, puis à-coup au coup de doigt
@@ -565,6 +575,22 @@ const INERTIE_FIN_AVANT = "cancelAnimationFrame(vmRaf); cancelAnimationFrame(raf
 const INERTIE_FIN_APRES = "cancelAnimationFrame(vmRaf); cancelAnimationFrame(raf); cancelAnimationFrame(anim); cancelAnimationFrame(rafP); cancelAnimationFrame(rafL); };";
 const BASCULE_AMORTI_AVANT = "      else uL += (uC - uL) * (1 - Math.exp(-dt * 14));\n";
 const BASCULE_AMORTI_APRES = "      else uL += (uC - uL) * (1 - Math.exp(-dt * (tactile() ? 1 / 0.45 : 14))); /* Correction du 30/10 (scripts/construire.mjs) : inertie sur écran tactile. */\n";
+// Retour de Loan du 02/11 (« sur mobile, tout va très bien sauf la partie yin yang : avec un défilement constant, j'ai même pas le
+// temps de le voir, ça passe super vite et ça va direct sur les cartes de paiement ») : sur mobile (< 900 px), la bascule est au
+// ralenti, comme le projecteur : le tour du taiji, la séparation et le vol des moitiés défilent 1,25 fois plus lentement, le moment où
+// tout est posé 3 fois plus lentement (jamais d'arrêt : vitesse ≥ 33 %, et la caméra continue d'avancer au rythme du défilement).
+// La section de l'étude est allongée d'autant sur mobile (+ 220svh ≈ 2,2 écrans) : les points du croquis gardent leur rythme, la
+// planche II arrive après. Ordinateur inchangé.
+const LENTE_CSS_AVANT = ".vfa { position: relative; height: calc(1455svh + var(--vfk-tenue)); }";
+const LENTE_CSS_APRES = LENTE_CSS_AVANT + " @media (max-width: 899px) { .vfa { height: calc(1675svh + var(--vfk-tenue)); } } /* Correction du 02/11 (scripts/construire.mjs) : bascule yin-yang au ralenti sur mobile. */";
+const LENTE_UR_AVANT = "V.UR = XS[XS.length - 1] * crs / Math.max(1, crs - tenue); }";
+const LENTE_UR_APRES = "V.E = V.mobile ? basculeLente.E : 0; V.UR = (XS[XS.length - 1] + V.E) * crs / Math.max(1, crs - tenue); } /* Correction du 02/11 : défilement ajouté sur mobile. */";
+const LENTE_XR_AVANT = "xr = borne(-r.top / course, 0, 1) * V.UR, uC = versU(xr);";
+const LENTE_XR_APRES = "xr0 = borne(-r.top / course, 0, 1) * V.UR, xr = V.E ? basculeLente.f(xr0) : xr0, uC = versU(xr); /* Correction du 02/11 : ralenti du yin-yang sur mobile. */";
+const LENTE_H_AVANT = "h0 = borne((xr - XL) / Math.max(1e-6, V.UR - XL), 0, 1)";
+const LENTE_H_APRES = "h0 = borne((xr - XL) / Math.max(1e-6, V.UR - V.E - XL), 0, 1)";
+const LENTE_X17_AVANT = "x17 = XL + (V.mobile ? 0.17 : 0.17 / RT) * (V.UR - XL);";
+const LENTE_X17_APRES = "x17 = XL + (V.mobile ? 0.17 : 0.17 / RT) * (V.UR - V.E - XL);";
 const ANCRE_FOR_WHO_AVANT = "tF = Math.round(0.9 * plage + tenue * 0.994);";
 const ANCRE_FOR_WHO_APRES = "tF = Math.round(0.9 * plage + ralentiP(s0, tenue, mob).R); /* Correction du 30/10 (scripts/construire.mjs) : retard total de ralenti(). */";
 // Projecteur, après l'éblouissement (P plafonné à 0,8 : page blanche « Video Feedback / For everyone… » immobile sur près de
@@ -589,7 +615,7 @@ const ECARTER_FIN_APRES = "        if (k < 1) el.style.scale = k.toFixed(3);\n  
 // douceur), puis continue pendant le recul de la tenue. Les étapes du croquis (u < 6,2) bougeaient déjà (zoom de 3,5 % par point).
 const DERIVE_AVANT = "      cible = { fx: pl.f[0] + (0.42 - pl.f[0]) * V.m, fy: pl.f[1] + (0.395 - pl.f[1]) * V.m, z: pl.z * z * (1 - 0.06 * V.m) * (1 - 0.3 * lisse(0.05, 0.4, h)) };\n";
 const DERIVE_APRES = "      /* Correction du 29/10 (scripts/construire.mjs) : lente avancée de la caméra dès la bascule, jamais d'arrêt. */\n" +
-  "      const xd = calme ? 0 : Math.max(0, xr - depuisU(6.9)), pousse = 0.014 * (xd < 0.5 ? xd * xd : xd - 0.25);\n" +
+  "      const xd = calme ? 0 : Math.max(0, xr0 - depuisU(6.9)), pousse = 0.014 * (xd < 0.5 ? xd * xd : xd - 0.25);\n" +
   "      cible = { fx: pl.f[0] + (0.42 - pl.f[0]) * V.m, fy: pl.f[1] + (0.395 - pl.f[1]) * V.m, z: pl.z * z * (1 - 0.06 * V.m) * (1 - 0.3 * lisse(0.05, 0.4, h)) * (1 + pousse) };\n";
 // --- Retour de Loan du 30/10 -------------------------------------------------------------------------------------
 // « J'aimerais que ce message s'affiche quand ils ouvrent la page » : le texte de Loan sur le fonctionnement de WhatsApp
@@ -1753,7 +1779,7 @@ const CORRECTIONS = [
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
   // Retour de Loan du 29/10 : jamais d'arrêt net en défilant (constantes plus haut : RALENTI_APRES, POUSSEE_APRES, TITRE_POUSSEE_APRES,
   // ECARTER_DEBUT_APRES, ECARTER_FIN_APRES, DERIVE_APRES, ANCRE_FOR_WHO_APRES, INERTIE_APRES,
-  // INERTIE_FIN_APRES, BASCULE_AMORTI_APRES).
+  // INERTIE_FIN_APRES, BASCULE_AMORTI_APRES, LENTE_*_APRES).
   { quoi: "Défilement sans arrêt : fonction ralenti (29 et 30/10)", fichiers: VF, n: 1, avant: RALENTI_AVANT, apres: RALENTI_APRES },
   { quoi: "Défilement sans arrêt : projecteur au ralenti au lieu de la tenue du cran, freinage progressif (29 et 30/10)", fichiers: VF, n: 1,
     avant: "s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994",
@@ -1766,6 +1792,11 @@ const CORRECTIONS = [
     avant: INERTIE_FIN_AVANT, apres: INERTIE_FIN_APRES },
   { quoi: "Défilement sans arrêt : bascule yin-yang amortie sur écran tactile (30/10)", fichiers: VF, n: 1,
     avant: BASCULE_AMORTI_AVANT, apres: BASCULE_AMORTI_APRES },
+  { quoi: "Défilement sans arrêt : étude allongée sur mobile pour le ralenti du yin-yang (02/11)", fichiers: VF, n: 1, avant: LENTE_CSS_AVANT, apres: LENTE_CSS_APRES },
+  { quoi: "Défilement sans arrêt : course de l'étude avec le défilement ajouté (02/11)", fichiers: VF, n: 1, avant: LENTE_UR_AVANT, apres: LENTE_UR_APRES },
+  { quoi: "Défilement sans arrêt : yin-yang au ralenti sur mobile (02/11)", fichiers: VF, n: 1, avant: LENTE_XR_AVANT, apres: LENTE_XR_APRES },
+  { quoi: "Défilement sans arrêt : tenue de l'étude après le défilement ajouté (02/11)", fichiers: VF, n: 1, avant: LENTE_H_AVANT, apres: LENTE_H_APRES },
+  { quoi: "Défilement sans arrêt : photo → croquis après le défilement ajouté (02/11)", fichiers: VF, n: 1, avant: LENTE_X17_AVANT, apres: LENTE_X17_APRES },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
     avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
   { quoi: "Défilement sans arrêt : le titre de la page blanche avance avec Loan (29/10)", fichiers: VF, n: 1,
