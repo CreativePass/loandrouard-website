@@ -1696,6 +1696,10 @@ const CORRECTIONS = [
     avant: "    if (this._offF) this._offF();\n", apres: "    if (this._offF) this._offF();\n    if (this._offGuide) this._offGuide(); /* Correction du 30/10 */\n" },
   // Retour de Loan du 30/10 : textes et structure des cartes (constantes plus haut : INFOS, FICHES, NOMS, CARTES_CSS_30, INFO_JS).
   ...Object.keys(FICHES).map((k, i) => ({ quoi: `Planche II : nouvelle carte ${k} (30/10)`, fichiers: VF, n: 1, avant: CARTE_AVANT(k, i), apres: CARTE_APRES(k, i) })),
+  // 02/11 (Loan : « enlève le Choose · send · receive professional feedback ») : surtitre de la planche II retiré (vertical à gauche
+  // sur ordinateur, au-dessus du titre sur mobile). Ses styles (.vfk-tete .vf-eyebrow) restent, sans effet.
+  { quoi: "Planche II : surtitre « Choose · send · receive » retiré (02/11)", fichiers: VF, n: 1,
+    avant: '<div class="vf-eyebrow vfk-ecrit"><i></i><span>Choose · send · receive professional feedback</span><i></i></div>\n', apres: "" },
   { quoi: "Planche II : analyse adaptée au niveau et aux objectifs (30/10)", fichiers: VF, n: 1,
     avant: LEDE_PLANCHE("The same analysis for all levels: beginner, intermediate, professional."),
     apres: LEDE_PLANCHE("An analysis tailored to your level and your goals: beginner, intermediate or professional.") },

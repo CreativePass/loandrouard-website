@@ -141,7 +141,7 @@ const TEXTES = [
   // Planche II.
   ["Pl. II — The packages", "Pl. II — Les formules", 1],
   ["All exchanges take place on WhatsApp.", "Tous les échanges se font sur WhatsApp.", 2], // plaque (mobile) et sous les cartes (ordinateur, 31/10)
-  ["Choose · send · receive professional feedback", "Choisissez · envoyez · recevez un retour professionnel", 1],
+  // 02/11 (Loan) : surtitre « Choose · send · receive professional feedback » retiré de la planche II (scripts/construire.mjs).
   ["Three ways to work together.", "Trois façons de travailler ensemble.", 1],
   // 30/10 (Loan) : « Une analyse adaptée à votre niveau et à vos objectifs » au lieu de « Une même analyse pour tous ».
   ["An analysis tailored to your level and your goals: beginner, intermediate or professional.", `Une analyse adaptée à votre niveau et à vos objectifs${NB}: débutant, intermédiaire ou professionnel.`, 1],
