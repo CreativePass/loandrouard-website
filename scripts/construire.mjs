@@ -963,9 +963,10 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   "         phrase « Tous les échanges se font sur WhatsApp » sous les cartes. */\n" +
   "      /* 31/10 (Loan : « tous les textes au même niveau ») : nom, prix, bouton et phrase d'accroche de même hauteur dans les 3 cartes (la plus\n" +
   "         haute), pour que bouton, ligne et puces commencent au même niveau ; recalculé à chaque taille de texte essayée. */\n" +
-  "      const egaliser = () => { [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].forEach((q) => {\n" +
-  "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
-  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } });\n" +
+  "      /* 02/11 : les 4 lignes remises à zéro ensemble, puis lues ensemble (une seule mise en page au lieu de 4 ; mêmes hauteurs). */\n" +
+  "      const egaliser = () => { const gs = [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].map((q) => C.map((k) => k.front.querySelector(q)).filter(Boolean));\n" +
+  "        gs.forEach((g) => g.forEach((e) => { e.style.minHeight = \"\"; }));\n" +
+  "        if (enRang) { const hs = gs.map((g) => (g.length > 1 ? Math.max.apply(null, g.map((e) => e.offsetHeight)) : 0)); gs.forEach((g, i) => { if (g.length > 1) g.forEach((e) => { e.style.minHeight = hs[i] + \"px\"; }); }); }\n" +
   "        /* 01/11 (Loan) : rectangles du Pack Évolution au-dessus de la carte, dans sa largeur. Quand ils s'affichent, le titre et sa\n" +
   "           phrase remontent autant qu'il faut (--vfk-monte), même hors de l'écran : aucune place réservée, la taille du texte des\n" +
   "           cartes passe avant (Loan, 01/11). Seule exception, sur les petits écrans : si les rectangles sortaient par le haut de\n" +
@@ -1513,39 +1514,40 @@ const COUVERT_JS = `<script>/* Correction du 02/11 (scripts/construire.mjs) : zo
     return r.top <= (haut > 0 ? -haut : 0.5) && r.bottom >= window.innerHeight - 0.5 && r.left <= 0.5 && r.right >= R.clientWidth - 0.5; };
   const plein = (el) => { const cs = getComputedStyle(el), m = cs.maskImage || cs.webkitMaskImage || "none"; return cs.opacity === "1" && cs.display !== "none" && m === "none"; };
   let raf = 0;
+  /* Marge : en remontant, la scène du dessous réapparaît quand le haut de la section passe sous le haut de l'écran ; le navigateur
+     peut afficher une image avant que ce script ne réagisse. Masqué seulement à plus de M px de ce moment. */
+  const haut = (q) => { const e = document.querySelector(q); return e ? e.getBoundingClientRect().top : 0; };
   const verifier = () => { raf = 0; const v = vf(); if (!v) return;
-    const pap = v.querySelector(".vfk-papier"), sc = v.querySelector(".vfa-scene");
-    const planche = !!pap && +getComputedStyle(pap).opacity >= 0.999 && couvre(pap, window.matchMedia("(max-width: 999px)").matches ? 230 : 0);
-    const etude = !planche && !!sc && plein(sc) && couvre(sc, 0);
+    const pap = v.querySelector(".vfk-papier"), sc = v.querySelector(".vfa-scene"), M = Math.max(240, 0.3 * window.innerHeight);
+    const mob = window.matchMedia("(max-width: 999px)").matches;
+    const planche = !!pap && +getComputedStyle(pap).opacity >= 0.999 && couvre(pap, mob ? 230 + M : 0) && (mob || haut(".vf > .vfk") <= -M);
+    const etude = !planche && !!sc && plein(sc) && couvre(sc, 0) && haut(".vf > .vfa") <= -M;
     if (R.classList.contains("vf-sous-planche") !== planche) R.classList.toggle("vf-sous-planche", planche);
     if (R.classList.contains("vf-sous-etude") !== etude) R.classList.toggle("vf-sous-etude", etude); };
   /* Après les calculs des scènes de cette image (opacités posées par leurs propres requestAnimationFrame). */
   const plusTard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = requestAnimationFrame(verifier); }); };
-  /* Au défilement : vérifié tout de suite si quelque chose redevient visible (le papier qui glisse), sans attendre une image. */
-  const surScroll = () => { y = window.scrollY; if (R.classList.contains("vf-sous-planche") || R.classList.contains("vf-sous-etude")) verifier(); plusTard(); };
-  /* 2) Redimensionnement : même proportion de la section en cours (sections de la page : projecteur, étude, planche, pied de page). */
+  /* 2) Redimensionnement : même proportion de la section en cours (sections de la page : projecteur, étude, planche, pied de page),
+     notée à chaque défilement. Chrome refait la mise en page à la nouvelle taille (et prévient les ResizeObserver) une image avant
+     l'événement « resize » : le recalage se fait dès cette première image, sur la taille du document (html), puis au « resize ». */
   const fin = window.matchMedia("(hover: hover) and (pointer: fine)");
-  let W = window.innerWidth, H = window.innerHeight, y = window.scrollY, geo = null;
-  const mesurer = () => { const v = vf(); if (!v) return; const sy = window.scrollY;
-    geo = Array.prototype.filter.call(v.children, (e) => e.tagName === "SECTION" || e.tagName === "FOOTER").map((e) => { const r = e.getBoundingClientRect(); return [e, r.top + sy, r.height]; }); };
+  let W = window.innerWidth, H = window.innerHeight, ancre = null;
+  const change = () => window.innerWidth !== W || window.innerHeight !== H;
+  const noter = () => { const v = vf(); if (!v) return; let a = null;
+    Array.prototype.forEach.call(v.children, (e) => { if (e.tagName !== "SECTION" && e.tagName !== "FOOTER") return; const r = e.getBoundingClientRect();
+      if (r.top <= 1 && r.height > 0) a = [e, Math.min(1, -r.top / r.height)]; });
+    ancre = a; };
   const aller = (t) => { const s = R.style.scrollBehavior; R.style.scrollBehavior = "auto"; window.scrollTo(0, t); R.style.scrollBehavior = s; };
-  const surResize = () => {
-    if (window.innerWidth === W && window.innerHeight === H) return; /* événement envoyé par la page elle-même : rien */
-    W = window.innerWidth; H = window.innerHeight;
-    if (fin.matches && geo && geo.length && y > 0) {
-      let i = -1; geo.forEach((g, j) => { if (g[1] <= y + 1) i = j; });
-      if (i >= 0 && geo[i][0].isConnected && geo[i][2] > 0) { const g = geo[i], f = Math.min(1, Math.max(0, (y - g[1]) / g[2])), r = g[0].getBoundingClientRect();
-        const t = Math.round(r.top + window.scrollY + f * r.height); if (Math.abs(t - window.scrollY) >= 1) aller(t); }
-    }
-    y = window.scrollY; mesurer(); plusTard(); };
-  const demarrer = () => { const v = vf(); if (!v) return false; mesurer();
-    if (window.ResizeObserver) { const ro = new ResizeObserver(() => mesurer()); Array.prototype.forEach.call(v.children, (e) => ro.observe(e)); }
-    plusTard(); return true; };
-  window.addEventListener("resize", surResize);
+  const recaler = () => { W = window.innerWidth; H = window.innerHeight;
+    if (fin.matches && ancre && ancre[0].isConnected) { const r = ancre[0].getBoundingClientRect(), t = Math.round(r.top + window.scrollY + ancre[1] * r.height);
+      if (Math.abs(t - window.scrollY) >= 1) aller(t); }
+    noter(); plusTard(); };
+  /* Au défilement : vérifié tout de suite si quelque chose redevient visible (le papier qui glisse), sans attendre une image. */
+  const surScroll = () => { if (!change()) noter(); if (R.classList.contains("vf-sous-planche") || R.classList.contains("vf-sous-etude")) verifier(); plusTard(); };
+  window.addEventListener("resize", () => { if (change()) recaler(); });
   window.addEventListener("scroll", surScroll, { passive: true });
-  window.addEventListener("load", plusTard);
-  /* La page est rendue par support.js : on attend que .vf existe. */
-  if (!demarrer()) { const mo = new MutationObserver(() => { if (demarrer()) mo.disconnect(); }); mo.observe(document.documentElement, { childList: true, subtree: true }); }
+  window.addEventListener("load", () => { noter(); plusTard(); });
+  /* Taille du document : nouvelle taille de fenêtre (recalage) ou contenu qui change sans elle (page rendue par support.js, polices…). */
+  if (window.ResizeObserver) new ResizeObserver(() => { if (change()) recaler(); else { noter(); plusTard(); } }).observe(R);
 })();
 </script>
 `;
