@@ -611,6 +611,18 @@ const LENTE_X17_APRES = "x17 = XL + (V.mobile ? 0.17 : 0.17 / RT) * (V.UR - V.E 
 // l'effacement des lignes dorées. Ordinateur et tablette en paysage inchangés.
 const FREIN_AVANT = 'racine.classList.toggle("vfk-frein", desc && y > arret - ZONE * window.innerHeight && y < arret - 2);';
 const FREIN_APRES = 'racine.classList.toggle("vfk-frein", desc && y > arret - (G && !G.rang ? 5 : ZONE) * window.innerHeight && y < arret - 2); /* Correction du 02/11 (scripts/construire.mjs) : 5 écrans en mise en page mobile. */';
+// Retour de Loan du 02/11 (4) (capture d'iPhone : « il n'y a pas le fondu comme sur ordinateur au-dessus de la partie des cartes ») :
+// sur mobile (< 1000 px, planche non épinglée), le papier de la planche II commençait par un bord net au-dessus de l'étude. Son haut
+// est maintenant en fondu, de transparent à plein sur --vfk-fondu (même courbe que le fondu d'ordinateur du 28/10, qui reste réservé
+// à l'ordinateur). Le haut de la planche mobile est vide (marge de l'en-tête + 28 px avant la plaque) : rien de lisible n'est touché.
+const FONDU_MOBILE_AVANT = SOMMAIRE_STYLE_FIN;
+const FONDU_MOBILE_APRES = `/* Correction du 02/11 (scripts/construire.mjs) : sur mobile, haut du papier de la planche II en fondu (plus de bord net). */
+@media (max-width: 999px) {
+  .vf > .vfk { --vfk-fondu: clamp(120px, 22svh, 220px); }
+  .vfk-papier { -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.05) calc(var(--vfk-fondu) * .2), rgba(0,0,0,.2) calc(var(--vfk-fondu) * .4), rgba(0,0,0,.48) calc(var(--vfk-fondu) * .6), rgba(0,0,0,.8) calc(var(--vfk-fondu) * .8), #000 var(--vfk-fondu));
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.05) calc(var(--vfk-fondu) * .2), rgba(0,0,0,.2) calc(var(--vfk-fondu) * .4), rgba(0,0,0,.48) calc(var(--vfk-fondu) * .6), rgba(0,0,0,.8) calc(var(--vfk-fondu) * .8), #000 var(--vfk-fondu)); }
+}
+` + SOMMAIRE_STYLE_FIN;
 const NETTE_AVANT = "      camS = s; camX = tx; camY = ty;";
 const NETTE_APRES = "      camS = s / (V.p || 1); camX = tx; camY = ty; /* Correction du 02/11 (scripts/construire.mjs) : l'avancée lente ne redessine pas la feuille. */";
 const ANCRE_FOR_WHO_AVANT = "tF = Math.round(0.9 * plage + tenue * 0.994);";
@@ -1805,7 +1817,7 @@ const CORRECTIONS = [
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
   // Retour de Loan du 29/10 : jamais d'arrêt net en défilant (constantes plus haut : RALENTI_APRES, POUSSEE_APRES, TITRE_POUSSEE_APRES,
   // ECARTER_DEBUT_APRES, ECARTER_FIN_APRES, DERIVE_APRES, ANCRE_FOR_WHO_APRES, INERTIE_APRES,
-  // INERTIE_FIN_APRES, BASCULE_AMORTI_APRES, LENTE_*_APRES, NETTE_APRES, FREIN_APRES).
+  // INERTIE_FIN_APRES, BASCULE_AMORTI_APRES, LENTE_*_APRES, NETTE_APRES, FREIN_APRES, FONDU_MOBILE_APRES).
   { quoi: "Défilement sans arrêt : fonction ralenti (29 et 30/10)", fichiers: VF, n: 1, avant: RALENTI_AVANT, apres: RALENTI_APRES },
   { quoi: "Défilement sans arrêt : projecteur au ralenti au lieu de la tenue du cran, freinage progressif (29 et 30/10)", fichiers: VF, n: 1,
     avant: "s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994",
@@ -1825,6 +1837,7 @@ const CORRECTIONS = [
   { quoi: "Défilement sans arrêt : photo → croquis après le défilement ajouté (02/11)", fichiers: VF, n: 1, avant: LENTE_X17_AVANT, apres: LENTE_X17_APRES },
   { quoi: "Défilement sans arrêt : l'avancée lente de la caméra ne redessine pas la feuille de l'étude (02/11)", fichiers: VF, n: 1, avant: NETTE_AVANT, apres: NETTE_APRES },
   { quoi: "Freinage d'iPhone / iPad sur 5 écrans avant les cartes en mise en page mobile (02/11)", fichiers: VF, n: 1, avant: FREIN_AVANT, apres: FREIN_APRES },
+  { quoi: "Planche II sur mobile : haut du papier en fondu (02/11)", fichiers: VF, n: 1, avant: FONDU_MOBILE_AVANT, apres: FONDU_MOBILE_APRES },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
     avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
   { quoi: "Défilement sans arrêt : les mots de la page blanche avancent avec Loan (29/10, 02/11)", fichiers: VF, n: 1,
