@@ -46,15 +46,16 @@ const ABONNEMENT = {
     (t.offre ? " (launch offer, instead of €" + euros(FORMULES.prog.normal.montant) + "), renewed automatically at this price" : ", renewed automatically") +
     " until cancelled; you can cancel at any time, effective at the end of the current period. ",
 };
+// 02/11 : texte du Pack aligné sur les CGV du 30/10 (« 3 retours » / « 3 feedback rounds », nom de la formule). À republier (npm run publier:api) avec l'accord de Loan.
 const CASE = {
   fr: {
     single: () => RENONCIATION.fr,
-    pack: () => RENONCIATION.fr + " Les 3 retours du pack sont valables 6 mois à compter du premier envoi.",
+    pack: () => RENONCIATION.fr + " Les 3 retours du Pack Évolution sont valables 6 mois à compter du premier envoi.",
     prog: (t) => ABONNEMENT.fr(t) + RENONCIATION.fr,
   },
   en: {
     single: () => RENONCIATION.en,
-    pack: () => RENONCIATION.en + " The pack's 3 analyses are valid for 6 months from your first video.",
+    pack: () => RENONCIATION.en + " The Progression Pack's 3 feedback rounds are valid for 6 months from your first video.",
     prog: (t) => ABONNEMENT.en(t) + RENONCIATION.en,
   },
 };

@@ -1485,6 +1485,103 @@ const CGV_30 = [
   ["Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer ;", "Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer, sans frais ;"],
   ["<span>Version du 29 octobre 2026</span>", "<span>Version du 30 octobre 2026</span>"],
 ];
+// Retour de Loan du 02/11 (captures : « quand on zoome avec deux doigts sur le trackpad, pas mal de choses ne s'affichent plus » ;
+// « en redimensionnant, la page fait des flashs blancs, tout a l'air de se redessiner »).
+// 1) Zoom : la carte graphique a un budget fixe pour les tuiles (Chrome, Dia, Edge : ≈ 512 Mo). Sur la planche II, la page gardait
+//    dessinés, sous le papier opaque de la planche, l'étude entière (feuille, photo, croquis, textures animées) et le fond « nuit »
+//    (dégradés animés, grain) : ≈ 280 Mo de tuiles à 1440 × 900 sur écran Retina, ≈ 500 Mo au zoom ×3 à 1728 × 1000 (mesuré dans
+//    Chromium, scratchpad du 02/11). Au-delà du budget, le navigateur abandonne des tuiles : morceaux de cartes manquants, rectangles
+//    sombres, photo de l'étude visible par endroits (captures de Loan). Ce qui est entièrement recouvert n'est plus dessiné
+//    (visibility: hidden) : sous la planche posée (papier opaque sur tout l'écran), l'étude et le fond « nuit » ; sous l'étude (papier
+//    blanc opaque sur tout l'écran, sans fondu), le fond « nuit » et le projecteur. Rien de visible ne change ; dès que le papier
+//    s'efface ou se décale d'un pixel, tout redevient dessiné, dans la même image.
+// 2) Redimensionnement (et zoom Cmd + / Cmd −) : les scènes ont une hauteur proportionnelle à celle de la fenêtre (svh) mais la position
+//    de défilement restait la même en pixels : en changeant la hauteur, la page sautait vers une autre scène (sur la planche II : le
+//    pied de page en rétrécissant, l'étude sur papier blanc en agrandissant — les « flashs blancs »). La page garde maintenant sa place
+//    dans la scène en cours (même proportion de la section), avant que les scènes ne se recalculent. Ordinateur seulement (souris ou
+//    trackpad) : sur téléphone, la barre d'adresse change la hauteur en plein défilement et rien ne doit y toucher.
+const COUVERT_CSS = `/* Correction du 02/11 (scripts/construire.mjs) : ce qui est entièrement recouvert n'est plus dessiné (COUVERT_JS). */
+html.vf-sous-etude .vf-nuit, html.vf-sous-etude .vfp-scene, html.vf-sous-etude .vfp-scene *,
+html.vf-sous-planche .vf-nuit, html.vf-sous-planche .vfa-scene, html.vf-sous-planche .vfa-scene * { visibility: hidden !important; }
+`;
+const COUVERT_JS = `<script>/* Correction du 02/11 (scripts/construire.mjs) : zoom au trackpad et redimensionnement. Voir COUVERT_CSS. */
+(() => {
+  const R = document.documentElement, vf = () => document.querySelector(".vf");
+  /* 1) Recouvert : le papier de la planche II (opaque, sans fondu sur ordinateur ; fondu de 220 px au plus en haut sur mobile) ou
+     la scène de l'étude (papier blanc, sans masque ni fondu) couvre tout l'écran (épinglés : haut à 0). */
+  const couvre = (el, haut) => { const r = el.getBoundingClientRect();
+    return r.top <= (haut > 0 ? -haut : 0.5) && r.bottom >= window.innerHeight - 0.5 && r.left <= 0.5 && r.right >= R.clientWidth - 0.5; };
+  const plein = (el) => { const cs = getComputedStyle(el), m = cs.maskImage || cs.webkitMaskImage || "none"; return cs.opacity === "1" && cs.display !== "none" && m === "none"; };
+  let raf = 0;
+  const verifier = () => { raf = 0; const v = vf(); if (!v) return;
+    const pap = v.querySelector(".vfk-papier"), sc = v.querySelector(".vfa-scene");
+    const planche = !!pap && +getComputedStyle(pap).opacity >= 0.999 && couvre(pap, window.matchMedia("(max-width: 999px)").matches ? 230 : 0);
+    const etude = !planche && !!sc && plein(sc) && couvre(sc, 0);
+    if (R.classList.contains("vf-sous-planche") !== planche) R.classList.toggle("vf-sous-planche", planche);
+    if (R.classList.contains("vf-sous-etude") !== etude) R.classList.toggle("vf-sous-etude", etude); };
+  /* Après les calculs des scènes de cette image (opacités posées par leurs propres requestAnimationFrame). */
+  const plusTard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = requestAnimationFrame(verifier); }); };
+  /* Au défilement : vérifié tout de suite si quelque chose redevient visible (le papier qui glisse), sans attendre une image. */
+  const surScroll = () => { y = window.scrollY; if (R.classList.contains("vf-sous-planche") || R.classList.contains("vf-sous-etude")) verifier(); plusTard(); };
+  /* 2) Redimensionnement : même proportion de la section en cours (sections de la page : projecteur, étude, planche, pied de page). */
+  const fin = window.matchMedia("(hover: hover) and (pointer: fine)");
+  let W = window.innerWidth, H = window.innerHeight, y = window.scrollY, geo = null;
+  const mesurer = () => { const v = vf(); if (!v) return; const sy = window.scrollY;
+    geo = Array.prototype.filter.call(v.children, (e) => e.tagName === "SECTION" || e.tagName === "FOOTER").map((e) => { const r = e.getBoundingClientRect(); return [e, r.top + sy, r.height]; }); };
+  const aller = (t) => { const s = R.style.scrollBehavior; R.style.scrollBehavior = "auto"; window.scrollTo(0, t); R.style.scrollBehavior = s; };
+  const surResize = () => {
+    if (window.innerWidth === W && window.innerHeight === H) return; /* événement envoyé par la page elle-même : rien */
+    W = window.innerWidth; H = window.innerHeight;
+    if (fin.matches && geo && geo.length && y > 0) {
+      let i = -1; geo.forEach((g, j) => { if (g[1] <= y + 1) i = j; });
+      if (i >= 0 && geo[i][0].isConnected && geo[i][2] > 0) { const g = geo[i], f = Math.min(1, Math.max(0, (y - g[1]) / g[2])), r = g[0].getBoundingClientRect();
+        const t = Math.round(r.top + window.scrollY + f * r.height); if (Math.abs(t - window.scrollY) >= 1) aller(t); }
+    }
+    y = window.scrollY; mesurer(); plusTard(); };
+  const demarrer = () => { const v = vf(); if (!v) return false; mesurer();
+    if (window.ResizeObserver) { const ro = new ResizeObserver(() => mesurer()); Array.prototype.forEach.call(v.children, (e) => ro.observe(e)); }
+    plusTard(); return true; };
+  window.addEventListener("resize", surResize);
+  window.addEventListener("scroll", surScroll, { passive: true });
+  window.addEventListener("load", plusTard);
+  /* La page est rendue par support.js : on attend que .vf existe. */
+  if (!demarrer()) { const mo = new MutationObserver(() => { if (demarrer()) mo.disconnect(); }); mo.observe(document.documentElement, { childList: true, subtree: true }); }
+})();
+</script>
+`;
+// CGV du 02/11 (Loan : « est-ce que les CGV sont à jour ? vérifie les noms des packs ») : il restait l'ancien mot « program » /
+// « programme » (Quarterly program) dans 9 passages par langue : remplacé par le nom de la formule (The Way of Performance /
+// Suivi Performance) ou par « abonnement ». Langue des retours (cartes : « French or English ») ajoutée à l'article 4.
+const CGV_02 = [
+  // Anglais.
+  ["I reply on WhatsApp, in writing or by voice message (also by video for The Way of Performance), within the time given in article 7.",
+    "I reply on WhatsApp, in French or English, in writing or by voice message (also by video for The Way of Performance), within the time given in article 7."],
+  ["<li><strong>Pack and program.</strong> Send your next videos", "<li><strong>Progression Pack and The Way of Performance.</strong> Send your next videos"],
+  ["For the program, a new price only applies from the next period", "For The Way of Performance, a new price only applies from the next period"],
+  ["<li>Program: its price is charged automatically", "<li>The Way of Performance: its price is charged automatically"],
+  ["The program is suspended until payment goes through", "The subscription is suspended until payment goes through"],
+  ["<li><strong>Pack or program partly performed:</strong>", "<li><strong>Progression Pack or The Way of Performance partly performed:</strong>"],
+  ["; for the program, the share of the price matching the weeks", "; for The Way of Performance, the share of the price matching the weeks"],
+  ["and, for the program, the share of the current period not provided.", "and, for The Way of Performance, the share of the current period not provided."],
+  ["<li>The program runs in 3-month periods from the date of payment.", "<li>The Way of Performance runs in 3-month periods from the date of payment."],
+  ["you can end the program at any time, at no cost", "you can end your subscription at any time, at no cost"],
+  ["<li>I can end the program at the end of a period", "<li>I can end The Way of Performance at the end of a period"],
+  ["<span>Version of 30 October 2026</span>", "<span>Version of 2 November 2026</span>"],
+  // Français.
+  ["Je vous réponds sur WhatsApp, par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance), dans le délai indiqué à l’article 7.",
+    "Je vous réponds sur WhatsApp, en français ou en anglais, par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance), dans le délai indiqué à l’article 7."],
+  ["<li><strong>Pack et programme.</strong> Vous envoyez", "<li><strong>Pack Évolution et Suivi Performance.</strong> Vous envoyez"],
+  ["Pour le programme, un nouveau prix ne s’applique", "Pour le Suivi Performance, un nouveau prix ne s’applique"],
+  ["<li>Programme : son prix est prélevé automatiquement", "<li>Suivi Performance : son prix est prélevé automatiquement"],
+  ["Le programme est suspendu jusqu’au paiement", "L’abonnement est suspendu jusqu’au paiement"],
+  ["<li><strong>Pack ou programme en partie exécuté :</strong>", "<li><strong>Pack Évolution ou Suivi Performance en partie exécuté :</strong>"],
+  ["; pour le programme, la part du prix correspondant aux semaines", "; pour le Suivi Performance, la part du prix correspondant aux semaines"],
+  ["et pour le programme, la part de la période en cours non fournie.", "et pour le Suivi Performance, la part de la période en cours non fournie."],
+  ["<li>Le programme fonctionne par périodes de 3 mois", "<li>Le Suivi Performance fonctionne par périodes de 3 mois"],
+  ["vous pouvez mettre fin au programme à tout moment, sans frais", "vous pouvez mettre fin à votre abonnement à tout moment, sans frais"],
+  ["<li>Je peux mettre fin au programme à la fin d’une période", "<li>Je peux mettre fin au Suivi Performance à la fin d’une période"],
+  ["<span>Version du 30 octobre 2026</span>", "<span>Version du 2 novembre 2026</span>"],
+];
 
 // Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
 // ?apercu=single, pack ou prog l'affiche avec le faux numéro de l'aperçu de l'éditeur (apercuPaye), et ouvre la fenêtre.
@@ -1838,6 +1935,9 @@ const CORRECTIONS = [
   { quoi: "Défilement sans arrêt : l'avancée lente de la caméra ne redessine pas la feuille de l'étude (02/11)", fichiers: VF, n: 1, avant: NETTE_AVANT, apres: NETTE_APRES },
   { quoi: "Freinage d'iPhone / iPad sur 5 écrans avant les cartes en mise en page mobile (02/11)", fichiers: VF, n: 1, avant: FREIN_AVANT, apres: FREIN_APRES },
   { quoi: "Planche II sur mobile : haut du papier en fondu (02/11)", fichiers: VF, n: 1, avant: FONDU_MOBILE_AVANT, apres: FONDU_MOBILE_APRES },
+  { quoi: "Zoom et redimensionnement : ce qui est recouvert n'est plus dessiné, styles (02/11)", fichiers: VF, n: 1, avant: SOMMAIRE_STYLE_FIN, apres: COUVERT_CSS + SOMMAIRE_STYLE_FIN },
+  { quoi: "Zoom et redimensionnement : recouvrement, place gardée au redimensionnement (02/11)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: COUVERT_JS + '<script src="./support.js"></script>' },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
     avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
   { quoi: "Défilement sans arrêt : les mots de la page blanche avancent avec Loan (29/10, 02/11)", fichiers: VF, n: 1,
@@ -1906,6 +2006,7 @@ const CORRECTIONS = [
   { quoi: "Suivi Performance : 3 places (capacité affichée avant la réponse de l'API, 30/10)", fichiers: VF, n: 1,
     avant: "const PLACES = { pack: 6, prog: 2 };", apres: "const PLACES = { pack: 6, prog: 3 }; /* Correction du 30/10 : 3 places (cloudflare/api-worker.js) */" },
   ...CGV_30.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 30/10 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
+  ...CGV_02.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 02/11 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
