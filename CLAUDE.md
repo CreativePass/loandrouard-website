@@ -10,7 +10,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - **Terminer chaque réponse par un résumé** : réponses aux questions posées, puis liste de ce que Loan doit faire.
 
 ## Prix et promotions (décision de Loan du 29/10/2026)
-- Prix normaux : Single feedback 99 €, 3× feedback pack 249 €, Quarterly program 990 € tous les 3 mois.
+- Prix normaux : Analyse Technique / Technical Analysis 99 €, Pack Évolution / Progression Pack 249 €, Suivi Performance / The Way of Performance 990 € tous les 3 mois (noms du 30/10 ; avant : Single feedback, 3× feedback pack, Quarterly program).
 - **À chaque promotion, les prix promo sont toujours ceux-ci : 49 €, 129 € et 499 € tous les 3 mois** (prix normal barré, réduction : −50 %, −48 %, −49 %). Un programme souscrit pendant une promo reste à 499 € tant qu'il n'est pas résilié.
 - Chez Stripe : coupons `lancement-single`, `lancement-pack`, `lancement-prog` (sans date limite ; leur nom affiché, « Offre de lancement / Launch offer », est à changer si la promo porte un autre nom). Dates de la promo : `OFFRE` dans `scripts/construire.mjs` et `cloudflare/api-worker.js` (voir MISE-EN-LIGNE.md).
 - Offre de lancement en cours depuis le 29/10/2026, sans date de fin ni date affichée : Loan dira quand l'arrêter.
@@ -26,7 +26,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 2. `npm install` (une fois), `npm run construire` (contrôles), puis, avec l'accord de Loan, `npm run publier`.
 3. Vérifier : `npm run verifier -- https://loandrouard.com` et comparer les fichiers servis à `public/`.
 
-Adresse de test (jamais loandrouard.com) : `npm run publier:essai`, sans redemander à Loan (accord permanent du 30/10 ; voir MISE-EN-LIGNE.md).
+Adresse de test (jamais loandrouard.com) : `npm run publier:essai` (voir MISE-EN-LIGNE.md). **Accord permanent de Loan depuis le 01/11/2026 : publier sur l'adresse de test sans demander** (le dire dans la réponse). loandrouard.com (`npm run publier`) et les autres mises en ligne demandent toujours son accord.
 
 Le jeton Cloudflare est dans l'environnement (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
 Une seule conversation à la fois doit mettre le site en ligne : la dernière publication remplace la précédente.

@@ -591,6 +591,846 @@ const DERIVE_AVANT = "      cible = { fx: pl.f[0] + (0.42 - pl.f[0]) * V.m, fy: 
 const DERIVE_APRES = "      /* Correction du 29/10 (scripts/construire.mjs) : lente avancée de la caméra dès la bascule, jamais d'arrêt. */\n" +
   "      const xd = calme ? 0 : Math.max(0, xr - depuisU(6.9)), pousse = 0.014 * (xd < 0.5 ? xd * xd : xd - 0.25);\n" +
   "      cible = { fx: pl.f[0] + (0.42 - pl.f[0]) * V.m, fy: pl.f[1] + (0.395 - pl.f[1]) * V.m, z: pl.z * z * (1 - 0.06 * V.m) * (1 - 0.3 * lisse(0.05, 0.4, h)) * (1 + pousse) };\n";
+// --- Retour de Loan du 30/10 -------------------------------------------------------------------------------------
+// « J'aimerais que ce message s'affiche quand ils ouvrent la page » : le texte de Loan sur le fonctionnement de WhatsApp
+// s'ouvre dans une fenêtre juste après le paiement (et au retour par le lien de l'e-mail, /acces/…), par-dessus la carte
+// payée ; un lien de la carte la rouvre. Un texte par formule (délais du site, une vidéo / trois / une par semaine) et par
+// langue (anglais traduit par Claude). Écrit pour convenir aussi à un client qui reprend une formule (« vos vidéos »,
+// pas « votre première vidéo ») ; 2 vidéos par analyse, partout (Loan, 30/10). Section : texte commun, ou { single, pack, prog } ; {delai} = délai de la formule (FORMULES).
+// Version d'essai, à faire valider par Loan sur l'adresse de test (aperçu : ?apercu=single, pack ou prog).
+const GUIDE = {
+  fr: {
+    titre: "Il est l’heure de passer au niveau supérieur 🤸‍♂️",
+    intro: "Je suis heureux de vous accompagner dans votre progression. Voici comment nous allons travailler ensemble sur WhatsApp :",
+    sections: [
+      { icone: "🎥", titre: "Vos vidéos", texte: {
+        single: "Envoyez-moi vos 2 vidéos. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
+        pack: "Envoyez-moi 2 vidéos pour chacune de vos 3 analyses, valables 6 mois à partir de la première. Je vous transmettrai à chaque fois une analyse personnalisée et des exercices ciblés, en fonction de vos priorités.",
+        prog: "Envoyez-moi 2 vidéos par semaine. Je vous transmettrai une analyse personnalisée et des exercices ciblés, en fonction de vos priorités." } },
+      { icone: "💬", titre: "Vos questions", texte: {
+        single: "Après l’analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète.",
+        pack: "Après chaque analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète.",
+        prog: "Après chaque analyse, un échange de questions-réponses est inclus pour vous aider à appliquer mes conseils. Merci de regrouper vos questions dans un seul message afin que je puisse vous apporter une réponse complète." } },
+      { icone: "⏳", titre: "Mes réponses",
+        texte: "Je consulte WhatsApp sur des créneaux dédiés et vous réponds sous {delai}, du lundi au dimanche. Vous pouvez m’écrire au moment qui vous convient ; les échanges se font en différé." },
+      { icone: "📈", titre: { single: "Après l’analyse", pack: "Entre deux analyses", prog: "Entre deux analyses" }, texte: {
+        single: "Prenez le temps de pratiquer les exercices et de noter vos observations. Pour faire analyser de nouvelles vidéos, il vous suffira de reprendre une formule sur le site.",
+        pack: "Prenez le temps de pratiquer les exercices et de noter vos observations. Les nouvelles vidéos et les sujets nécessitant une analyse complémentaire seront traités lors de votre prochaine analyse.",
+        prog: "Prenez le temps de pratiquer les exercices et de noter vos observations. Les nouvelles vidéos et les sujets nécessitant une analyse complémentaire seront traités lors du prochain rendez-vous hebdomadaire." } },
+    ],
+    fin: "Ce fonctionnement me permet de consacrer toute l’attention nécessaire à votre progression.",
+    bientot: "À très bientôt pour vos vidéos !",
+    signature: "Loan ☀️",
+    lien: "Comment nous allons travailler", fermer: "Fermer", whatsapp: "Ouvrir WhatsApp",
+  },
+  en: {
+    titre: "Time to level up 🤸‍♂️",
+    intro: "I’m happy to support you in your progress. Here’s how we’ll work together on WhatsApp:",
+    sections: [
+      { icone: "🎥", titre: "Your videos", texte: {
+        single: "Send me your 2 videos. I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
+        pack: "Send me 2 videos for each of your 3 analyses, valid for 6 months from the first one. Each time, I’ll send you a personalized analysis and targeted exercises, based on your priorities.",
+        prog: "Send me 2 videos a week. I’ll send you a personalized analysis and targeted exercises, based on your priorities." } },
+      { icone: "💬", titre: "Your questions", texte: {
+        single: "After the analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer.",
+        pack: "After each analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer.",
+        prog: "After each analysis, a round of questions and answers is included to help you put my advice into practice. Please group your questions in a single message so I can give you a complete answer." } },
+      { icone: "⏳", titre: "My replies",
+        texte: "I check WhatsApp at set times and reply within {delai}, Monday to Sunday. You can write to me whenever suits you; we don’t need to be online at the same time." },
+      { icone: "📈", titre: { single: "After the analysis", pack: "Between analyses", prog: "Between analyses" }, texte: {
+        single: "Take the time to practice the exercises and note what you observe. To have new videos analyzed, simply get another package on the site.",
+        pack: "Take the time to practice the exercises and note what you observe. New videos and topics that need further analysis will be covered in your next analysis.",
+        prog: "Take the time to practice the exercises and note what you observe. New videos and topics that need further analysis will be covered at our next weekly session." } },
+    ],
+    fin: "Working this way lets me give your progress all the attention it deserves.",
+    bientot: "Looking forward to your videos!",
+    signature: "Loan ☀️",
+    lien: "How we’ll work together", fermer: "Close", whatsapp: "Open WhatsApp",
+  },
+};
+const GUIDE_CSS = `/* Correction du 30/10 (scripts/construire.mjs) : fenêtre « How we'll work together » / « Comment nous allons travailler »,
+   ouverte après le paiement, même habillage que la fenêtre de paiement ; lien de la carte payée qui la rouvre. */
+/* Bento (demandé par Loan le 30/10 : « qu'ils flottent dans le vide », pas dans un plus gros rectangle) : pas de cadre autour,
+   les rectangles flottent sur le fond assombri de la page ; le texte défile si la hauteur manque. Marges ≥ 30 px : la lueur
+   dorée d'un rectangle survolé n'est pas coupée. */
+.vf-modale.vf-guide { background: rgba(10,10,10,.9); } /* fond plus sombre que la fenêtre de paiement (.82) : la page se voit moins entre les rectangles */
+.vf-guide .vf-modale__panneau { display: flex; flex-direction: column; width: min(600px, 100%); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow: hidden; padding: 0; border: 0; border-radius: 0; background: none; }
+.vf-guide__defile { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 32px 32px; outline: none; }
+.vf-guide .vf-modale__tete { margin-bottom: 14px; }
+.vf-guide__etiquette { font-family: 'Cinzel', Georgia, serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #C6A05E; }
+.vf-guide__titre { margin: 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; font-size: clamp(28px, 4vw, 36px); line-height: 1.1; letter-spacing: .01em; text-wrap: balance; }
+.vf-guide__intro { margin: 14px 0 0; font-size: 19px; line-height: 1.55; color: rgba(246,245,241,.8); }
+/* Rectangles (demandés par Loan le 30/10, « plus facile à lire ») : l'introduction et chacune des quatre parties dans son cadre,
+   avec l'effet des cartes au survol, mêmes valeurs : inclinaison (incliner / relacher), reflet doré (.vf-carte::after) et bord
+   doré (.vf-carte:hover). Souris seulement : sur écran tactile, un toucher laisserait un cadre penché pendant la lecture. */
+.vf-guide__carte { position: relative; overflow: hidden; border: 1px solid rgba(246,245,241,.14); border-radius: 18px; background: #1e1d1c; padding: 20px 22px 22px; transition: border-color .35s ease, box-shadow .35s ease; }
+.vf-guide__carte::after { content: ''; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; opacity: 0; transition: opacity .35s ease; background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(169,129,74,.16), transparent 70%); }
+@media (hover: hover) and (pointer: fine) {
+  .vf-guide__carte:hover::after { opacity: 1; }
+  .vf-guide__carte:hover { border-color: rgba(169,129,74,.4); box-shadow: 0 0 40px -10px rgba(169,129,74,.4); }
+}
+@media (hover: none), (pointer: coarse) { .vf-guide__carte { transform: none !important; } }
+.vf-guide__blocs { display: grid; gap: 12px; margin-top: 12px; }
+.vf-guide__bloc h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: #E3D5B8; }
+.vf-guide__bloc h3 span { font-size: 18px; letter-spacing: 0; }
+.vf-guide__bloc p, .vf-guide__fin { margin: 8px 0 0; font-size: 18px; line-height: 1.55; color: rgba(246,245,241,.86); }
+.vf-guide__pied { margin-top: 12px; }
+.vf-guide__fin { margin-top: 0; }
+.vf-guide__fin + .vf-guide__fin { margin-top: 6px; }
+.vf-guide__signature { margin: 6px 0 0; font-style: italic; font-size: 20px; }
+.vf-guide__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 24px; margin-top: 24px; }
+.vf-guide-lien { align-self: flex-start; padding: 0; border: 0; background: none; color: #C6A05E; font: 500 11px/1.5 'Cinzel', Georgia, serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.vf-guide-lien:focus-visible { outline: 1px solid #A9814A; outline-offset: 3px; }
+/* Téléphone et tablette en portrait : fond opaque (la grande carte payée, ouverte dessous, et son bouton Fermer se voyaient entre les rectangles). */
+@media (max-width: 899px) { .vf-modale.vf-guide { background: #0a0a0a; } }
+@media (max-width: 599px) { .vf-modale.vf-guide { padding: 8px 0; } .vf-guide__defile { padding: 12px 16px 24px; } .vf-guide__carte { padding: 18px 18px 20px; } }
+/* Format paysage sur ordinateur et tablette en paysage (demandé par Loan le 30/10 : « pour qu'on puisse tout voir d'un coup ») :
+   à gauche le rectangle d'introduction (vertical), à droite les quatre parties (2 × 2), dessous la fin du message et les boutons.
+   Ordre du texte inchangé (lecteurs d'écran, téléphone). Si la hauteur manque, le texte défile encore. */
+@media (min-width: 900px) {
+  .vf-guide .vf-modale__panneau { width: min(1120px, 100%); }
+  .vf-guide__defile { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 2fr); grid-template-areas: "tete tete" "accueil blocs" "pied pied"; column-gap: 16px; padding: 24px 32px 28px; }
+  .vf-guide__defile > .vf-modale__tete { grid-area: tete; }
+  .vf-guide__accueil { grid-area: accueil; }
+  .vf-guide__blocs { grid-area: blocs; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 0; }
+  .vf-guide__bloc p { font-size: 17.5px; line-height: 1.5; }
+  /* « Ouvrir WhatsApp » centré horizontalement dans le rectangle du bas (Loan, 30/10), en bas, à hauteur de la signature ;
+     le texte garde toute la largeur (ses deux dernières lignes sont courtes : le bouton ne les touche pas). */
+  .vf-guide__pied { grid-area: pied; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; margin-top: 16px; }
+  .vf-guide__mot { grid-area: 1 / 1 / 2 / 4; }
+  .vf-guide__actions { grid-area: 1 / 2 / 2 / 3; margin-top: 0; }
+  /* Plus serré, pour que tout tienne sans défiler jusqu'à 1280 × 720 et 1024 × 768 (iPad en paysage), en français aussi. */
+  .vf-guide__defile { padding: 8px 32px 32px; }
+  .vf-guide .vf-modale__tete { margin-bottom: 12px; }
+  .vf-guide__carte { padding: 18px 20px 20px; }
+  .vf-guide__bloc p { margin-top: 6px; }
+}
+@media (min-width: 900px) and (max-width: 1199px) {
+  .vf-guide__defile { grid-template-columns: minmax(0, .75fr) minmax(0, 2fr); padding-left: 30px; padding-right: 30px; }
+  .vf-guide__bloc p { font-size: 16.5px; }
+}
+`;
+const GUIDE_HTML = `
+<sc-if value="{{ guideOuvert }}" hint-placeholder-val="{{ false }}">
+<div class="vf-modale vf-guide" role="dialog" aria-modal="true" aria-label="{{ guideLien }}" onClick="{{ fermerFondGuide }}">
+<div class="vf-modale__panneau">
+<div class="vf-guide__defile" tabindex="-1" ref="{{ refGuide }}">
+<div class="vf-modale__tete">
+<span class="vf-guide__etiquette">{{ formuleNom }}</span>
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.LienTrait" ton="sombre" onClick="{{ fermerGuide }}" hint-size="70px,30px">{{ guideFermer }}</x-import>
+</div>
+<div class="vf-guide__accueil vf-guide__carte" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
+<h2 class="vf-guide__titre">{{ guideTitre }}</h2>
+<p class="vf-guide__intro">{{ guideIntro }}</p>
+</div>
+<div class="vf-guide__blocs">
+<sc-for list="{{ guideSections }}" as="s" hint-placeholder-count="4">
+<div class="vf-guide__bloc vf-guide__carte" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}"><h3><span aria-hidden="true">{{ s.icone }}</span>{{ s.titre }}</h3><p>{{ s.texte }}</p></div>
+</sc-for>
+</div>
+<div class="vf-guide__pied vf-guide__carte" onMouseMove="{{ incliner }}" onMouseLeave="{{ relacher }}">
+<div class="vf-guide__mot">
+<p class="vf-guide__fin">{{ guideFin }}</p>
+<p class="vf-guide__fin">{{ guideBientot }}</p>
+<p class="vf-guide__signature">{{ guideSignature }}</p>
+</div>
+<div class="vf-guide__actions">
+<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" href="{{ lienWhatsApp }}" target="_blank" rel="noreferrer" hint-size="170px,44px">{{ guideWhatsApp }}</x-import>
+</div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+`;
+const GUIDE_JS = `/* Correction du 30/10 (scripts/construire.mjs) : texte de Loan « Comment nous allons travailler », par formule et par langue. */
+const GUIDE = ${JSON.stringify(GUIDE)};
+const guideTextes = (cle) => {
+  const g = GUIDE[document.documentElement.lang === "fr" ? "fr" : "en"], par = (v) => (typeof v === "string" ? v : v[cle]);
+  return { ...g, sections: g.sections.map((s) => ({ icone: s.icone, titre: par(s.titre), texte: par(s.texte).replace("{delai}", FORMULES[cle].delai.replace(/ /g, "\u00A0")) })) };
+};
+
+`;
+const GUIDE_METHODES = `  /* Correction du 30/10 (scripts/construire.mjs) : fenêtre « Comment nous allons travailler », ouverte après le paiement
+     (et depuis le lien de la carte payée) ; Close, Échap ou un clic hors de la fenêtre la referme. */
+  refGuide = (el) => { if (el) el.focus({ preventScroll: true }); };
+  ouvrirGuide() {
+    if (this.state.guide) return;
+    this._focusGuide = document.activeElement;
+    document.body.style.overflow = "hidden";
+    this.setState({ guide: true });
+    if (!this._offGuide) {
+      const esc = (e) => { if (e.key === "Escape" && this.state.guide && !this.state.paiement) this.fermerGuide(); };
+      window.addEventListener("keydown", esc);
+      this._offGuide = () => window.removeEventListener("keydown", esc);
+    }
+  }
+
+  fermerGuide() {
+    if (!this.state.guide) return;
+    document.body.style.overflow = "";
+    this.setState({ guide: false });
+    const f = this._focusGuide; this._focusGuide = null;
+    if (f && f !== document.body && f.focus && document.contains(f)) f.focus({ preventScroll: true });
+  }
+
+`;
+const GUIDE_VALS = `      /* Correction du 30/10 (scripts/construire.mjs) : fenêtre « Comment nous allons travailler ». */
+      ...(() => { const g = guideTextes(FORMULES[clePayee] ? clePayee : "single"); return {
+        guideOuvert: !!(this.state.guide && clePayee), guideTitre: g.titre, guideIntro: g.intro, guideSections: g.sections,
+        guideFin: g.fin, guideBientot: g.bientot, guideSignature: g.signature, guideLien: g.lien, guideFermer: g.fermer, guideWhatsApp: g.whatsapp }; })(),
+      refGuide: this.refGuide,
+      voirGuide: (e) => { e.stopPropagation(); this.ouvrirGuide(); },
+      fermerGuide: () => this.fermerGuide(),
+      fermerFondGuide: (e) => { const t = e.target; if (t === e.currentTarget || (t.matches && t.matches(".vf-modale__panneau, .vf-guide__defile, .vf-guide__blocs"))) this.fermerGuide(); }, /* fond ou vide entre les rectangles */
+`;
+// --- Retour de Loan du 30/10 : textes et structure des cartes de la planche II ------------------------------------
+// Ordre demandé par Loan : nom, prix et sa phrase, texte, puces, bouton, puis des « bento » (petits rectangles : paiement,
+// délai, format, langue, envoi…). Le délai est dans un rectangle : plus de « Reply in … » sous les cartes. « Launch offer »
+// une seule fois, sous « Three ways to work together. » (plus au-dessus de chaque carte de la planche). Noms des formules
+// changés partout (vitrine, fenêtre de paiement, carte payée, message WhatsApp). Français : scripts/traduction-fr.mjs.
+// ⓘ (« le ⓘ à la fin du texte ») : bulle d'information au survol à la souris, au toucher ou au clavier (INFO_JS). Texte de
+// chaque bulle : INFOS ; il est dans la page, caché (lecteurs d'écran : aria-describedby), et recopié dans la bulle.
+const INFOS = {
+  notes: { genre: "notes", lignes: [["A score", "Quality of the technical movements."], ["B score", "Overall performance (power, rhythm, style)."], ["C score", "Jumps and difficulty."]] },
+  validite: { lignes: [["Validity", "Your 3 feedback rounds can be used within 6 months of your first video. Each round is delivered within 3 to 5 days."]] },
+  abonnement: { lignes: [["Keep progressing", "Your subscription renews automatically at the end of each quarter. You can cancel at any time by simply sending us a message or an email before the next billing date. At the end of the 12 weeks, we review your progress and your goals for the next quarter together."]] },
+  semaines: { lignes: [["Unused weeks", "Up to 2 weeks can be carried over to another week of the quarter."]] },
+};
+// Rectangles : [icône (PICTOS), titre (vide : texte seul), texte, ⓘ, sur toute la largeur (carte ouverte sur mobile)]. Puces : texte, ou [texte, ⓘ].
+const ENVOI = "2 videos, 2 minutes max each or 3 videos, 45 seconds max each";
+const FICHES = {
+  Single: { ancien: ["Single<br>feedback", "one full analysis", "170px,44px"], nom: "Technical <br>analysis",
+    accroche: "2 videos analyzed so you know what to improve and how.",
+    textes: ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "I analyze your videos based on your level and your goals:"],
+    puces: ["Your strengths and your priority corrections.", "Specific advice on technique, jumps, rhythm or transitions, depending on your needs.",
+      ["Advice mainly focused on the A and C scores", "notes"]],
+    bento: [["paiement", "", "One-time payment"], ["delai", "Turnaround", "4 to 6 days"], ["format", "Feedback format", "Written or voice message"],
+      ["langue", "Feedback language", "French or English"], ["envoi", "Submission", ENVOI, null, true]] },
+  Pack: { ancien: ["3× feedback<br>pack", "3 full analyses", "180px,44px"], nom: "Progression <br>pack",
+    accroche: "6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.",
+    textes: ["Develop your taolu, specific sections or jumps with three personalized feedback rounds on 2 videos each, spaced out to fit your pace."],
+    puces: ["A detailed technical analysis of each of your videos.", "Specific advice on technique, jumps, speed, presence, rhythm, style or transitions, depending on your needs.",
+      "Tracking of your progress from one feedback round to the next.", "Explained corrections and targeted drills after each round.",
+      ["Advice and focus on the B score, in addition to the A and C scores", "notes"],
+      // Prix de l'Analyse technique au moment de l'achat : 49 € pendant l'offre de lancement, 99 € ensuite.
+      "Already had a Technical Analysis? Its {{ prixSingle }} is deducted from the Pack if you get it within 30 days."],
+    bento: [["paiement", "", "One-time payment"], ["delai", "Turnaround", "3 to 5 days per feedback round", "validite"], ["format", "Feedback format", "Written or voice message"],
+      ["langue", "Feedback language", "French or English"], ["envoi", "Submission", ENVOI + ", per round", null, true]] },
+  Prog: { ancien: ["Quarterly<br>program", "weekly coaching", "180px,44px"], nom: "The way of <br>performance", par: " / quarter",
+    accroche: "24 videos analyzed over 12 weeks, to develop your practice effectively.",
+    textes: ["One-on-one coaching, week after week, to work on everything you want to improve and progress as effectively as possible."],
+    puces: ["24 personalized analyses: 2 videos per week.", "Key areas to work on, defined at the start of the quarter.", "Ongoing support and weekly tracking of your corrections and progress.",
+      "Training priorities and technical details set each week.", "Q&amp;A on WhatsApp after each feedback session.", "Final review with recommendations for what comes next."],
+    bento: [["abonnement", "", "Quarterly subscription", "abonnement"], ["places", "Limited spots", "3 per quarter"], ["delai", "Turnaround", "Priority handling, within 48 to 72 hours", null, true],
+      ["format", "Feedback format", "Written, voice or video"], ["langue", "Feedback language", "French or English"], ["envoi", "Submission", ENVOI + ", per feedback session", "semaines", true]] },
+};
+// Noms des formules dans le texte (fenêtre de paiement, carte payée, fenêtre du 30/10, message WhatsApp : achat).
+const NOMS = {
+  single: ["Single feedback", "Technical Analysis", "the Technical Analysis"],
+  pack: ["3\\u00D7 feedback pack", "Progression Pack", "the Progression Pack"],
+  prog: ["Quarterly program", "The Way of Performance", "The Way of Performance"],
+};
+let nInfo = 0;
+const INFO = (cle) => { const i = INFOS[cle], id = "vf-i-" + ++nInfo;
+  return `<span class="vf-i" role="button" tabindex="0" aria-label="More information" aria-expanded="false" aria-describedby="${id}"><span class="vf-i-o">i</span></span>` +
+    `<span class="vf-i-txt" id="${id}"${i.genre ? ` data-genre="${i.genre}"` : ""}>${i.lignes.map(([l, t]) => `<span class="vf-i-l"><b>${l}</b><span>${t}</span></span>`).join("")}</span>`; };
+const PUCE = (p) => (Array.isArray(p) ? `<div class="vf-pt"><i></i><span>${p[0]}${INFO(p[1])}</span></div>\n` : `<div class="vf-pt"><i></i><span>${p}</span></div>\n`);
+const BENTO = ([icone, titre, texte, info, large]) => `<div class="vf-bento__b${large ? " vf-bento__b--l" : ""}${titre ? "" : " vf-bento__b--seul"}" data-ic="${icone}">` +
+  (titre ? `<b>${titre}</b>` : "") + `<span>${texte}${info ? INFO(info) : ""}</span></div>\n`;
+const PLACES = (k) => (k === "Single" ? "" : `<div class="vf-places"><span>Spots left</span><b>{{ places${k} }}</b></div>`);
+const PAYER = (k, bouton, taille) => `<div class="vf-payer" onPointerEnter="{{ armer${k} }}">\n` +
+  `<x-import component-from-global-scope="LoanDrouardDesignSystem_06a79c.Bouton" ton="sombre" taille="md" onClick="{{ pay${k} }}" hint-size="${taille}">${bouton}</x-import>\n</div>\n`;
+const LIBRE = (k) => `<sc-if value="{{ libre${k} }}" hint-placeholder-val="{{ true }}">`;
+// Carte de la planche II avant ce retour (après les corrections précédentes) : garde-fou, comme toute correction.
+const ANCIENNES_PUCES = {
+  Single: ["Written or voice feedback", "Technique, rhythm, jumps, transitions", "Grade A and C corrections"],
+  Pack: ["Written or voice feedback", "Technique, rhythm, jumps, transitions", "Grade A and C corrections"],
+  Prog: ["Renews every 3 months, cancel anytime", "Written or voice feedback", "Technique, rhythm, jumps, transitions", "Grade A and C corrections"],
+};
+const ANCIENS_TIERS = {
+  Single: "",
+  Pack: '<div class="vf-tier vf-tier--pack">\n<b>In the pack</b>\n' + ["Three analyses, whenever you need them", "Targeted exercises after each video",
+    "Progress tracked from one video to the next", "Grade B suggestions on top", "Valid 6 months from your first video"].map(PUCE).join("") + "</div>\n",
+  Prog: '<div class="vf-tier">\n<b>Also included</b>\n' + ["Targeted exercises after each video", "Progress tracked from one video to the next", "Grade B suggestions on top"].map(PUCE).join("") +
+    '</div>\n<div class="vf-tier vf-tier--prog">\n<b>In the program</b>\n' + ["One analysis every single week", "Priorities set together each week",
+    "Written check-ins whenever you need", "Final review, and a plan going forward"].map(PUCE).join("") + "</div>\n",
+};
+const ANCIENS_DELAIS = { Single: "Reply in 4 to 6 days", Pack: "Reply in 3 to 5 days", Prog: "Reply in 2 to 3 days" };
+const CARTE_AVANT = (k, i) => { const [nom, quoi, taille] = FICHES[k].ancien;
+  return LIBRE(k) + PLACES(k) + '\n<div class="vf-carte__tete">\n' + OFFRE_TITRE + `<div class="vf-nom">${nom}</div>\n` +
+    `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}<span class="vf-prix-d"> · ${quoi}</span></span></div>\n` +
+    PAYER(k, BOUTONS[i][1], taille) + "</div>\n" + '<div class="vf-liste">\n' + ANCIENNES_PUCES[k].map(PUCE).join("") + "</div>\n" + ANCIENS_TIERS[k] +
+    "</sc-if>\n</article>\n</div>\n" + DELAI(`libre${k}`, ANCIENS_DELAIS[k]); };
+// 31/10 (Loan) : même structure et même ordre que les cartes du haut (nom, prix, bouton centré), puis la phrase d'accroche, une
+// fine ligne de séparation et les puces. Version « épurée » choisie par Loan : sur ordinateur, ni paragraphe (il est sur les cartes
+// du haut) ni rectangles dans la carte ; les rectangles sont à l'extérieur (à gauche de l'Analyse Technique, à droite du Suivi
+// Performance ; Pack Évolution : place à décider, rien sur ordinateur). Carte ouverte sur mobile : tout, rectangles dessous.
+const CARTE_APRES = (k, i) => { const f = FICHES[k];
+  return LIBRE(k) + PLACES(k) + '\n<div class="vf-carte__tete">\n' + `<div class="vf-nom">${f.nom}</div>\n` +
+    `<div class="vf-prix">${OFFRE_PRIX(k)}<span class="vf-prix-t">{{ prix${k} }}${f.par ? `<span class="vf-prix-d">${f.par}</span>` : ""}</span></div>\n</div>\n` +
+    '<div class="vf-agir">\n' + PAYER(k, BOUTONS[i][1], f.ancien[2]) + "</div>\n" +
+    '<div class="vf-details">\n' + `<p class="vf-accroche">${f.accroche}</p>\n` + '<div class="vf-sep" aria-hidden="true"></div>\n' +
+    '<div class="vf-texte">\n' + f.textes.map((t) => `<p>${t}</p>\n`).join("") + "</div>\n" +
+    '<div class="vf-liste">\n' + f.puces.map(PUCE).join("") + "</div>\n" +
+    "</div>\n</sc-if>\n</article>\n</div>\n" +
+    LIBRE(k) + `<div class="vf-bento" data-choisi="{{ choisi${k} }}">\n` + f.bento.map(BENTO).join("") + "</div></sc-if>\n"; };
+// Cartes du haut (vitrine, 31/10) : les puces sont remplacées par le paragraphe de la formule, en bas de la carte.
+const VITRINE_PUCES = {
+  Single: ["Written or voice feedback"],
+  Pack: ["Three analyses, progress tracked between them"],
+  Prog: ["One analysis every week, priorities set together", "Renews automatically, cancel anytime"],
+};
+const VITRINE_PHRASE = { Single: FICHES.Single.textes[0], Pack: FICHES.Pack.textes[0], Prog: FICHES.Prog.textes[0] };
+// « Tous les échanges se font sur WhatsApp » : sous les cartes (Loan, 31/10), au lieu d'en haut à gauche (ordinateur).
+const WHATSAPP_AVANT = '</div>\n</div>\n<p class="vfk-note">';
+const WHATSAPP_APRES = '</div>\n</div>\n<p class="vfk-whatsapp">All exchanges take place on WhatsApp.</p>\n<p class="vfk-note">';
+const TITRE_PLANCHE = '<h2 class="vf-titre vfk-ecrit" style="transition-delay:.3s;font-size:clamp(32px,4.2vw,56px)">Three ways to work together.</h2>\n';
+const LEDE_PLANCHE = (t) => `<p class="vf-lede vfk-ecrit" style="transition-delay:.7s;margin-inline:auto;text-align:center">${t}</p>`;
+// Planche II sur ordinateur : les cartes entières à l'écran, sans défiler (Loan, 30/10). Les textes des cartes (--vfk-k, de 1 à
+// 0,75) sont réduits juste assez (recherche par dichotomie : 7 essais, à chaque mesure) ; s'il manque encore de la place, réduction
+// d'ensemble de la planche (jusqu'à 0,8, au lieu de 0,68). Au-delà, la page défile comme avant.
+const ECHELLE_AVANT = "      /* Comme avant : tout tient sur un écran jusqu'au bas du 3× pack ; réduction d'ensemble si la hauteur manque. */\n" +
+  "      if (enRang) {\n" +
+  "        const pr = pin.getBoundingClientRect(), br = bloc.getBoundingClientRect(), bas = C[1].c.getBoundingClientRect().bottom;\n" +
+  "        const s = borne((window.innerHeight - (br.top - pr.top) - 18) / Math.max(1, bas - br.top), 0.68, 1);\n";
+const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : les cartes entières à l'écran ; textes des cartes réduits juste assez\n" +
+  "         (--vfk-k, 1 à 0,75), puis réduction d'ensemble si la hauteur manque encore (jusqu'à 0,8). 31/10 : avec les rectangles et la\n" +
+  "         phrase « Tous les échanges se font sur WhatsApp » sous les cartes. */\n" +
+  "      /* 31/10 (Loan : « tous les textes au même niveau ») : nom, prix, bouton et phrase d'accroche de même hauteur dans les 3 cartes (la plus\n" +
+  "         haute), pour que bouton, ligne et puces commencent au même niveau ; recalculé à chaque taille de texte essayée. */\n" +
+  "      const egaliser = () => { [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].forEach((q) => {\n" +
+  "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
+  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } });\n" +
+  "        /* 01/11 (Loan) : rectangles du Pack Évolution au-dessus de la carte, dans sa largeur. Quand ils s'affichent, le titre et sa\n" +
+  "           phrase remontent autant qu'il faut (--vfk-monte), même hors de l'écran : aucune place réservée, la taille du texte des\n" +
+  "           cartes passe avant (Loan, 01/11). Seule exception, sur les petits écrans : si les rectangles sortaient par le haut de\n" +
+  "           l'écran, les cartes descendent juste assez (bande au-dessus des cartes, souvent 0). 12 px d'air sous la phrase, 10 sur la carte. */\n" +
+  "        const pb = C[1] && C[1].c.querySelector(\":scope > .vf-bento\"), rg = C[0] && C[0].c.parentNode;\n" +
+  "        bloc.style.setProperty(\"--vfk-monte\", \"0px\"); if (rg) rg.style.marginTop = \"\";\n" +
+  "        if (enRang && pb && rg) { const haut = C[1].c.getBoundingClientRect().top - pin.getBoundingClientRect().top - 10 - pb.offsetHeight;\n" +
+  "          if (haut < 16) rg.style.marginTop = Math.ceil(16 - haut) + \"px\"; /* 16 : le léger zoom de la caméra (≈ 1,4 %) remonte les rectangles de quelques px */\n" +
+  "          const besoin = pb.offsetHeight + 22, libre = C[1].c.getBoundingClientRect().top - tete.getBoundingClientRect().bottom;\n" +
+  "          const monte = Math.max(0, Math.round(besoin - libre)); bloc.style.setProperty(\"--vfk-monte\", monte + \"px\");\n" +
+  "          /* Une ligne qui sortirait en partie de l'écran s'efface en fondu (une ligne coupée ne fait pas soigné). */\n" +
+  "          tete.querySelectorAll(\":scope > .vf-titre, :scope > .vf-lede\").forEach((e) => { const op = e.offsetParent;\n" +
+  "            e.toggleAttribute(\"data-sort\", !!op && op.getBoundingClientRect().top + e.offsetTop - pin.getBoundingClientRect().top - monte < 28); }); } /* 28 : marge pour le zoom de la caméra */\n" +
+  "        else tete.querySelectorAll(\"[data-sort]\").forEach((e) => e.removeAttribute(\"data-sort\")); };\n" +
+  "      egaliser();\n" +
+  "      if (enRang) {\n" +
+  "        const pr = pin.getBoundingClientRect(), dispo = window.innerHeight - 16, wa = sec.querySelector(\".vfk-whatsapp\");\n" +
+  "        const basC = () => { egaliser(); return Math.max.apply(null, C.map((k) => { const b = k.c.querySelector(\".vf-bento\"); return Math.max(k.c.getBoundingClientRect().bottom, b ? b.getBoundingClientRect().bottom : 0); }).concat(wa ? [wa.getBoundingClientRect().bottom] : [])) - pr.top; }; /* cartes, rectangles, phrase WhatsApp */\n" +
+  '        let lo = 0.75, hi = 1; bloc.style.setProperty("--vfk-k", "1");\n' +
+  '        if (basC() > dispo) { for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; bloc.style.setProperty("--vfk-k", m.toFixed(4)); if (basC() > dispo) hi = m; else lo = m; } bloc.style.setProperty("--vfk-k", lo.toFixed(4)); egaliser(); }\n' +
+  "        const br = bloc.getBoundingClientRect(), bas = basC() + pr.top;\n" +
+  "        const s = borne((dispo - (br.top - pr.top)) / Math.max(1, bas - br.top), 0.75, 1); /* 0,75 au plus (petits écrans, rectangles du Pack) */\n";
+// Petites icônes des rectangles (provisoires : Loan les choisira plus tard) : traits fins, couleur or (masque CSS).
+const PICTOS = {
+  paiement: "<rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='M3 10h18M7 15h3'/>",
+  abonnement: "<path d='M19.5 10.5A7.5 7.5 0 0 0 6 7M4.5 13.5A7.5 7.5 0 0 0 18 17'/><path d='M5.5 3.5V7.5H9.5M18.5 20.5v-4h-4'/>",
+  places: "<circle cx='12' cy='8' r='3.5'/><path d='M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5'/>",
+  delai: "<circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/>",
+  format: "<path d='M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z'/>",
+  langue: "<circle cx='12' cy='12' r='8.5'/><path d='M3.5 12h17M12 3.5c2.4 2.4 3.6 5.3 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.3-3.6-8.5s1.2-6.1 3.6-8.5z'/>",
+  envoi: "<rect x='3' y='6.5' width='12.5' height='11' rx='2'/><path d='M15.5 10.5l5-3v9l-5-3z'/>",
+};
+const ICONE_CSS = Object.entries(PICTOS).map(([k, d]) => `.vf-bento__b[data-ic="${k}"] { --ic: url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>${d}</svg>`)}"); }`).join("\n");
+const APERCU_DELAI = 0.45; // 01/11 : attente (s) avant l'aperçu des rectangles du Pack Évolution (non choisi) au survol
+const K = (v) => `calc(var(--vfk-k, 1) * ${v})`; // taille ajustée pour que les cartes tiennent à l'écran (ECHELLE_APRES)
+const CARTES_CSS_30 = `/* Corrections des 30 et 31/10 (scripts/construire.mjs) : cartes de la planche II avec la structure des cartes du haut (nom,
+   prix, bouton centré), phrase d'accroche, fine ligne, puces ; rectangles « bento » à l'extérieur ; ⓘ ; « Launch offer » à côté de
+   la réduction ; cartes du haut : paragraphe de la formule en bas, bouton centré. */
+.vfk-tete .vf-lede { text-wrap: balance; }
+.vf-remise-o { font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 10.5px; line-height: 1.2; letter-spacing: .2em; text-transform: uppercase; color: #C6A05E; }
+@media (max-width: 899px) { .vfp-c .vf-remise-o { display: none; } } /* vitrine sur mobile : l'offre est sous « See the options » */
+/* Cartes du haut : bouton centré, paragraphe de la formule en bas (caché sur mobile, comme les puces qu'il remplace). */
+.vfp-c .vf-payer { align-self: center; }
+.vfp-phrase { margin: 0; font-size: 18px; line-height: 1.45; color: rgba(246,245,241,.86); text-wrap: pretty; }
+@media (max-width: 899px) { .vfp-c .vf-payer { flex-basis: 100%; justify-content: center; } }
+/* Cartes du bas. */
+.vfk-c .vf-carte__tete { min-height: 0; gap: 14px; }
+.vfk-c .vf-remise { margin-bottom: 6px; }
+.vf-agir { display: flex; justify-content: center; align-items: center; padding-top: 22px; } /* boutons centrés aussi en hauteur (hauteurs égalisées) */
+.vf-agir .vf-payer { max-width: 100%; }
+.vf-agir .ld-bouton { max-width: 100%; text-align: left; }
+/* Phrase d'accroche : Cormorant SC (police des titres du design system), droite (pas d'italique : Loan, 31/10). */
+.vf-accroche { margin: 22px 0 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 500; font-size: 19px; line-height: 1.35; letter-spacing: .01em; color: rgba(246,245,241,.94); text-wrap: pretty; }
+/* Fine ligne de séparation, discrète, entre la phrase d'accroche et le contenu. */
+.vf-sep { height: 1px; margin: 16px 6% 16px; background: linear-gradient(90deg, rgba(246,245,241,0), rgba(246,245,241,.22), rgba(246,245,241,0)); }
+.vf-texte { display: grid; gap: 8px; margin-bottom: 14px; }
+.vf-texte p { margin: 0; font-size: 17.5px; line-height: 1.5; color: rgba(246,245,241,.72); text-wrap: pretty; }
+.vfk-c .vf-liste { gap: 14px; } /* plus d'espace entre les puces (Loan, 31/10) */
+/* Bento : petites précisions, les unes sous les autres ; petite icône (provisoire) à côté du titre, texte dessous. */
+.vf-bento { display: flex; flex-direction: column; gap: 6px; }
+.vf-bento__b { display: grid; grid-template-columns: 15px minmax(0, 1fr); align-items: center; gap: 3px 7px; min-width: 0; padding: 9px 11px 10px; border: 1px solid rgba(246,245,241,.15); border-radius: 11px; background: rgba(24,23,21,.94); font-size: 14.5px; line-height: 1.3; color: rgba(246,245,241,.9); }
+.vf-bento__b::before { content: ''; grid-row: 1; grid-column: 1; width: 15px; height: 15px; background: #C6A05E; -webkit-mask: var(--ic) 50% 50% / contain no-repeat; mask: var(--ic) 50% 50% / contain no-repeat; }
+.vf-bento__b > b { grid-row: 1; grid-column: 2; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9px; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: rgba(246,245,241,.52); }
+.vf-bento__b > span { grid-column: 1 / -1; }
+.vf-bento__b--seul > span { grid-row: 1; grid-column: 2; font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 9.5px; line-height: 1.45; letter-spacing: .12em; text-transform: uppercase; color: #C6A05E; }
+${ICONE_CSS}
+/* « Tous les échanges se font sur WhatsApp » sous les cartes (ordinateur), quand les cartes sont retournées (comme la note). */
+.vfk-whatsapp { display: none; }
+/* ⓘ à la fin du texte, collé au dernier mot sans espace (élément en ligne : il ne passe jamais seul à la ligne ; écart = marge). */
+.vf-i { cursor: pointer; outline: none; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.vf-i-o { position: relative; top: -.1em; margin-left: .3em; padding: 0 .4em; border: 1px solid rgba(198,160,94,.7); border-radius: 1em; font: italic 600 .78em/1 'Cormorant', Georgia, serif; letter-spacing: 0; text-transform: none; color: #C6A05E; transition: background-color .2s ease, color .2s ease; }
+.vf-i:hover .vf-i-o, .vf-i[aria-expanded="true"] .vf-i-o { background: rgba(198,160,94,.22); color: #EBD3A0; }
+.vf-i:focus-visible .vf-i-o { outline: 1px solid #A9814A; outline-offset: 2px; }
+.vf-i-txt { display: none; }
+/* La bulle est posée sur la page (INFO_JS), au-dessus de la ⓘ (dessous s'il n'y a pas la place). */
+.vf-bulle-i { position: fixed; z-index: 1000; left: 0; top: 0; box-sizing: border-box; width: max-content; max-width: min(330px, calc(100vw - 24px)); padding: 12px 15px 13px; border: 1px solid rgba(198,160,94,.45); border-radius: 12px; background: #171614; box-shadow: 0 14px 36px rgba(0,0,0,.6), 0 0 30px -12px rgba(169,129,74,.5); color: rgba(246,245,241,.92); font: 400 16.5px/1.45 'Cormorant', Georgia, serif; text-align: left; pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .18s ease, transform .18s ease; }
+.vf-bulle-i[data-on] { opacity: 1; transform: none; }
+.vf-bulle-i .vf-i-l { display: block; }
+.vf-bulle-i .vf-i-l + .vf-i-l { margin-top: 8px; }
+.vf-bulle-i b { display: block; margin-bottom: 3px; font: 500 10px/1.3 'Cinzel', Georgia, serif; letter-spacing: .14em; text-transform: uppercase; color: #C6A05E; }
+.vf-bulle-i[data-notes] .vf-i-l { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px; }
+.vf-bulle-i[data-notes] .vf-i-l + .vf-i-l { margin-top: 5px; }
+.vf-bulle-i[data-notes] b { margin: 0; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .vf-bulle-i, .vf-i-o, .vfk-c > .vf-bento, .vfk-whatsapp, .vfk-tete > :is(.vf-titre, .vf-lede) { transition: none !important; } }
+/* Tailles des cartes, à la mesure de l'écran (Loan, 31/10) : les mêmes en haut (vitrine) et en bas (planche II) ; égales aux
+   anciennes tailles fixes à 1440 px de large, plus grandes au-delà. */
+@media (min-width: 900px) {
+  .vf { --c-nom: clamp(28px, 2.7vw, 40px); --c-prix: clamp(20px, .25vw + 18.4px, 22.5px); /* prix plafonné : « 49 € · analyse complète » tient sur une ligne en haut */ --c-remise: clamp(16px, .4vw + 12.2px, 20px);
+    --c-texte: clamp(16.5px, .55vw + 9.6px, 21px); --c-accroche: clamp(17.5px, .6vw + 10.4px, 22.5px); --c-bento: clamp(13.5px, .35vw + 9.5px, 16px); }
+  .vfp-c .vf-nom { font-size: var(--c-nom); }
+  .vfp-c .vf-prix { font-size: var(--c-prix); }
+  .vfp-c .vf-remise { font-size: var(--c-remise); }
+  .vfp-phrase { font-size: var(--c-texte); }
+}
+/* Ordinateur : titre sur une ligne, remonté ; surtitre à la verticale, à gauche de l'écran (Loan, 31/10) ; cartes au centre, de même
+   hauteur ; une colonne de rectangles de chaque côté (place réservée) ; textes à la taille des cartes du haut, réduits juste assez
+   pour que tout tienne à l'écran (--vfk-k : ECHELLE_APRES). */
+@media (min-width: 1000px) {
+  .vfk-bloc { position: relative; --vfk-w: clamp(118px, 8.6vw, 190px); --vfk-bord: max(60px, 3.9vw); }
+  .vfk-contenu { padding-top: calc(var(--hauteur-header, 72px) + clamp(2px, 1svh, 14px)); }
+  .vfk-tete { max-width: none; margin-bottom: clamp(12px, 2.2svh, 28px); }
+  .vfk-tete .vf-titre { white-space: nowrap; font-size: clamp(30px, 3.3vw, 54px) !important; }
+  .vfk-tete .vf-eyebrow { position: absolute; left: max(30px, 2.3vw); top: 58%; margin: 0 !important; font-size: clamp(11px, .2vw + 8.5px, 13.5px); white-space: nowrap; transform-origin: 0 0; transform: rotate(-90deg) translateX(-50%); }
+  .vfk-tete .vf-eyebrow > span { max-width: none; white-space: nowrap; }
+  .vfk-plaque span { display: none; } /* « Tous les échanges se font sur WhatsApp » : sous les cartes */
+  .vfk-plaque { max-width: calc(18vw - 16px); }
+  .vfk-whatsapp { display: block; margin: ${K("18px")} 0 0; text-align: center; font-style: italic; font-weight: 500; font-size: clamp(17px, .5vw + 10px, 21px); color: rgba(246,245,241,.7); opacity: 0; transition: opacity 1.2s ease; }
+  .vfk-bloc:has(.vfk-note[data-on]) .vfk-whatsapp { opacity: 1; }
+  @supports not selector(:has(*)) { .vfk-whatsapp { opacity: 1; } }
+  .vfk-rang { --vfk-gap: clamp(28px, 2.6vw, 52px); width: min(1320px, 100vw - 2 * (var(--vfk-bord) + var(--vfk-w) + 16px)); gap: var(--vfk-gap); align-items: stretch; }
+  .vfk-c { display: flex; flex-direction: column; }
+  .vfk-flip { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .vfk-c .vf-carte { flex: 1 0 auto; display: flex; flex-direction: column; padding: max(${K("30px")}, 7cqw) max(26px, 8.6cqw) max(${K("26px")}, 6.4cqw); } /* marges à la mesure de la carte : les ornements du cadre grandissent avec elle */
+  .vfk-c .vf-nom { font-size: ${K("var(--c-nom)")}; }
+  .vfk-c .vf-carte__tete { gap: ${K("12px")}; }
+  .vfk-c .vf-remise { margin-bottom: ${K("4px")}; font-size: ${K("var(--c-remise)")}; }
+  .vfk-c .vf-prix { font-size: ${K("var(--c-prix)")}; }
+  .vfk-c .vf-agir { padding-top: ${K("20px")}; }
+  .vfk-c .vf-texte { display: none; } /* version épurée : le paragraphe est sur les cartes du haut */
+  .vfk-c .vf-accroche { margin-top: ${K("22px")}; font-size: ${K("var(--c-accroche)")}; }
+  .vfk-c .vf-sep { margin-top: ${K("16px")}; margin-bottom: ${K("16px")}; }
+  .vfk-c .vf-liste { margin-top: 0; gap: ${K("14px")}; }
+  .vfk-c .vf-pt { font-size: ${K("var(--c-texte)")}; line-height: 1.38; }
+  .vfk-c .vf-pt i { margin-top: .7em; }
+  /* Rectangles à l'extérieur : à gauche de l'Analyse Technique, à droite du Suivi Performance (Pack Évolution : à décider), seulement
+     pour la carte choisie ; au survol d'une autre carte, les siens apparaissent presque transparents (un clic les affiche). */
+  .vfk-c > .vf-bento { position: absolute; z-index: 2; top: 0; width: var(--vfk-w); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .35s ease, transform .35s ease, visibility 0s .35s; } /* cachés : ni clic ni clavier */
+  .vfk-c[data-k="0"] > .vf-bento { right: calc(100% + 16px); transform: translateX(6px); }
+  .vfk-c[data-k="2"] > .vf-bento { left: calc(100% + 16px); transform: translateX(-6px); }
+  /* Pack Évolution (Loan, 31/10 et 01/11) : au-dessus de la carte, jamais plus large qu'elle ; compacts (icône et texte, deux par
+     ligne, l'envoi sur toute la largeur ; le titre de chaque rectangle reste lu par les lecteurs d'écran). Quand ils s'affichent (clic,
+     ou aperçu au survol), le titre et sa phrase remontent autant qu'il faut, même hors de l'écran (--vfk-monte : ECHELLE_APRES). */
+  .vfk-c[data-k="1"] > .vf-bento { top: auto; bottom: calc(100% + 10px); left: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; align-items: stretch; transform: translateY(6px); }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b { position: relative; padding: 4px 8px 5px; column-gap: 6px; font-size: 12px; line-height: 1.2; } /* compacts : ils tiennent au-dessus de la carte sans réduire le texte des cartes (Loan, 01/11) */
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b > span { grid-row: 1; grid-column: 2; }
+  .vfk-c[data-k="1"] > .vf-bento .vf-bento__b--l { grid-column: 1 / -1; }
+  .vfk-tete > .vf-titre { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .3s, .3s, 0s, 0s !important; }
+  .vfk-tete > .vf-lede { transition: -webkit-mask-position 1.8s cubic-bezier(.3,.6,.2,1), mask-position 1.8s cubic-bezier(.3,.6,.2,1), opacity .4s ease, transform .45s cubic-bezier(.2,.7,.2,1); transition-delay: .7s, .7s, 0s, 0s !important; }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu] > .vf-bento[data-choisi="oui"]) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu] > .vf-bento[data-choisi="oui"]) .vfk-tete > [data-sort] { opacity: 0; }
+  .vfk-c[data-vu] > .vf-bento[data-choisi="oui"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
+  .vfk-c .vf-bento__b { font-size: max(12.5px, ${K("var(--c-bento)")}); }
+}
+/* 01/11 (Loan : « quand je passe la souris rapidement sur le Pack, on pourrait croire que ça bugue ») : l'aperçu du Pack Évolution au
+   survol attend ${APERCU_DELAI} s que la souris reste sur la carte (rectangles et titre qui remonte) ; il disparaît sans attendre. Cartes de
+   gauche et de droite : aperçu instantané, comme avant (Loan, 01/11). */
+@media (min-width: 1000px) and (hover: hover) { .vfk-c[data-vu]:hover > .vf-bento[data-choisi="non"] { opacity: .55; visibility: visible; transform: none; transition-delay: 0s; } /* 31/10 : 20 % → 55 % (Loan : « on ne voit rien ») */
+  .vfk-c[data-k="1"][data-vu]:hover > .vf-bento[data-choisi="non"] { transition-delay: ${APERCU_DELAI}s; }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > :is(.vf-titre, .vf-lede) { transform: translateY(calc(-1 * var(--vfk-monte, 0px))); }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento[data-choisi="non"]) .vfk-tete > .vf-titre { transition-delay: .3s, .3s, ${APERCU_DELAI}s, ${APERCU_DELAI}s !important; }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento[data-choisi="non"]) .vfk-tete > .vf-lede { transition-delay: .7s, .7s, ${APERCU_DELAI}s, ${APERCU_DELAI}s !important; }
+  .vfk-bloc:has(.vfk-c[data-k="1"][data-vu]:hover > .vf-bento) .vfk-tete > [data-sort] { opacity: 0; } }
+/* Grands écrans : le titre monte dans la bande de l'en-tête (ses liens sont effacés dès qu'on descend ; le nom et les langues sont
+   sur les côtés). En dessous de 1 100 px, il reste sous l'en-tête (il toucherait le nom). */
+@media (min-width: 1100px) { .vfk-contenu { padding-top: clamp(16px, 2.6svh, 30px); } }
+/* Mobile : petites cartes (nom et prix, bouton centré comme sur les autres cartes, « + » en haut à droite) ; tout le reste, et les
+   rectangles dessous, dans la carte ouverte. */
+@media (max-width: 999px) {
+  .vfk .vfk-c:not([data-grand]) .vf-carte__tete::after { position: absolute; top: 18px; right: 18px; margin: 0; }
+  ${MINI} .vf-details { display: none; }
+  ${MINI} .vf-agir { padding-top: 14px; }
+  .vfk-c:not([data-grand]) > .vf-bento { display: none; }
+  .vfk-c[data-grand] > .vf-bento { flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: min(460px, 100%); margin-top: 14px; opacity: 0; transition: opacity .4s ease .25s; }
+  .vfk-c[data-grand="on"] > .vf-bento { opacity: 1; }
+  .vfk-c[data-grand] .vf-bento__b--l { grid-column: 1 / -1; }
+}
+@media (max-width: 359px) { .vfk-c[data-grand] > .vf-bento { grid-template-columns: minmax(0, 1fr); } }
+/* Carte ouverte (mobile, Loan, 31/10 : « on voit un bout de l'autre bouton en fond ») : sous la barre flottante de Safari (iOS 26), la
+   page derrière restait visible. Les autres cartes et les traits sont cachés une fois le fond sombre posé (0,5 s), et réapparaissent
+   dès la fermeture ; le fond sombre déborde de l'écran. */
+@media (max-width: 999px) {
+  .vfk[data-grand] .vfk-cam { visibility: hidden; transition: visibility 0s .5s; }
+  .vfk[data-grand] .vfk-c[data-grand] { visibility: visible; }
+  .vfk:has(.vfk-c[data-grand="ferme"]) .vfk-cam { visibility: visible; transition: none; }
+  .vfk .vfk-c[data-grand]::before { inset: -30vh 0; }
+}
+/* Moins de 375 px (vitrine et petites cartes) : noms et boutons un peu resserrés ; « Performance » ne touche plus « Voir tous les
+   détails », et les cartes de la vitrine grandissent moins. */
+@media (max-width: 374px) {
+  :is(.vfp-c, ${MINI}) .vf-nom { font-size: 21px; }
+  :is(.vfp-c, ${MINI}) .ld-bouton { padding-left: 16px; padding-right: 18px; letter-spacing: .05em; }
+}
+`;
+const EGALISER_JS = `<script>/* Correction du 31/10 (scripts/construire.mjs) : cartes du haut (vitrine), sur ordinateur : nom, prix et paragraphe de
+   même hauteur dans les 3 cartes (la plus haute), pour que tous les textes soient au même niveau. Recalculé quand une carte change de
+   taille (fenêtre, polices). */
+(() => { if (window.__ldEgal) return; window.__ldEgal = 1;
+  const mq = window.matchMedia("(min-width: 900px)"), GROUPES = [".vfp-c .vf-carte__tete .vf-nom", ".vfp-c .vf-carte__tete .vf-prix", ".vfp-c .vfp-phrase"];
+  const egaliser = () => GROUPES.forEach((q) => { const g = [...document.querySelectorAll(q)]; g.forEach((e) => { e.style.minHeight = ""; });
+    if (mq.matches && g.length > 1) { const h = Math.max(...g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + "px"; }); } });
+  /* Chaque élément est observé (taille) ; les cartes aussi (contenu recréé par le moteur de la page) : égalisation à l'image suivante. */
+  let ro = null, raf = 0;
+  const plus_tard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; egaliser(); if (ro) GROUPES.forEach((q) => document.querySelectorAll(q).forEach((e) => ro.observe(e))); }); };
+  /* Toute la page est surveillée (et pas seulement les cartes du haut) : le moteur peut recréer tout le bloc des cartes. */
+  const brancher = () => { if (!document.body) return false;
+    if (window.ResizeObserver) ro = new ResizeObserver(plus_tard);
+    const vitrine = (n) => { const e = n && (n.nodeType === 1 ? n : n.parentElement); return !!e && (!!e.closest(".vfp-cartes") || (e.querySelector && !!e.querySelector(".vfp-c"))); };
+    if (window.MutationObserver) new MutationObserver((l) => { if (l.some((r) => vitrine(r.target) || [...r.addedNodes].some(vitrine))) plus_tard(); })
+      .observe(document.body, { childList: true, subtree: true, characterData: true }); /* seulement ce qui touche les cartes du haut */
+    plus_tard(); return true; };
+  if (!brancher()) document.addEventListener("DOMContentLoaded", brancher);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(plus_tard);
+  if (mq.addEventListener) mq.addEventListener("change", plus_tard);
+  addEventListener("resize", plus_tard);
+  document.addEventListener("click", plus_tard, true); /* « See the options » : cartes affichées */
+})();
+</script>
+`;
+const INFO_JS = `<script>/* Correction du 30/10 (scripts/construire.mjs) : bulles ⓘ des cartes. Souris : au survol (un clic la garde ouverte) ;
+   toucher : un toucher l'ouvre ou la ferme ; clavier : au focus, Entrée ou Espace. Échap ou un clic ailleurs la ferme ; elle suit
+   la ⓘ quand la page défile (fermée si la ⓘ sort de l'écran). La bulle est posée sur la page, hors des cartes (elles coupent ce
+   qui dépasse, s'inclinent et sont parfois réduites). */
+(() => { if (window.__ldInfo) return; window.__ldInfo = 1;
+  let bulle = null, cible = null, doigt = false, tPointeur = 0, raf = 0;
+  const trouver = (e) => (e.target && e.target.closest ? e.target.closest(".vf-i") : null);
+  const placer = () => {
+    const o = cible.querySelector(".vf-i-o") || cible, q = o.getBoundingClientRect(), b = bulle.getBoundingClientRect(), m = 12;
+    let y = q.top - b.height - 10; if (y < m) y = q.bottom + 10;
+    bulle.style.left = Math.round(Math.max(m, Math.min(innerWidth - b.width - m, q.left + q.width / 2 - b.width / 2))) + "px";
+    bulle.style.top = Math.round(y) + "px";
+  };
+  const ouvrir = (b) => {
+    const src = document.getElementById(b.getAttribute("aria-describedby")); if (!src) return;
+    if (cible && cible !== b) cible.setAttribute("aria-expanded", "false");
+    if (!bulle) { bulle = document.createElement("div"); bulle.className = "vf-bulle-i"; bulle.setAttribute("aria-hidden", "true"); document.body.appendChild(bulle); }
+    cible = b; b.setAttribute("aria-expanded", "true");
+    bulle.innerHTML = src.innerHTML; bulle.toggleAttribute("data-notes", src.getAttribute("data-genre") === "notes");
+    bulle.style.left = bulle.style.top = "0px"; placer(); bulle.setAttribute("data-on", "");
+  };
+  const fermer = () => { if (!cible) return; cible.setAttribute("aria-expanded", "false"); cible = null; if (bulle) bulle.removeAttribute("data-on"); };
+  document.addEventListener("pointerdown", (e) => { doigt = e.pointerType !== "mouse"; tPointeur = performance.now(); }, true);
+  document.addEventListener("click", (e) => {
+    const b = trouver(e);
+    if (!b) { fermer(); return; }
+    if (!doigt && e.detail) { if (cible !== b) ouvrir(b); return; }
+    if (cible === b) fermer(); else ouvrir(b);
+  });
+  document.addEventListener("pointerover", (e) => { if (e.pointerType !== "mouse") return; const b = trouver(e); if (b && b !== cible) ouvrir(b); });
+  document.addEventListener("pointerout", (e) => { if (e.pointerType !== "mouse") return; const b = trouver(e); if (b && b === cible && !b.contains(e.relatedTarget) && document.activeElement !== b) fermer(); });
+  document.addEventListener("focusin", (e) => { const b = trouver(e); if (b && (b.matches(":focus-visible") || performance.now() - tPointeur > 500)) ouvrir(b); });
+  document.addEventListener("focusout", (e) => { const b = trouver(e); if (b && b === cible) fermer(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { fermer(); return; }
+    const b = trouver(e); if (b && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); if (cible === b) fermer(); else ouvrir(b); }
+  });
+  const suivre = () => { if (!cible || raf) return; raf = requestAnimationFrame(() => { raf = 0; if (!cible) return; const q = cible.getBoundingClientRect();
+    if (!document.contains(cible) || !q.width || q.bottom < 0 || q.top > innerHeight) fermer(); else placer(); }); };
+  addEventListener("scroll", suivre, { passive: true, capture: true });
+  addEventListener("resize", suivre);
+  document.addEventListener("ld-loupe", suivre); /* 01/11 : la bulle suit sa ⓘ pendant que la ligne grossit (LOUPE_JS) */
+})();
+</script>
+`;
+// 01/11 (Loan) : effet « Dock de macOS » sur les puces des cartes de la planche II (ordinateur, souris), pour rendre le texte des
+// cartes, assez petit, plus lisible : la ligne sous la souris grossit et pousse les autres, ses voisines grossissent un peu.
+// Second retour du 01/11 : le texte grossit sans changer de lignes (zoom, pas de nouvelle mise en page) ; même agrandissement dans les
+// 3 cartes ; le texte peut sortir de sa place habituelle tant qu'il reste dans la carte. Une ligne qui garde ses retours à la ligne
+// s'élargit d'autant : la largeur de la carte décide de l'agrandissement (≈ ×1,17 : les lignes les plus longues occupent déjà toute
+// la largeur ; marges de la carte utilisées jusqu'à 6 px du bord). Troisième retour du 01/11 (« comme le Dock, grossissement et
+// rétrécissement continus entre les lignes ») : la taille de chaque puce dépend en continu de la distance entre la souris et la puce
+// (pleine taille sur toutes ses lignes, puis décroissance douce sur ≈ 3 lignes de texte). Quatrième retour du 01/11 (« des petits
+// haut-bas en permanence sur tout le texte ») : le haut de la liste reste fixe, seules les lignes sous la partie agrandie sont poussées
+// vers le bas. Rien ne bouge dans la mise en page (cartes, bas de page) : seulement des zooms et des déplacements, à chaque image.
+const LOUPE = { max: 1.3, portee: 3, tau: 55, lacher: 150, bord: 6 }; // ×1,3 au plus ; portée : 3 lignes de texte ; amorti 55 ms (150 ms quand la souris s'en va) ; 6 px du bord
+const LOUPE_CSS = `/* Correction du 01/11 (scripts/construire.mjs) : effet loupe des puces des cartes (LOUPE_JS). */
+.vfk-c .vf-liste[data-loupe] > .vf-pt { position: relative; z-index: 1; } /* devant le cadre de la carte */
+/* Le cadre garde tout son éclat (Loan, 01/11 : « la carte perd de sa brillance » quand il s'atténuait) ; là où une ligne agrandie passe
+   sur ses petits médaillons (haut de la liste), un léger halo sombre autour des lettres les garde lisibles (invisible sur le fond). */
+.vfk-c .vf-liste[data-loupe] > .vf-pt { text-shadow: 0 0 3px rgba(20,19,17,.95), 0 0 7px rgba(20,19,17,.8); }
+`;
+const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effet loupe façon Dock de macOS sur les puces des cartes de la planche II
+   (ordinateur, souris). La taille de chaque puce suit en continu la distance à la souris ; le haut de la liste reste fixe, les lignes
+   sous la partie agrandie sont poussées vers le bas. Zoom sans nouvelle mise en page : chaque puce garde ses retours à la
+   ligne, la carte et la page ne bougent pas. Même agrandissement dans les 3 cartes : le plus grand qui garde toutes les lignes dans la
+   carte (${LOUPE.bord} px du bord au moins), ×${LOUPE.max} au plus. */
+(() => { if (window.__ldLoupe) return; window.__ldLoupe = 1;
+  const mq = matchMedia("(min-width: 1000px) and (hover: hover) and (pointer: fine)"), calme = matchMedia("(prefers-reduced-motion: reduce)");
+  const MAX = ${LOUPE.max}, PORTEE = ${LOUPE.portee}, TAU = ${LOUPE.tau}, TAU_LACHER = ${LOUPE.lacher}, BORD = ${LOUPE.bord}, LISTES = ".vfk-c .vf-details .vf-liste";
+  const etats = new Map(); /* liste → { f (mesures), c (zoom actuel de chaque puce), y (point sous la souris), g (décalage d'ensemble) } */
+  let commun = null, active = null, py = 0, raf = 0, tPrec = 0;
+  const puces = (l) => Array.prototype.filter.call(l.children, (e) => e.classList.contains("vf-pt"));
+  /* Effet (1 à 0) d'une puce selon la distance (px) entre la souris et ses lignes : décroissance douce (cos²) sur R px. */
+  const effet = (d, R) => (d >= R ? 0 : Math.pow(Math.cos(Math.PI / 2 * d / R), 2));
+  const distance = (f, j, y) => Math.max(0, f.top[j] + f.a[j] - y, y - (f.top[j] + f.h[j] - f.a[j]));
+  const zoom = (f, j, y) => 1 + (commun.S - 1) * effet(distance(f, j, y), f.R);
+  const croissance = (f, y) => f.p.reduce((t, _, j) => t + f.h[j] * (zoom(f, j, y) - 1), 0);
+  /* Mesures au repos, en px de mise en page, des 3 listes ensemble (même agrandissement partout) ; refaites si la largeur ou la taille
+     du texte change. Ligne la plus large de chaque puce : rectangles du texte, ramenés en px de mise en page (zoom de la caméra). */
+  const mesurer = () => {
+    const ls = Array.prototype.slice.call(document.querySelectorAll(LISTES)).filter((l) => puces(l).length && l.offsetWidth);
+    if (!ls.length) return null;
+    const cle = ls.map((l) => l.clientWidth + "|" + getComputedStyle(puces(l)[0]).fontSize + "|" + puces(l).length).join(";");
+    if (commun && commun.cle === cle && commun.ls.every((l, i) => l === ls[i]) && Array.from(commun.fiches.values()).every((f) => f.p.every((e) => e.isConnected))) return commun;
+    let S = MAX; const fiches = new Map();
+    ls.forEach((l) => {
+      const carte = l.closest(".vf-carte"); if (!carte) return;
+      const p = puces(l), W = l.clientWidth, cc = getComputedStyle(carte), pg = parseFloat(cc.paddingLeft) || 0, pd = parseFloat(cc.paddingRight) || 0, pb = parseFloat(cc.paddingBottom) || 0;
+      const lr = l.getBoundingClientRect(), k = lr.width / (l.offsetWidth || 1) || 1;
+      const larg = p.map((e) => { let d = 0, n; const tw = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
+        while ((n = tw.nextNode())) { if (!n.textContent.trim() || n.parentElement.closest(".vf-i-txt")) continue;
+          const r = document.createRange(); r.selectNodeContents(n); const q = r.getClientRects(); for (let i = 0; i < q.length; i++) d = Math.max(d, q[i].right - lr.left); }
+        const io = e.querySelector(".vf-i-o"); if (io) d = Math.max(d, io.getBoundingClientRect().right - lr.left);
+        return Math.min(W, Math.max(1, d / k)); });
+      /* Place de chaque côté : marges de la carte jusqu'à BORD px du bord ; à droite, aussi ce que la ligne la plus large laisse libre. */
+      const G = Math.max(0, pg - BORD), D = (x) => Math.max(0, W - x + pd - BORD);
+      larg.forEach((x) => { S = Math.min(S, 1 + (G + D(x)) / x); });
+      let haut = 0; for (let e = l; e && e !== carte; e = e.offsetParent) haut += e.offsetTop;
+      let prec = l.previousElementSibling; while (prec && !prec.getClientRects().length) prec = prec.previousElementSibling; /* élément affiché au-dessus (le paragraphe est caché sur ordinateur) */
+      const H0 = l.offsetHeight, L = parseFloat(getComputedStyle(p[0]).lineHeight) || 20;
+      const h = p.map((e) => e.offsetHeight), top = p.map((e) => e.offsetTop - l.offsetTop);
+      fiches.set(l, { l, carte, p, h, top, H0, R: PORTEE * L, g0: p.length > 1 ? top[1] - top[0] - h[0] : 0,
+        a: h.map((x) => Math.min(x / 2, L / 2)), /* pleine taille tant que la souris est sur une des lignes de la puce */
+        ox: larg.map((x) => { const g = G, d = D(x); return g + d > 0 ? x * g / (g + d) : x / 2; }), /* la place est partagée à gauche et à droite */
+        bas: Math.max(0, carte.clientHeight - haut - H0 - Math.max(BORD, pb * 0.3)), /* place sous la liste, jusqu'à la marge du bas */
+        dessus: prec ? Math.max(0, l.offsetTop - prec.offsetTop - prec.offsetHeight - 7) : 0 });
+    });
+    commun = { cle, ls, S: Math.max(1, S), fiches };
+    /* Croissance moyenne de chaque liste quand la souris la parcourt : les lignes éloignées sont poussées de cette valeur, fixe. */
+    fiches.forEach((f) => { const n = f.p.length, y0 = f.top[0] + f.a[0], y1 = f.top[n - 1] + f.h[n - 1] - f.a[n - 1]; let somme = 0, nb = 0;
+      for (let y = y0; y <= y1; y += 2) { somme += croissance(f, y); nb++; } f.Gm = nb ? somme / nb : 0; f.y0 = y0; f.y1 = y1; });
+    return commun;
+  };
+  /* Position de chaque puce : le haut de la liste ne bouge pas ; chaque puce est poussée vers le bas par l'agrandissement de celles du
+     dessus (4e retour du 01/11 : avec le point sous la souris fixe, tout le texte montait et descendait sans cesse en déplaçant la souris). */
+  const positions = (s) => { const f = s.f, t = []; let bas = 0; f.p.forEach((_, j) => { t[j] = bas + s.g; bas += f.h[j] * (s.c[j] - 1) + (s.e[j] || 0); }); return { t, croissance: bas - (s.e[f.p.length - 1] || 0) }; };
+  const appliquer = (s) => {
+    const f = s.f;
+    /* Décalage d'ensemble, seulement si la place manque sous la liste (bas de la carte) : la liste remonte juste assez, sans toucher la
+       ligne fine au-dessus. */
+    s.g = 0; const { croissance } = positions(s); s.g = Math.max(-f.dessus, Math.min(0, f.bas - croissance));
+    const { t } = positions(s);
+    f.p.forEach((e, j) => { const c = s.c[j];
+      if (Math.abs(c - 1) < 0.0005 && Math.abs(t[j]) < 0.05) { e.style.transform = ""; return; }
+      e.style.transformOrigin = f.ox[j].toFixed(1) + "px 0";
+      e.style.transform = "translateY(" + t[j].toFixed(2) + "px) scale(" + c.toFixed(4) + ")"; });
+  };
+  /* Point de la liste au repos qui est affiché sous la souris (Y : px de mise en page depuis le haut de la liste) : dans une puce agrandie,
+     on divise par son zoom ; entre deux puces, l'espace n'est pas agrandi. Ainsi la puce sous la souris est bien celle qui grossit. */
+  const auRepos = (s, Y) => {
+    const f = s.f, n = f.p.length, { t } = positions(s);
+    if (Y < f.top[0] + t[0]) return Y - t[0];
+    for (let j = 0; j < n; j++) { const haut = f.top[j] + t[j], hauteur = f.h[j] * s.c[j];
+      if (Y <= haut + hauteur) return f.top[j] + Math.max(0, Y - haut) / s.c[j];
+      if (j === n - 1) return f.top[j] + f.h[j] + (Y - haut - hauteur);
+      if (Y < f.top[j + 1] + t[j + 1]) { const e = f.top[j + 1] + t[j + 1] - haut - hauteur; return f.top[j] + f.h[j] + (e > 0.01 ? (Y - haut - hauteur) * f.g0 / e : 0); } }
+    return Y;
+  };
+  const finir = (l, s) => { s.f.p.forEach((e) => { e.style.transform = e.style.transformOrigin = ""; }); l.removeAttribute("data-loupe");
+    etats.delete(l); };
+  const image = (t) => {
+    raf = 0; const dt = tPrec ? Math.min(250, t - tPrec) : 16; tPrec = t;
+    if (active && commun && commun.fiches.has(active) && !etats.has(active)) { const f = commun.fiches.get(active);
+      etats.set(active, { f, c: f.p.map(() => 1), e: f.p.map(() => 0), y: 0, g: 0 }); active.setAttribute("data-loupe", ""); }
+    let encore = false;
+    etats.forEach((s, l) => { const f = s.f;
+      if (l === active) { const r = l.getBoundingClientRect(), kY = r.height / (f.H0 || 1) || 1; s.y = auRepos(s, (py - r.top) / kY); } /* point de la liste (au repos) sous la souris */
+      const vise = f.p.map((_, j) => (l === active ? zoom(f, j, s.y) : 1));
+      /* Écarts entre puces sous la souris : ils absorbent la différence entre la croissance réelle et la croissance moyenne, pour que les
+         lignes éloignées restent immobiles pendant qu'on parcourt la liste (sans cela, elles montaient et descendaient à chaque puce,
+         les puces n'ayant pas toutes la même hauteur). L'écart d'une puce agrandie n'est pas touché ; 40 % à 200 % de l'écart normal. */
+      const ecarts = f.p.map(() => 0);
+      if (l === active && f.g0 > 0) { const n = f.p.length, A = effet(Math.max(0, f.y0 - s.y, s.y - f.y1), f.R);
+        const reste = A * f.Gm - vise.reduce((t, c, j) => t + f.h[j] * (c - 1), 0), poids = f.p.map((_, j) => (j < n - 1 && f.top[j + 1] > s.y ? 1 - effet(distance(f, j + 1, s.y), f.R) : 0));
+        const W = Math.max(1, poids.reduce((t, x) => t + x, 0)); /* moins d'un écart libre sous la souris (bas de la liste) : compensation partielle, qui s'éteint en douceur */
+        poids.forEach((w, j) => { ecarts[j] = Math.max(-0.6 * f.g0, Math.min(f.g0, reste * w / W)); }); }
+      const a = calme.matches ? 1 : 1 - Math.exp(-dt / (l === active ? TAU : TAU_LACHER));
+      let bouge = false; s.c = s.c.map((c, j) => { const e = vise[j] - c; if (Math.abs(e) < 0.0015) return vise[j]; bouge = true; return c + e * a; });
+      s.e = s.e.map((x, j) => { const e = ecarts[j] - x; if (Math.abs(e) < 0.05) return ecarts[j]; bouge = true; return x + e * a; });
+      appliquer(s); if (bouge) encore = true; else if (l !== active && vise.every((x) => x === 1)) finir(l, s); });
+    document.dispatchEvent(new Event("ld-loupe")); /* la bulle ⓘ suit sa ligne */
+    if (encore) raf = requestAnimationFrame(image); else tPrec = 0; /* tout est arrivé : on attend le prochain mouvement de la souris */
+  };
+  const relancer = () => { if (!raf) raf = requestAnimationFrame(image); };
+  const lacher = () => { if (active) { active = null; relancer(); } };
+  /* Liste active : celle de la carte où se trouve la souris (en largeur), quand la souris est à moins de la portée de ses lignes (en
+     hauteur, même un peu sous la carte) : l'effet commence et finit en douceur, sans dépendre du bord de la carte (qui s'incline). */
+  document.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    if (!mq.matches) { if (active) lacher(); return; }
+    if (!etats.size && e.target && e.target.closest && e.target.closest(".vfk-c .vf-carte")) mesurer(); /* au repos seulement : les mesures lisent la mise en page sans zoom */
+    let n = null;
+    if (commun) commun.fiches.forEach((f, l) => { if (n) return; const cr = f.carte.getBoundingClientRect(); if (e.clientX < cr.left || e.clientX > cr.right) return;
+      const r = l.getBoundingClientRect(), m = f.R * r.height / (f.H0 || 1); if (e.clientY > r.top - m && e.clientY < r.bottom + m) n = l; });
+    if (n !== active || n) { active = n; py = e.clientY; relancer(); }
+  }, { passive: true });
+  addEventListener("scroll", () => { if (active) relancer(); }, { passive: true, capture: true }); /* la page défile sous la souris immobile */
+  document.addEventListener("pointerout", (e) => { if (e.pointerType === "mouse" && !e.relatedTarget) lacher(); }); /* sortie de la fenêtre */
+  addEventListener("blur", lacher);
+  /* Changement de taille de la fenêtre : retour immédiat à la normale, mesures à refaire. */
+  addEventListener("resize", () => { active = null; etats.forEach((s, l) => finir(l, s)); commun = null; });
+})();
+</script>
+`;
+// 01/11 (Loan : « la ⓘ de Quarterly subscription sort ») : aucun texte des rectangles (bento) ne dépasse de son rectangle. Un texte trop
+// large (mot long et sa ⓘ, toujours collée au dernier mot) se réduit juste assez ; s'il fallait le réduire de plus de 12 %, le texte
+// doré seul passe d'abord sous l'icône à partir de sa 2e ligne (« Quarterly subscription » entre 1000 et 1600 px de large). Même chose
+// pour les titres des rectangles (« Turnaround » dépassait de 7 px entre 1000 et 1370 px).
+const BENTO_CSS = `/* Correction du 01/11 (scripts/construire.mjs) : texte doré seul trop large : 2e ligne sous l'icône (BENTO_JS). */
+.vf-bento__b--seul[data-flottant] { display: flow-root; }
+.vf-bento__b--seul[data-flottant]::before { display: block; float: left; margin: 0 7px -2px 0; }
+`;
+const BENTO_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : un texte de rectangle (titre ou texte doré) plus large que son rectangle
+   (mot long et sa ⓘ) se réduit juste assez ; au-delà de 12 %, le texte doré seul passe d'abord sous l'icône dès sa 2e ligne. Refait quand
+   un rectangle change de taille (fenêtre, polices, carte ouverte sur mobile). */
+(() => { if (window.__ldBento) return; window.__ldBento = 1;
+  const suivis = new WeakSet();
+  const droite = (e) => { let d = -Infinity, n; const tw = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
+    while ((n = tw.nextNode())) { if (!n.textContent.trim() || n.parentElement.closest(".vf-i-txt")) continue;
+      const g = document.createRange(); g.selectNodeContents(n); const q = g.getClientRects(); for (let i = 0; i < q.length; i++) d = Math.max(d, q[i].right); }
+    const io = e.querySelector(".vf-i-o"); if (io) d = Math.max(d, io.getBoundingClientRect().right); return d; };
+  /* Largeur nécessaire (droite du texte) et début de l'élément, depuis le bord gauche du contenu du rectangle, en px de mise en page. */
+  const mesure = (r, e, pg) => { const rr = r.getBoundingClientRect(), k = rr.width / r.offsetWidth || 1;
+    return { b: (droite(e) - rr.left) / k - pg, off: Math.max(0, (e.getBoundingClientRect().left - rr.left) / k - pg) }; };
+  const ajuster = (r) => {
+    if (!r.offsetWidth) return;
+    const cs = getComputedStyle(r), pg = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth), dispo = r.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const seul = r.classList.contains("vf-bento__b--seul");
+    Array.prototype.forEach.call(r.children, (e) => {
+      if (e.tagName !== "B" && !(e.tagName === "SPAN" && seul)) return;
+      e.style.fontSize = ""; if (getComputedStyle(e).position === "absolute") return; /* titres lus seulement par les lecteurs d'écran */
+      if (seul) { r.removeAttribute("data-flottant"); const m = mesure(r, e, pg);
+        if (m.b > dispo + 0.3 && (dispo - m.off) / (m.b - m.off) < 0.88) r.setAttribute("data-flottant", ""); }
+      for (let i = 0; i < 4; i++) { const m = mesure(r, e, pg); if (!(m.b > dispo + 0.3)) break;
+        e.style.fontSize = parseFloat(getComputedStyle(e).fontSize) * Math.max(0.8, (dispo - m.off) / Math.max(1, m.b - m.off)) * 0.99 + "px"; }
+    });
+  };
+  const ro = window.ResizeObserver ? new ResizeObserver((l) => l.forEach((x) => ajuster(x.target))) : null;
+  const tous = () => document.querySelectorAll(".vf-bento__b").forEach((r) => { if (ro && !suivis.has(r)) { suivis.add(r); ro.observe(r); } else if (!ro) ajuster(r); });
+  let attente = 0; const plus_tard = () => { if (!attente) attente = requestAnimationFrame(() => { attente = 0; if (document.querySelector(".vf-bento__b")) tous(); }); };
+  new MutationObserver(plus_tard).observe(document.documentElement, { childList: true, subtree: true });
+  const refaire = () => document.querySelectorAll(".vf-bento__b").forEach(ajuster);
+  if (document.fonts) { document.fonts.ready.then(refaire); if (document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", refaire); }
+  if (!ro) addEventListener("resize", refaire);
+  plus_tard();
+})();
+</script>
+`;
+
+// CGV du 30/10 (demandées par Loan : « adapte les CGV, ajoute ce qu'il faut ») : nouveaux noms et contenu des formules
+// (textes des cartes), déduction de l'Analyse Technique sur le Pack (30 jours), Suivi Performance limité à 3, envoi de 2 vidéos de
+// 2 min ou 3 de 45 s, jusqu'à 2 semaines reportables, réponse sous 48 à 72 h, résiliation aussi par message, conseils de
+// tournage, retour par vidéo pour le Suivi Performance. [passage actuel, nouveau passage, occurrences].
+const DEDUCTION_EN = "<p><strong>Technical Analysis deducted from the Pack.</strong> If you order the Progression Pack within 30 days of a Technical Analysis, the price you paid for that Technical Analysis is deducted: I refund it to you within 14 days of the Pack payment, using the payment method you used for the Technical Analysis.</p>";
+const DEDUCTION_FR = "<p><strong>Analyse Technique déduite du Pack.</strong> Si vous prenez le Pack Évolution dans les 30 jours qui suivent une Analyse Technique, le prix payé pour cette Analyse Technique est déduit : je vous le rembourse dans les 14 jours suivant le paiement du Pack, sur le moyen de paiement utilisé pour l’Analyse Technique.</p>";
+const CGV_30 = [
+  // Anglais.
+  ["I watch your video and reply with a full analysis, written or by voice message: technique, rhythm, jumps, transitions, with corrections ranked by priority.",
+    "I analyze your videos based on your level and your goals, and reply in writing or by voice message (also by video for The Way of Performance): your strengths, technique, jumps, rhythm, transitions, with corrections ranked by priority."],
+  ["<h3>Single feedback — 99&nbsp;€</h3>\n<p>A full analysis of one routine.</p>",
+    "<h3>Technical Analysis — 99&nbsp;€</h3>\n<p>2 videos analyzed (your taolu, your jumps or a specific section): your strengths, your priority corrections and specific advice, mainly on the A and C scores.</p>"],
+  ["<h3>3× feedback pack — 249&nbsp;€</h3>\n<p>Three analyses, sent whenever you need them, with targeted exercises after each video and progress tracked from one video to the next. Valid 6 months from your first video.</p>",
+    "<h3>Progression Pack — 249&nbsp;€</h3>\n<p>6 videos analyzed across 3 feedback rounds of 2 videos each, spaced out to fit your pace: a detailed analysis of each video, explained corrections and targeted drills after each round, progress tracked from one round to the next, and advice on the B score in addition to the A and C scores. Valid 6 months from your first video.</p>\n" + DEDUCTION_EN],
+  ["<h3>Quarterly program — 990&nbsp;€ every 3 months (subscription)</h3>\n<p>One analysis every week, priorities set together, written check-ins whenever you need them, then a final review with a plan going forward.",
+    "<h3>The Way of Performance — 990&nbsp;€ every 3 months (subscription)</h3>\n<p>One-on-one coaching over 12 weeks: 24 personalized analyses (2 videos per week), key areas defined at the start of the quarter, weekly tracking of your corrections and progress, priorities set at each feedback, Q&amp;A on WhatsApp after each feedback, then a final review with recommendations for what comes next. Feedback in writing, by voice message or by video, with priority handling."],
+  ["the pack is limited to 6 clients at the same time and the program to 2.", "the pack is limited to 6 clients at the same time and The Way of Performance to 3."],
+  ["Per analysis: up to 3 videos under 30 seconds, or 2 videos under 2 minutes.", "Per feedback: 2 videos of up to 2 minutes each, or 3 videos of up to 45 seconds each."],
+  ["I reply on WhatsApp, in writing or by voice message, within the time given in article 7.", "I reply on WhatsApp, in writing or by voice message (also by video for The Way of Performance), within the time given in article 7."],
+  ["<li>Single feedback: 99&nbsp;€ · 3× feedback pack: 249&nbsp;€ · Quarterly program: 990&nbsp;€ per 3-month period.</li>",
+    "<li>Technical Analysis: 99&nbsp;€ · Progression Pack: 249&nbsp;€ · The Way of Performance: 990&nbsp;€ per 3-month period.</li>"],
+  ["Single feedback: 49&nbsp;€ · 3× feedback pack: 129&nbsp;€ · Quarterly program: 499&nbsp;€ per 3-month period. A program taken out",
+    "Technical Analysis: 49&nbsp;€ · Progression Pack: 129&nbsp;€ · The Way of Performance: 499&nbsp;€ per 3-month period. A subscription taken out"],
+  ["<li>Single feedback: 4 to 6 days</li>\n<li>3× feedback pack: 3 to 5 days</li>\n<li>Quarterly program: 2 to 3 days</li>",
+    "<li>Technical Analysis: 4 to 6 days</li>\n<li>Progression Pack: 3 to 5 days per feedback round</li>\n<li>The Way of Performance: priority handling, within 48 to 72 hours</li>"],
+  ["<li><strong>Single feedback:</strong> send your video within 6 months of payment.</li>",
+    "<li><strong>Technical Analysis:</strong> send your videos within 6 months of payment.</li>"],
+  ["<li><strong>3× feedback pack:</strong> send your first video within 6 months of payment. The three analyses are then valid 6 months from the date of that first video.</li>",
+    "<li><strong>Progression Pack:</strong> send your first videos within 6 months of payment. The 3 feedback rounds are then valid 6 months from the date of your first video.</li>"],
+  ["<li><strong>Quarterly program:</strong> one analysis per week of the current 3-month period. A week without a video can be made up later in the same period; unused analyses do not carry over to the next period.</li>",
+    "<li><strong>The Way of Performance:</strong> one feedback (2 videos) per week, over 12 weeks of the current 3-month period. Up to 2 unused weeks can be carried over to another week of the same period; unused weeks do not carry over to the next period.</li>"],
+  ["<li><strong>Single feedback received:</strong>", "<li><strong>Technical Analysis received:</strong>"],
+  ["a third of the price paid per analysis received for the pack", "a third of the price paid per feedback round received for the pack"],
+  ["the share of the price matching the analyses received, out of the 13 planned for the period", "the share of the price matching the weeks of feedback received, out of the 12 planned for the period"],
+  ["the price paid for the single feedback, a third of the price paid per remaining analysis of the pack", "the price paid for the Technical Analysis, a third of the price paid per remaining feedback round of the pack"],
+  ["Quarterly program: renewal and cancellation", "The Way of Performance: renewal and cancellation", 2],
+  ["Stripe customer portal</a>, or by email.", "Stripe customer portal</a>, or simply by sending me a message (WhatsApp) or an email before the next renewal date."],
+  ["<li>Send usable videos: the whole routine, filmed front on, full body in frame, with good light and a steady camera.</li>",
+    "<li>Send usable videos: filmed horizontally, full body in frame, from the front or the side, with good light and a steady camera.</li>"],
+  ["<li>Respect the format: per analysis, up to 3 videos under 30 seconds or 2 videos under 2 minutes.</li>",
+    "<li>Respect the format: per feedback, 2 videos of up to 2 minutes each, or 3 videos of up to 45 seconds each.</li>"],
+  ["If a video cannot be used, I ask you once to send a new one;", "If a video cannot be used, I ask you once to send a new one, at no cost;"],
+  ["<span>Version of 29 October 2026</span>", "<span>Version of 30 October 2026</span>"],
+  // Français.
+  ["Je regarde votre vidéo et vous réponds par une analyse complète, écrite ou en message vocal : technique, rythme, sauts, transitions, avec des corrections classées par priorité.",
+    "J’analyse vos vidéos selon votre niveau et vos objectifs, et vous réponds par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance) : vos points forts, la technique, les sauts, le rythme, les transitions, avec des corrections classées par priorité."],
+  ["<h3>Single feedback — 99&nbsp;€</h3>\n<p>L’analyse complète d’un enchaînement.</p>",
+    "<h3>Analyse Technique — 99&nbsp;€</h3>\n<p>2 vidéos analysées (votre taolu, vos sauts ou une partie ciblée) : vos points forts, vos corrections prioritaires et des conseils précis, principalement axés sur les notes A et C.</p>"],
+  ["<h3>3× feedback pack — 249&nbsp;€</h3>\n<p>Trois analyses, à envoyer quand vous le souhaitez, avec des exercices ciblés après chaque vidéo et un suivi de vos progrès d’une vidéo à l’autre. Valable 6 mois à compter de votre première vidéo.</p>",
+    "<h3>Pack Évolution — 249&nbsp;€</h3>\n<p>6 vidéos analysées en 3 retours de 2 vidéos chacun, espacés selon votre rythme : une analyse détaillée de chaque vidéo, des corrections expliquées et des exercices ciblés après chaque retour, un suivi de vos progrès d’un retour à l’autre, et des conseils sur la note B en plus des notes A et C. Valable 6 mois à compter de votre première vidéo.</p>\n" + DEDUCTION_FR],
+  ["<h3>Quarterly program — 990&nbsp;€ tous les 3 mois (abonnement)</h3>\n<p>Une analyse chaque semaine, des priorités fixées ensemble, des échanges écrits quand vous en avez besoin, puis un bilan final avec un plan pour la suite.",
+    "<h3>Suivi Performance — 990&nbsp;€ tous les 3 mois (abonnement)</h3>\n<p>Un suivi individuel sur 12 semaines : 24 analyses personnalisées (2 vidéos par semaine), les axes à travailler définis au début du trimestre, un suivi continu de vos corrections et de votre progression chaque semaine, les points prioritaires à corriger identifiés à chaque retour, des questions-réponses sur WhatsApp après chaque retour, puis un bilan final avec des recommandations pour la suite. Retour écrit, vocal ou en vidéo, avec un traitement prioritaire."],
+  ["le pack est limité à 6 clients en même temps et le programme à 2.", "le pack est limité à 6 clients en même temps et le Suivi Performance à 3."],
+  ["Par analyse : jusqu’à 3 vidéos de moins de 30 secondes, ou 2 vidéos de moins de 2 minutes.", "Par retour : 2 vidéos de 2 minutes maximum chacune, ou 3 vidéos de 45 secondes maximum chacune."],
+  ["Je vous réponds sur WhatsApp, par écrit ou en message vocal, dans le délai indiqué à l’article 7.", "Je vous réponds sur WhatsApp, par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance), dans le délai indiqué à l’article 7."],
+  ["<li>Single feedback : 99&nbsp;€ · 3× feedback pack : 249&nbsp;€ · Quarterly program : 990&nbsp;€ par période de 3 mois.</li>",
+    "<li>Analyse Technique : 99&nbsp;€ · Pack Évolution : 249&nbsp;€ · Suivi Performance : 990&nbsp;€ par période de 3 mois.</li>"],
+  ["Single feedback : 49&nbsp;€ · 3× feedback pack : 129&nbsp;€ · Quarterly program : 499&nbsp;€ par période de 3 mois. Un programme souscrit",
+    "Analyse Technique : 49&nbsp;€ · Pack Évolution : 129&nbsp;€ · Suivi Performance : 499&nbsp;€ par période de 3 mois. Un abonnement souscrit"],
+  ["<li>Single feedback : 4 à 6 jours</li>\n<li>3× feedback pack : 3 à 5 jours</li>\n<li>Quarterly program : 2 à 3 jours</li>",
+    "<li>Analyse Technique : 4 à 6 jours</li>\n<li>Pack Évolution : 3 à 5 jours par retour</li>\n<li>Suivi Performance : traitement prioritaire, sous 48 à 72 heures</li>"],
+  ["<li><strong>Single feedback :</strong> envoyez votre vidéo dans les 6 mois suivant le paiement.</li>",
+    "<li><strong>Analyse Technique :</strong> envoyez vos vidéos dans les 6 mois suivant le paiement.</li>"],
+  ["<li><strong>3× feedback pack :</strong> envoyez votre première vidéo dans les 6 mois suivant le paiement. Les trois analyses sont ensuite valables 6 mois à compter de la date de cette première vidéo.</li>",
+    "<li><strong>Pack Évolution :</strong> envoyez vos premières vidéos dans les 6 mois suivant le paiement. Les 3 retours sont ensuite utilisables pendant 6 mois à compter de la date de votre première vidéo.</li>"],
+  ["<li><strong>Quarterly program :</strong> une analyse par semaine pendant la période de 3 mois en cours. Une semaine sans vidéo peut être rattrapée plus tard dans la même période ; les analyses non utilisées ne sont pas reportées sur la période suivante.</li>",
+    "<li><strong>Suivi Performance :</strong> un retour (2 vidéos) par semaine, sur 12 semaines de la période de 3 mois en cours. Jusqu’à 2 semaines non utilisées peuvent être reportées sur une autre semaine de la même période ; les semaines non utilisées ne sont pas reportées sur la période suivante.</li>"],
+  ["<li><strong>Single feedback reçu :</strong>", "<li><strong>Analyse Technique reçue :</strong>"],
+  ["un tiers du prix payé par analyse reçue pour le pack", "un tiers du prix payé par retour reçu pour le pack"],
+  ["la part du prix correspondant aux analyses reçues, sur les 13 prévues dans la période", "la part du prix correspondant aux semaines de retour reçues, sur les 12 prévues dans la période"],
+  ["le prix payé pour le single feedback, un tiers du prix payé par analyse restante du pack", "le prix payé pour l’Analyse Technique, un tiers du prix payé par retour restant du pack"],
+  ["Programme trimestriel : reconduction et résiliation", "Suivi Performance : reconduction et résiliation", 2],
+  ["espace client Stripe</a>, ou par e-mail.", "espace client Stripe</a>, ou simplement en m’envoyant un message (WhatsApp) ou un e-mail avant la prochaine échéance."],
+  ["<li>Envoyer des vidéos exploitables : l’enchaînement complet, filmé de face, corps entier dans le cadre, avec une bonne lumière et une caméra stable.</li>",
+    "<li>Envoyer des vidéos exploitables : filmées à l’horizontale, le corps entier dans le cadre, de face ou de côté, avec une bonne lumière et une caméra stable.</li>"],
+  ["<li>Respecter le format : par analyse, jusqu’à 3 vidéos de moins de 30 secondes ou 2 vidéos de moins de 2 minutes.</li>",
+    "<li>Respecter le format : par retour, 2 vidéos de 2 minutes maximum chacune, ou 3 vidéos de 45 secondes maximum chacune.</li>"],
+  ["Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer ;", "Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer, sans frais ;"],
+  ["<span>Version du 29 octobre 2026</span>", "<span>Version du 30 octobre 2026</span>"],
+];
+
+// Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
+// ?apercu=single, pack ou prog l'affiche avec le faux numéro de l'aperçu de l'éditeur (apercuPaye), et ouvre la fenêtre.
+const APERCU_ESSAI = [
+  { quoi: "Adresse de test : aperçu de la carte payée et de la fenêtre du 30/10 (?apercu=single, pack ou prog)", fichiers: VF, n: 1,
+    avant: "    if (sid) this.verifier(sid, retour);\n",
+    apres: "    if (sid) this.verifier(sid, retour);\n" +
+      "    /* ADRESSE DE TEST SEULEMENT (ESSAI=1, scripts/construire.mjs) : ?apercu=single|pack|prog, carte payée avec un faux numéro et fenêtre du 30/10. */\n" +
+      '    else { let ap = null; try { ap = new URLSearchParams(location.search).get("apercu"); } catch (e) {} if (FORMULES[ap]) { this.setState({ paye: ap, choix: ap, numero: "33600000000" }); this.ouvrirGuide(); setTimeout(() => this.allerFormules(), 300); } }\n' },
+];
 
 const CORRECTIONS = [
   {
@@ -936,6 +1776,64 @@ const CORRECTIONS = [
     avant: ECARTER_FIN_AVANT, apres: ECARTER_FIN_APRES },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra de l'étude pendant la bascule (29/10)", fichiers: VF, n: 1,
     avant: DERIVE_AVANT, apres: DERIVE_APRES },
+  // Retour de Loan du 30/10 (constantes plus haut : GUIDE, GUIDE_CSS, GUIDE_HTML, GUIDE_JS, GUIDE_METHODES, GUIDE_VALS).
+  { quoi: "Styles du 30/10 : fenêtre « Comment nous allons travailler » et lien de la carte payée", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: GUIDE_CSS + SOMMAIRE_STYLE_FIN },
+  { quoi: "Fenêtre « Comment nous allons travailler » après la fenêtre de paiement (30/10)", fichiers: VF, n: 1,
+    avant: '<div class="vf-modale__stripe" ref="{{ refPaiement }}"></div>\n</div>\n</div>\n</sc-if>\n',
+    apres: '<div class="vf-modale__stripe" ref="{{ refPaiement }}"></div>\n</div>\n</div>\n</sc-if>\n' + GUIDE_HTML },
+  { quoi: "Carte payée : lien « Comment nous allons travailler » (30/10)", fichiers: VF, n: 3,
+    avant: '<span class="vf-wa__pied">', apres: '<button type="button" class="vf-guide-lien" onClick="{{ voirGuide }}">{{ guideLien }}</button>\n<span class="vf-wa__pied">' },
+  { quoi: "Textes de la fenêtre du 30/10, par formule et par langue", fichiers: VF, n: 1,
+    avant: "class Component extends DCLogic {\n", apres: GUIDE_JS + "class Component extends DCLogic {\n" },
+  { quoi: "Fenêtre du 30/10 : ouverture et fermeture", fichiers: VF, n: 1,
+    avant: "  fermerPaiement() {\n", apres: GUIDE_METHODES + "  fermerPaiement() {\n" },
+  { quoi: "Fenêtre du 30/10 : ouverte juste après le paiement et au retour par le lien de l'e-mail", fichiers: VF, n: 1,
+    avant: "      if (defiler) setTimeout(() => this.allerFormules(), 300);\n",
+    apres: "      if (defiler) { this.ouvrirGuide(); setTimeout(() => this.allerFormules(), 300); } /* Correction du 30/10 : fenêtre « Comment nous allons travailler ». */\n" },
+  { quoi: "Fenêtre du 30/10 : valeurs du gabarit", fichiers: VF, n: 1,
+    avant: "      refQr: this.refQr,\n", apres: "      refQr: this.refQr,\n" + GUIDE_VALS },
+  { quoi: "Fenêtre du 30/10 : touche Échap libérée au démontage", fichiers: VF, n: 1,
+    avant: "    if (this._offF) this._offF();\n", apres: "    if (this._offF) this._offF();\n    if (this._offGuide) this._offGuide(); /* Correction du 30/10 */\n" },
+  // Retour de Loan du 30/10 : textes et structure des cartes (constantes plus haut : INFOS, FICHES, NOMS, CARTES_CSS_30, INFO_JS).
+  ...Object.keys(FICHES).map((k, i) => ({ quoi: `Planche II : nouvelle carte ${k} (30/10)`, fichiers: VF, n: 1, avant: CARTE_AVANT(k, i), apres: CARTE_APRES(k, i) })),
+  // 02/11 (Loan : « enlève le Choose · send · receive professional feedback ») : surtitre de la planche II retiré (vertical à gauche
+  // sur ordinateur, au-dessus du titre sur mobile). Ses styles (.vfk-tete .vf-eyebrow) restent, sans effet.
+  { quoi: "Planche II : surtitre « Choose · send · receive » retiré (02/11)", fichiers: VF, n: 1,
+    avant: '<div class="vf-eyebrow vfk-ecrit"><i></i><span>Choose · send · receive professional feedback</span><i></i></div>\n', apres: "" },
+  { quoi: "Planche II : analyse adaptée au niveau et aux objectifs (30/10)", fichiers: VF, n: 1,
+    avant: LEDE_PLANCHE("The same analysis for all levels: beginner, intermediate, professional."),
+    apres: LEDE_PLANCHE("An analysis tailored to your level and your goals: beginner, intermediate or professional.") },
+  // « Launch offer » : à côté de la réduction, sur les 6 cartes (vitrine et planche II), plus au-dessus du nom.
+  { quoi: "Vitrine : « Launch offer » plus au-dessus du nom (30/10)", fichiers: VF, n: 3,
+    avant: '<div class="vf-carte__tete">\n' + OFFRE_TITRE, apres: '<div class="vf-carte__tete">\n' },
+  ...Object.keys(FICHES).map((k) => ({ quoi: `« Launch offer » à côté de la réduction, ${k} (30/10)`, fichiers: VF, n: 2,
+    avant: `<b>{{ remise${k} }}</b></span>`, apres: `<b>{{ remise${k} }}</b><span class="vf-remise-o">Launch offer</span></span>` })),
+  { quoi: "Planche II : cote réelle de l'écart entre deux cartes (30/10)", fichiers: VF, n: 1,
+    avant: 'ecrire((xa + xb) / 2, yd - 6, "28", gCotes, { "text-anchor": "middle" });',
+    apres: 'ecrire((xa + xb) / 2, yd - 6, String(Math.round(C[1].c.offsetLeft - C[0].c.offsetLeft - C[0].c.offsetWidth)), gCotes, { "text-anchor": "middle" }); /* Correction du 30/10 : écart réel */' },
+  ...Object.keys(VITRINE_PUCES).map((k) => ({ quoi: `Vitrine : paragraphe de la formule au lieu des puces, ${k} (31/10)`, fichiers: VF, n: 1,
+    avant: '<div class="vf-liste">\n' + VITRINE_PUCES[k].map(PUCE).join("") + "</div>", apres: `<div class="vf-liste">\n<p class="vfp-phrase">${VITRINE_PHRASE[k]}</p>\n</div>` })),
+  ...Object.values(FICHES).map((f) => ({ quoi: `Vitrine : nom « ${f.nom.replace("<br>", " ")} » (30/10)`, fichiers: VF, n: 1,
+    avant: `<div class="vf-nom">${f.ancien[0]}</div>`, apres: `<div class="vf-nom">${f.nom}</div>` })),
+  ...Object.entries(NOMS).map(([k, [avant, nom, achat]]) => ({ quoi: `Nom de la formule ${k} : « ${nom} » (30/10)`, fichiers: VF, n: 1,
+    avant: `  ${k}: { nom: "${avant}", prix:`, apres: `  ${k}: { nom: "${nom}", achatEn: "${achat}", prix:` })),
+  { quoi: "Message WhatsApp : nom de la formule avec son article (30/10)", fichiers: VF, n: 1,
+    avant: '"Hi Loan, I just purchased the " + f.nom + ".', apres: '"Hi Loan, I just purchased " + f.achatEn + ".' },
+  { quoi: "Carte payée : 2 vidéos de 2 min ou 3 de 45 s, comme sur les cartes (30/10)", fichiers: VF, n: 3,
+    avant: "<span>3 videos under 30 s, or 2 under 2 minutes.</span>", apres: `<span>${ENVOI}.</span>` },
+  { quoi: "Planche II : cartes entières à l'écran, textes ajustés (30/10)", fichiers: VF, n: 1, avant: ECHELLE_AVANT, apres: ECHELLE_APRES },
+  { quoi: "Styles du 30/10 : cartes de la planche II, bento et bulles ⓘ", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: CARTES_CSS_30 + SOMMAIRE_STYLE_FIN },
+  { quoi: "Bulles ⓘ des cartes : script (30/10)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: EGALISER_JS + INFO_JS + '<script src="./support.js"></script>' },
+  { quoi: "Planche II : effet loupe des puces et textes des rectangles, styles (01/11)", fichiers: VF, n: 1, avant: SOMMAIRE_STYLE_FIN, apres: LOUPE_CSS + BENTO_CSS + SOMMAIRE_STYLE_FIN },
+  { quoi: "Planche II : effet loupe des puces et textes des rectangles, scripts (01/11)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: LOUPE_JS + BENTO_JS + '<script src="./support.js"></script>' },
+  { quoi: "« Tous les échanges se font sur WhatsApp » sous les cartes (31/10)", fichiers: VF, n: 1, avant: WHATSAPP_AVANT, apres: WHATSAPP_APRES },
+  { quoi: "Suivi Performance : 3 places (capacité affichée avant la réponse de l'API, 30/10)", fichiers: VF, n: 1,
+    avant: "const PLACES = { pack: 6, prog: 2 };", apres: "const PLACES = { pack: 6, prog: 3 }; /* Correction du 30/10 : 3 places (cloudflare/api-worker.js) */" },
+  ...CGV_30.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 30/10 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
@@ -1008,8 +1906,9 @@ function corriger(t, c, f, bavard = true) {
 }
 
 // Corrections de contenu, optimisations de performance (scripts/optimisations.mjs), corrections Safari retenues
-// (scripts/safari.mjs), puis version française (scripts/traduction-fr.mjs, appliquée au texte final, sans un message par texte).
-for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI, ...TRADUCTION]) {
+// (scripts/safari.mjs), puis version française (scripts/traduction-fr.mjs, appliquée au texte final, sans un message par texte) ;
+// sur l'adresse de test seulement, l'aperçu de la carte payée (APERCU_ESSAI).
+for (const c of [...CORRECTIONS, ...OPTIMISATIONS, ...SAFARI, ...TRADUCTION, ...(ESSAI ? APERCU_ESSAI : [])]) {
   for (const f of c.fichiers) {
     const p = path.join(PUBLIC, f);
     if (!fs.existsSync(p)) continue;
@@ -1141,6 +2040,7 @@ if (!ESSAI) {
     const nom = path.relative(PUBLIC, f);
     if (nom === "diag.js" || nom === "resultats.html" || Object.keys(VARIANTES_ESSAI).includes(nom)) erreurs.push(`${nom} : fichier de l'adresse de test dans une construction normale`);
     if (/\.html$/.test(f) && fs.readFileSync(f, "utf8").includes("diag.js")) erreurs.push(`${nom} : référence au diagnostic de test (diag.js)`);
+    if (/\.html$/.test(f) && fs.readFileSync(f, "utf8").includes('get("apercu")')) erreurs.push(`${nom} : aperçu de l'adresse de test (?apercu=)`);
   }
 }
 
