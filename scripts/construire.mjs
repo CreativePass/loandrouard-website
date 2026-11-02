@@ -553,7 +553,7 @@ const RALENTI_APRES = RALENTI_AVANT +
   "   finit au repère x donné. E : défilement ajouté (section de l'étude allongée d'autant sur mobile). */\n" +
   "const basculeLente = (() => { const vc = 0.8, vp = 0.33, ve = 0.55, vt = 0.2, X = depuisU, XL = XS[XS.length - 1];\n" +
   "  const S = [[1, vc, 0.8], [vc, vc, 0, X(7.4) - 0.3 * (vc + vp)], [vc, vp, 0.6], [vp, vp, 0, X(7.56)], [vp, 1, 0.8], [1, 1, 0, X(7.94) - 0.3 * (1 + ve)],\n" +
-  "    [1, ve, 0.6], [ve, ve, 0, X(8.42) - 0.2 * (ve + vt)], [ve, vt, 0.4], [vt, vt, 0, XL + 0.17 * 110 / 90], [vt, 1, 1]];\n" +
+  "    [1, ve, 0.6], [ve, ve, 0, X(8.42) - 0.2 * (ve + vt)], [ve, vt, 0.4], [vt, vt, 0, XL + 0.3 * 110 / 90], [vt, 1, 1]];\n" +
   "  const A = X(6.9) - 0.4 * (1 + vc);\n" +
   "  let x = A, y = A; const P = S.map(([a, b, L, m]) => { if (m !== undefined) L = Math.max(0, (m - y) / a); const p = { x, y, L, a, b }; x += L; y += L * (a + b) / 2; return p; });\n" +
   "  return { E: x - y, f: (xr) => { if (xr <= A) return xr; for (const p of P) if (xr < p.x + p.L) { const t = (xr - p.x) / p.L; return p.y + p.L * (p.a * t + (p.b - p.a) * t * t * t * (1 - t / 2)); } return xr - (x - y); } };\n" +
@@ -576,7 +576,7 @@ const INERTIE_APRES = "    /* Correction du 30/10 (scripts/construire.mjs) : sur
 const INERTIE_FIN_AVANT = "cancelAnimationFrame(vmRaf); cancelAnimationFrame(raf); cancelAnimationFrame(anim); cancelAnimationFrame(rafP); };";
 const INERTIE_FIN_APRES = "cancelAnimationFrame(vmRaf); cancelAnimationFrame(raf); cancelAnimationFrame(anim); cancelAnimationFrame(rafP); cancelAnimationFrame(rafL); };";
 const BASCULE_AMORTI_AVANT = "      else uL += (uC - uL) * (1 - Math.exp(-dt * 14));\n";
-const BASCULE_AMORTI_APRES = "      else uL += (uC - uL) * (1 - Math.exp(-dt * (tactile() ? 1 / 0.45 : 14))); /* Correction du 30/10 (scripts/construire.mjs) : inertie sur écran tactile. */\n";
+const BASCULE_AMORTI_APRES = "      else uL += (uC - uL) * (1 - Math.exp(-dt * (tactile() ? 1 / 0.3 : 14))); /* Corrections du 30/10 et du 02/11 (scripts/construire.mjs) : inertie sur écran tactile (0,3 s). */\n";
 // Retour de Loan du 02/11 (« sur mobile, tout va très bien sauf la partie yin yang : avec un défilement constant, j'ai même pas le
 // temps de le voir, ça passe super vite et ça va direct sur les cartes de paiement ») : sur mobile (< 900 px), la bascule est au
 // ralenti, comme le projecteur : le tour du taiji, la séparation et le vol des moitiés défilent 1,25 fois plus lentement, le moment où
@@ -588,7 +588,7 @@ const BASCULE_AMORTI_APRES = "      else uL += (uC - uL) * (1 - Math.exp(-dt * (
 // Section de l'étude allongée d'autant sur mobile (+ 497svh ≈ 5 écrans au total) : les points du croquis gardent leur rythme.
 // Ordinateur inchangé.
 const LENTE_CSS_AVANT = ".vfa { position: relative; height: calc(1455svh + var(--vfk-tenue)); }";
-const LENTE_CSS_APRES = LENTE_CSS_AVANT + " @media (max-width: 899px) { .vfa { height: calc(1952svh + var(--vfk-tenue)); } } /* Correction du 02/11 (scripts/construire.mjs) : bascule yin-yang au ralenti sur mobile. */";
+const LENTE_CSS_APRES = LENTE_CSS_AVANT + " @media (max-width: 899px) { .vfa { height: calc(2009svh + var(--vfk-tenue)); } } /* Correction du 02/11 (scripts/construire.mjs) : bascule yin-yang au ralenti sur mobile. */";
 const LENTE_UR_AVANT = "V.UR = XS[XS.length - 1] * crs / Math.max(1, crs - tenue); }";
 const LENTE_UR_APRES = "V.E = V.mobile ? basculeLente.E : 0; V.UR = (XS[XS.length - 1] + V.E) * crs / Math.max(1, crs - tenue); } /* Correction du 02/11 : défilement ajouté sur mobile. */";
 const LENTE_XR_AVANT = "xr = borne(-r.top / course, 0, 1) * V.UR, uC = versU(xr);";
@@ -603,6 +603,14 @@ const LENTE_X17_APRES = "x17 = XL + (V.mobile ? 0.17 : 0.17 / RT) * (V.UR - V.E 
 // écrans). L'avancée lente de la caméra (29/10) changeait ce zoom pendant toute la bascule : la feuille était repeinte à chaque
 // pause de la molette. Elle est désormais exclue de ce calcul : la feuille n'est repeinte que comme sur loandrouard.com, et
 // l'avancée (≤ 9 %) agrandit la feuille déjà nette.
+// Troisième retour du 02/11 (« sur mobile, j'ai toujours pas le temps de voir les lignes dorées qui disparaissent, ça reste
+// instantané, la descente ») : sur iPhone, un coup de doigt parcourt 3 à 5 écrans, et l'étude (amortie 0,45 s) n'affichait pas encore
+// l'effacement quand la planche arrivait. Amorti de la bascule 0,45 → 0,3 s ; photo → croquis lent jusqu'au début du fondu de la
+// scène (h = 0,3 au lieu de 0,17 : ≈ 1 écran de marge avant la planche au lieu de 0,5) ; freinage d'iPhone / iPad (18/10, glissade
+// courte de Safari, validé par Loan) sur les 5 écrans qui précèdent les cartes au lieu de 2 en mise en page mobile : il couvre
+// l'effacement des lignes dorées. Ordinateur et tablette en paysage inchangés.
+const FREIN_AVANT = 'racine.classList.toggle("vfk-frein", desc && y > arret - ZONE * window.innerHeight && y < arret - 2);';
+const FREIN_APRES = 'racine.classList.toggle("vfk-frein", desc && y > arret - (G && !G.rang ? 5 : ZONE) * window.innerHeight && y < arret - 2); /* Correction du 02/11 (scripts/construire.mjs) : 5 écrans en mise en page mobile. */';
 const NETTE_AVANT = "      camS = s; camX = tx; camY = ty;";
 const NETTE_APRES = "      camS = s / (V.p || 1); camX = tx; camY = ty; /* Correction du 02/11 (scripts/construire.mjs) : l'avancée lente ne redessine pas la feuille. */";
 const ANCRE_FOR_WHO_AVANT = "tF = Math.round(0.9 * plage + tenue * 0.994);";
@@ -614,15 +622,19 @@ const ANCRE_FOR_WHO_APRES = "tF = Math.round(0.9 * plage + ralentiP(s0, tenue, m
 // d'avant, à l'échelle ; plafonnée une fois la scène sortie de l'écran. Mouvement réduit : rien.
 const POUSSEE_AVANT = "const t = borne(P / 0.7, 0, 1), z = 1 + (Zm - 1) * (1 - Math.pow(1 - t, 2.1));";
 const POUSSEE_APRES = "const t = borne(P / 0.7, 0, 1), pz = calme ? 0 : borne(s / plage - 0.36, 0, 1.2), pf = 1 + 0.08 * (pz < 0.12 ? pz * pz / 0.24 : pz - 0.06), z = (1 + (Zm - 1) * (1 - Math.pow(1 - t, 2.1))) * pf; /* Correction du 29/10 (scripts/construire.mjs) : la caméra ne s'arrête jamais, lente avancée sur la page blanche. */";
+// 02/11 (photo de Loan, iPhone) : sur la page blanche, « VIDEO FEEDBACK » et « For everyone… » s'affichaient en grand sur la
+// silhouette (réduction d'ecarter() perdue). Safari n'appliquait plus la réduction des mots (propriété scale) sous le bloc du titre
+// agrandi (transform). Le bloc n'est plus transformé : chaque mot avance avec la caméra par ses propres propriétés translate et
+// scale (réduction d'ecarter() × avancée), autour du même point que Loan. Mêmes écarts qu'avant, à l'échelle.
 const TITRE_POUSSEE_AVANT = "      fig.style.transform = reman.style.transform = tFig;\n";
 const TITRE_POUSSEE_APRES = TITRE_POUSSEE_AVANT +
-  "      { const tt = G.tt || (G.tt = sec.querySelector(\".vfp-titre\")), o = Sx.toFixed(1) + \"px \" + Sy.toFixed(1) + \"px\", v = pf > 1.0005 ? \"scale(\" + pf.toFixed(4) + \")\" : \"\";\n" +
-  "        if (tt && tt.__v !== v + o) { tt.__v = v + o; tt.style.transformOrigin = o; tt.style.transform = v; } } /* Correction du 29/10 (scripts/construire.mjs) : le titre avance avec Loan. */\n";
-const ECARTER_DEBUT_AVANT = "    function ecarter() {\n      if (!A || !G) return;\n";
-const ECARTER_DEBUT_APRES = ECARTER_DEBUT_AVANT +
-  "      const tt = sec.querySelector(\".vfp-titre\"), tz = tt ? tt.style.transform : \"\"; if (tt) tt.style.transform = \"\"; /* Correction du 29/10 : mesuré sans l'avancée de la caméra. */\n";
-const ECARTER_FIN_AVANT = "        if (k < 1) el.style.scale = k.toFixed(3);\n      });\n    }\n";
-const ECARTER_FIN_APRES = "        if (k < 1) el.style.scale = k.toFixed(3);\n      });\n      if (tt) tt.style.transform = tz;\n    }\n";
+  "      { const mots = G.mots || (G.mots = [\".vfp-mot--video\", \".vfp-mot--feedback\"].map((q) => sec.querySelector(q)).filter(Boolean)), av = pf > 1.0005;\n" +
+  "        mots.forEach((el) => { if (el.__k === undefined) return; const k = el.__k, t = av ? ((pf - 1) * (el.__ax - Sx)).toFixed(1) + \"px \" + ((pf - 1) * (el.__ay - Sy)).toFixed(1) + \"px\" : \"\", sc = av ? (k * pf).toFixed(4) : k < 1 ? k.toFixed(3) : \"\";\n" +
+  "          if (el.__v !== t + \"|\" + sc) { el.__v = t + \"|\" + sc; el.style.translate = t; el.style.scale = sc; } }); } /* Correction du 29/10 et du 02/11 (scripts/construire.mjs) : les mots avancent avec Loan. */\n";
+const ECARTER_DEBUT_AVANT = "const el = sec.querySelector(q); if (!el) return; el.style.scale = \"\"; el.style.transformOrigin = (ox * 100) + \"% \" + (oy * 100) + \"%\";";
+const ECARTER_DEBUT_APRES = ECARTER_DEBUT_AVANT + " el.style.translate = \"\"; el.__v = \"\"; /* Correction du 02/11 : mesuré sans l'avancée de la caméra. */";
+const ECARTER_FIN_AVANT = "        if (k < 1) el.style.scale = k.toFixed(3);\n";
+const ECARTER_FIN_APRES = ECARTER_FIN_AVANT + "        el.__k = k; el.__ax = px0; el.__ay = py0; /* Correction du 02/11 : réduction et coin d'ancrage, pour l'avancée de la caméra. */\n";
 // Étude, bascule yin-yang et photo en couleur (u ≥ 6,9) : la caméra est fixe et chaque étape finit en douceur, d'où des presque-arrêts
 // (début du tour du taiji, arrivée des moitiés, pause 7,4 → 7,56 « tout est posé, rien ne bouge », photo immobile pendant que les
 // corrections en or s'effacent). La caméra avance très lentement vers Loan pendant tout ce passage (≈ 1,5 % par écran, prise en
@@ -1793,7 +1805,7 @@ const CORRECTIONS = [
     avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_29 + SOMMAIRE_STYLE_FIN },
   // Retour de Loan du 29/10 : jamais d'arrêt net en défilant (constantes plus haut : RALENTI_APRES, POUSSEE_APRES, TITRE_POUSSEE_APRES,
   // ECARTER_DEBUT_APRES, ECARTER_FIN_APRES, DERIVE_APRES, ANCRE_FOR_WHO_APRES, INERTIE_APRES,
-  // INERTIE_FIN_APRES, BASCULE_AMORTI_APRES, LENTE_*_APRES, NETTE_APRES).
+  // INERTIE_FIN_APRES, BASCULE_AMORTI_APRES, LENTE_*_APRES, NETTE_APRES, FREIN_APRES).
   { quoi: "Défilement sans arrêt : fonction ralenti (29 et 30/10)", fichiers: VF, n: 1, avant: RALENTI_AVANT, apres: RALENTI_APRES },
   { quoi: "Défilement sans arrêt : projecteur au ralenti au lieu de la tenue du cran, freinage progressif (29 et 30/10)", fichiers: VF, n: 1,
     avant: "s = s1 < s0 ? s1 : s1 < s0 + tenue ? s0 + (s1 - s0) * 0.006 : s1 - tenue * 0.994",
@@ -1812,13 +1824,14 @@ const CORRECTIONS = [
   { quoi: "Défilement sans arrêt : tenue de l'étude après le défilement ajouté (02/11)", fichiers: VF, n: 1, avant: LENTE_H_AVANT, apres: LENTE_H_APRES },
   { quoi: "Défilement sans arrêt : photo → croquis après le défilement ajouté (02/11)", fichiers: VF, n: 1, avant: LENTE_X17_AVANT, apres: LENTE_X17_APRES },
   { quoi: "Défilement sans arrêt : l'avancée lente de la caméra ne redessine pas la feuille de l'étude (02/11)", fichiers: VF, n: 1, avant: NETTE_AVANT, apres: NETTE_APRES },
+  { quoi: "Freinage d'iPhone / iPad sur 5 écrans avant les cartes en mise en page mobile (02/11)", fichiers: VF, n: 1, avant: FREIN_AVANT, apres: FREIN_APRES },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
     avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
-  { quoi: "Défilement sans arrêt : le titre de la page blanche avance avec Loan (29/10)", fichiers: VF, n: 1,
+  { quoi: "Défilement sans arrêt : les mots de la page blanche avancent avec Loan (29/10, 02/11)", fichiers: VF, n: 1,
     avant: TITRE_POUSSEE_AVANT, apres: TITRE_POUSSEE_APRES },
-  { quoi: "Défilement sans arrêt : écart titre / silhouette mesuré sans l'avancée (29/10)", fichiers: VF, n: 1,
+  { quoi: "Défilement sans arrêt : écart mots / silhouette mesuré sans l'avancée (29/10, 02/11)", fichiers: VF, n: 1,
     avant: ECARTER_DEBUT_AVANT, apres: ECARTER_DEBUT_APRES },
-  { quoi: "Défilement sans arrêt : avancée rendue au titre après la mesure (29/10)", fichiers: VF, n: 1,
+  { quoi: "Défilement sans arrêt : réduction et ancrage des mots gardés pour l'avancée (29/10, 02/11)", fichiers: VF, n: 1,
     avant: ECARTER_FIN_AVANT, apres: ECARTER_FIN_APRES },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra de l'étude pendant la bascule (29/10)", fichiers: VF, n: 1,
     avant: DERIVE_AVANT, apres: DERIVE_APRES },
