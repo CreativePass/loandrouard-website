@@ -1346,7 +1346,7 @@ const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effe
      hauteur, même un peu sous la carte) : l'effet commence et finit en douceur, sans dépendre du bord de la carte (qui s'incline). */
   document.addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse") return;
-    if (!mq.matches) { if (active) lacher(); return; }
+    if (!mq.matches || window.__ldZoom) { if (active) lacher(); return; } /* 03/11 : pas pendant un zoom au pincement (COUVERT_JS) */
     if (!etats.size && e.target && e.target.closest && e.target.closest(".vfk-c .vf-carte")) mesurer(); /* au repos seulement : les mesures lisent la mise en page sans zoom */
     let n = null;
     if (commun) commun.fiches.forEach((f, l) => { if (n) return; const cr = f.carte.getBoundingClientRect(); if (e.clientX < cr.left || e.clientX > cr.right) return;
@@ -1501,29 +1501,54 @@ const CGV_30 = [
 //    pied de page en rétrécissant, l'étude sur papier blanc en agrandissant — les « flashs blancs »). La page garde maintenant sa place
 //    dans la scène en cours (même proportion de la section), avant que les scènes ne se recalculent. Ordinateur seulement (souris ou
 //    trackpad) : sur téléphone, la barre d'adresse change la hauteur en plein défilement et rien ne doit y toucher.
-const COUVERT_CSS = `/* Correction du 02/11 (scripts/construire.mjs) : ce qui est entièrement recouvert n'est plus dessiné (COUVERT_JS). */
-html.vf-sous-etude .vf-nuit, html.vf-sous-etude .vfp-scene, html.vf-sous-etude .vfp-scene *,
-html.vf-sous-planche .vf-nuit, html.vf-sous-planche .vfa-scene, html.vf-sous-planche .vfa-scene * { visibility: hidden !important; }
+const COUVERT_CSS = `/* Corrections des 02 et 03/11 (scripts/construire.mjs) : ce qui est entièrement recouvert n'est plus dessiné (COUVERT_JS). */
+html.vf-cache-nuit .vf-nuit, html.vf-cache-proj .vfp-scene, html.vf-cache-proj .vfp-scene *,
+html.vf-cache-etude .vfa-scene, html.vf-cache-etude .vfa-scene * { visibility: hidden !important; }
+/* 03/11 : page agrandie au pincement (html.vf-zoom, COUVERT_JS) : ni inclinaison ni reflet au survol des cartes (chaque mouvement
+   redessinait toute la carte, 9 à 25 fois plus grande : elle restait vide le temps du dessin). */
+html.vf-zoom .vf-carte, html.vf-zoom .vf-guide__carte { transform: none !important; }
+html.vf-zoom .vf-carte::after, html.vf-zoom .vf-guide__carte::after { content: none !important; }
 `;
-const COUVERT_JS = `<script>/* Correction du 02/11 (scripts/construire.mjs) : zoom au trackpad et redimensionnement. Voir COUVERT_CSS. */
+const COUVERT_JS = `<script>/* Corrections des 02 et 03/11 (scripts/construire.mjs) : zoom au trackpad et redimensionnement. Voir COUVERT_CSS. */
 (() => {
   const R = document.documentElement, vf = () => document.querySelector(".vf");
-  /* 1) Recouvert : le papier de la planche II (opaque, sans fondu sur ordinateur ; fondu de 220 px au plus en haut sur mobile) ou
-     la scène de l'étude (papier blanc, sans masque ni fondu) couvre tout l'écran (épinglés : haut à 0). */
-  const couvre = (el, haut) => { const r = el.getBoundingClientRect();
-    return r.top <= (haut > 0 ? -haut : 0.5) && r.bottom >= window.innerHeight - 0.5 && r.left <= 0.5 && r.right >= R.clientWidth - 0.5; };
-  const plein = (el) => { const cs = getComputedStyle(el), m = cs.maskImage || cs.webkitMaskImage || "none"; return cs.opacity === "1" && cs.display !== "none" && m === "none"; };
+  /* 1) Recouvert. Zones opaques, de bas en haut (ordre d'empilement de la page) : fond « nuit » (fixe, tout au fond), projecteur
+     (fond noir), étude (papier blanc, sans fondu), planche II (papier opaque ; sur mobile, son haut en fondu sur 220 px au plus),
+     pied de page (papier opaque). Une zone est cachée quand celles qui sont au-dessus d'elle couvrent ensemble tout l'écran
+     (03/11 : en bas de page, la planche et le pied de page se partagent l'écran). Marge : le navigateur peut afficher une image
+     avant que ce script ne réagisse au défilement ; chaque zone ne compte que pour ce qu'elle couvre encore après un défilement
+     de M px dans un sens ou dans l'autre (scènes épinglées : tant que leur section les retient). Exception : la planche posée
+     (data-posee, ordinateur) est précédée d'un fondu de papier (140 à 260 px, presque opaque près d'elle) qui couvre ce moment. */
+  const plein = (el, stop) => { for (let e = el; e && e !== stop; e = e.parentElement) { const cs = getComputedStyle(e), m = cs.maskImage || cs.webkitMaskImage || "none";
+      if (cs.opacity !== "1" || cs.display === "none" || (e !== el || !el.classList.contains("vfk-papier")) && m !== "none") return false; }
+    return getComputedStyle(el).visibility !== "hidden"; };
+  /* Position d'une zone après un défilement de d px (d > 0 : vers le bas) : scène épinglée (sticky, haut à 0, en tête de sa section)
+     ou zone qui suit la page. Planche posée : son fondu la prolonge vers le haut (jamais moins couverte qu'à d = 0). */
+  const zone = (el, sec, fondu, posee) => { const r = el.getBoundingClientRect(), h = r.height;
+    if (h <= 0 || r.left > 0.5 || r.right < R.clientWidth - 0.5) return null;
+    let pos = (d) => r.top - d;
+    if (sec && getComputedStyle(el).position === "sticky") { const s = sec.getBoundingClientRect(); pos = (d) => Math.min(Math.max(0, s.top - d), s.bottom - d - h);
+      if (Math.abs(pos(0) - r.top) > 1) return null; } /* pas en tête de sa section : on ne compte pas dessus */
+    return (d) => [(posee ? Math.min(pos(d), pos(0)) : pos(d)) + fondu, pos(d) + h]; };
+  /* Couvert : pour chaque défilement possible de -M à +M px (sans dépasser le haut ni le bas de la page), les zones réunies
+     couvrent tout l'écran. */
+  const couvert = (zones, M) => { const z = zones.filter(Boolean), H = window.innerHeight, y = window.scrollY, ymax = R.scrollHeight - H;
+    const d0 = -Math.min(M, y), d1 = Math.min(M, Math.max(0, ymax - y));
+    for (let i = 0; i <= 16; i++) { const d = d0 + (d1 - d0) * i / 16, iv = z.map((f) => f(d)).sort((a, b) => a[0] - b[0]); let bas = 0;
+      for (const [a, b] of iv) { if (a > bas + 0.5) break; bas = Math.max(bas, b); }
+      if (bas < H - 0.5) return false; }
+    return z.length > 0; };
   let raf = 0;
-  /* Marge : en remontant, la scène du dessous réapparaît quand le haut de la section passe sous le haut de l'écran ; le navigateur
-     peut afficher une image avant que ce script ne réagisse. Masqué seulement à plus de M px de ce moment. */
-  const haut = (q) => { const e = document.querySelector(q); return e ? e.getBoundingClientRect().top : 0; };
   const verifier = () => { raf = 0; const v = vf(); if (!v) return;
-    const pap = v.querySelector(".vfk-papier"), sc = v.querySelector(".vfa-scene"), M = Math.max(240, 0.3 * window.innerHeight);
-    const mob = window.matchMedia("(max-width: 999px)").matches;
-    const planche = !!pap && +getComputedStyle(pap).opacity >= 0.999 && couvre(pap, mob ? 230 + M : 0) && (mob || haut(".vf > .vfk") <= -M);
-    const etude = !planche && !!sc && plein(sc) && couvre(sc, 0) && haut(".vf > .vfa") <= -M;
-    if (R.classList.contains("vf-sous-planche") !== planche) R.classList.toggle("vf-sous-planche", planche);
-    if (R.classList.contains("vf-sous-etude") !== etude) R.classList.toggle("vf-sous-etude", etude); };
+    const M = Math.max(240, 0.3 * window.innerHeight), mob = window.matchMedia("(max-width: 999px)").matches;
+    const q = (s) => v.querySelector(s), vfp = q(":scope > .vfp"), vfa = q(":scope > .vfa"), vfk = q(":scope > .vfk"), pied = q(":scope > footer");
+    const scP = q(".vfp-scene"), scA = q(".vfa-scene"), pin = q(".vfk-pin"), pap = q(".vfk-papier");
+    const zP = scP && vfp && plein(scP, v) ? zone(scP, vfp, 0) : null;
+    const zA = scA && vfa && plein(scA, v) ? zone(scA, vfa, 0) : null;
+    const zK = pin && pap && vfk && +getComputedStyle(pap).opacity >= 0.999 && plein(pap, v) ? zone(pin, vfk, mob ? 230 : 0, !mob && vfk.hasAttribute("data-posee")) : null;
+    const zF = pied && plein(pied, v) ? zone(pied, null, 0) : null;
+    const etat = { "vf-cache-etude": couvert([zK, zF], M), "vf-cache-proj": couvert([zA, zK, zF], M), "vf-cache-nuit": couvert([zP, zA, zK, zF], M) };
+    for (const c in etat) if (R.classList.contains(c) !== etat[c]) R.classList.toggle(c, etat[c]); };
   /* Après les calculs des scènes de cette image (opacités posées par leurs propres requestAnimationFrame). */
   const plusTard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = requestAnimationFrame(verifier); }); };
   /* 2) Redimensionnement : même proportion de la section en cours (sections de la page : projecteur, étude, planche, pied de page),
@@ -1542,12 +1567,28 @@ const COUVERT_JS = `<script>/* Correction du 02/11 (scripts/construire.mjs) : zo
       if (Math.abs(t - window.scrollY) >= 1) aller(t); }
     noter(); plusTard(); };
   /* Au défilement : vérifié tout de suite si quelque chose redevient visible (le papier qui glisse), sans attendre une image. */
-  const surScroll = () => { if (!change()) noter(); if (R.classList.contains("vf-sous-planche") || R.classList.contains("vf-sous-etude")) verifier(); plusTard(); };
+  const surScroll = () => { if (!change()) noter(); if (/\\bvf-cache-/.test(R.className)) verifier(); plusTard(); };
   window.addEventListener("resize", () => { if (change()) recaler(); });
   window.addEventListener("scroll", surScroll, { passive: true });
   window.addEventListener("load", () => { noter(); plusTard(); });
   /* Taille du document : nouvelle taille de fenêtre (recalage) ou contenu qui change sans elle (page rendue par support.js, polices…). */
   if (window.ResizeObserver) new ResizeObserver(() => { if (change()) recaler(); else { noter(); plusTard(); } }).observe(R);
+  /* 3) Page agrandie au pincement (trackpad ou écran tactile ; 03/11, retour de Loan) : chaque image redessinée coûte 9 à 25 fois
+     plus. Tant que le zoom dure (visualViewport.scale > 1,02) : lueurs d'ambiance très lentes figées sur place (papier de l'étude,
+     44 s ; fond « nuit », 46 à 62 s ; respiration du faisceau), ni inclinaison, ni reflet, ni effet loupe au survol des cartes,
+     éclairage des cartes de la vitrine et parallaxe à la souris arrêtés (window.__ldZoom). Tout reprend où il en était au dézoom. */
+  const vv = window.visualViewport, AMB = /^(vf-derive-[abc]|vfa-jour|vfp-respire)$/;
+  let figees = null;
+  const plat = (t) => { if (!t || t === "none" || !window.DOMMatrix) return t; /* matrice 2D : la lueur figée n'a plus besoin de son propre calque */
+    try { const m = new DOMMatrix(t); if (m.is2D || [m.m13, m.m14, m.m23, m.m24, m.m31, m.m32, m.m34, m.m43].every((x) => Math.abs(x) < 1e-6) && m.m33 === 1 && m.m44 === 1)
+      return "matrix(" + [m.a, m.b, m.c, m.d, m.e, m.f].join(",") + ")"; } catch (e) {} return t; };
+  const zoom = () => { const z = !!vv && vv.scale > 1.02; if (z === !!window.__ldZoom) return; window.__ldZoom = z; R.classList.toggle("vf-zoom", z);
+    if (z) { figees = []; (document.getAnimations ? document.getAnimations() : []).forEach((a) => { const el = a.effect && a.effect.target;
+        if (!el || !el.style || !AMB.test(a.animationName || "") || a.playState !== "running") return;
+        const cs = getComputedStyle(el); figees.push([a, el, a.currentTime, el.style.transform, el.style.opacity]);
+        el.style.transform = plat(cs.transform); el.style.opacity = cs.opacity; a.cancel(); }); }
+    else if (figees) { figees.forEach(([a, el, t, tr, op]) => { try { a.currentTime = t; a.play(); } catch (e) {} el.style.transform = tr; el.style.opacity = op; }); figees = null; } };
+  if (vv) { vv.addEventListener("resize", zoom); zoom(); }
 })();
 </script>
 `;
@@ -1937,6 +1978,10 @@ const CORRECTIONS = [
   { quoi: "Défilement sans arrêt : l'avancée lente de la caméra ne redessine pas la feuille de l'étude (02/11)", fichiers: VF, n: 1, avant: NETTE_AVANT, apres: NETTE_APRES },
   { quoi: "Freinage d'iPhone / iPad sur 5 écrans avant les cartes en mise en page mobile (02/11)", fichiers: VF, n: 1, avant: FREIN_AVANT, apres: FREIN_APRES },
   { quoi: "Planche II sur mobile : haut du papier en fondu (02/11)", fichiers: VF, n: 1, avant: FONDU_MOBILE_AVANT, apres: FONDU_MOBILE_APRES },
+  { quoi: "Zoom au pincement : parallaxe à la souris arrêtée (03/11)", fichiers: VF, n: 1,
+    avant: "const onMove = (e) => { if (calme) return;", apres: "const onMove = (e) => { if (calme || window.__ldZoom) return; /* Correction du 03/11 (scripts/construire.mjs) : pas pendant un zoom au pincement. */" },
+  { quoi: "Zoom au pincement : éclairage des cartes de la vitrine arrêté (03/11)", fichiers: VF, n: 1,
+    avant: "const eclairer = (Lv, ang, vm) => { if (!G.C) return;", apres: "const eclairer = (Lv, ang, vm) => { if (!G.C || window.__ldZoom) return; /* Correction du 03/11 : pas pendant un zoom au pincement (les cartes seraient redessinées à chaque image). */" },
   { quoi: "Zoom et redimensionnement : ce qui est recouvert n'est plus dessiné, styles (02/11)", fichiers: VF, n: 1, avant: SOMMAIRE_STYLE_FIN, apres: COUVERT_CSS + SOMMAIRE_STYLE_FIN },
   { quoi: "Zoom et redimensionnement : recouvrement, place gardée au redimensionnement (02/11)", fichiers: VF, n: 1,
     avant: '<script src="./support.js"></script>', apres: COUVERT_JS + '<script src="./support.js"></script>' },
