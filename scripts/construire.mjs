@@ -963,9 +963,10 @@ const ECHELLE_APRES = "      /* Correction du 30/10 (scripts/construire.mjs) : l
   "         phrase « Tous les échanges se font sur WhatsApp » sous les cartes. */\n" +
   "      /* 31/10 (Loan : « tous les textes au même niveau ») : nom, prix, bouton et phrase d'accroche de même hauteur dans les 3 cartes (la plus\n" +
   "         haute), pour que bouton, ligne et puces commencent au même niveau ; recalculé à chaque taille de texte essayée. */\n" +
-  "      const egaliser = () => { [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].forEach((q) => {\n" +
-  "        const g = C.map((k) => k.front.querySelector(q)).filter(Boolean); g.forEach((e) => { e.style.minHeight = \"\"; });\n" +
-  "        if (enRang && g.length > 1) { const h = Math.max.apply(null, g.map((e) => e.offsetHeight)); g.forEach((e) => { e.style.minHeight = h + \"px\"; }); } });\n" +
+  "      /* 02/11 : les 4 lignes remises à zéro ensemble, puis lues ensemble (une seule mise en page au lieu de 4 ; mêmes hauteurs). */\n" +
+  "      const egaliser = () => { const gs = [\".vf-carte__tete .vf-nom\", \".vf-carte__tete .vf-prix\", \".vf-agir\", \".vf-details .vf-accroche\"].map((q) => C.map((k) => k.front.querySelector(q)).filter(Boolean));\n" +
+  "        gs.forEach((g) => g.forEach((e) => { e.style.minHeight = \"\"; }));\n" +
+  "        if (enRang) { const hs = gs.map((g) => (g.length > 1 ? Math.max.apply(null, g.map((e) => e.offsetHeight)) : 0)); gs.forEach((g, i) => { if (g.length > 1) g.forEach((e) => { e.style.minHeight = hs[i] + \"px\"; }); }); }\n" +
   "        /* 01/11 (Loan) : rectangles du Pack Évolution au-dessus de la carte, dans sa largeur. Quand ils s'affichent, le titre et sa\n" +
   "           phrase remontent autant qu'il faut (--vfk-monte), même hors de l'écran : aucune place réservée, la taille du texte des\n" +
   "           cartes passe avant (Loan, 01/11). Seule exception, sur les petits écrans : si les rectangles sortaient par le haut de\n" +
@@ -1345,7 +1346,7 @@ const LOUPE_JS = `<script>/* Correction du 01/11 (scripts/construire.mjs) : effe
      hauteur, même un peu sous la carte) : l'effet commence et finit en douceur, sans dépendre du bord de la carte (qui s'incline). */
   document.addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse") return;
-    if (!mq.matches) { if (active) lacher(); return; }
+    if (!mq.matches || window.__ldZoom) { if (active) lacher(); return; } /* 03/11 : pas pendant un zoom au pincement (COUVERT_JS) */
     if (!etats.size && e.target && e.target.closest && e.target.closest(".vfk-c .vf-carte")) mesurer(); /* au repos seulement : les mesures lisent la mise en page sans zoom */
     let n = null;
     if (commun) commun.fiches.forEach((f, l) => { if (n) return; const cr = f.carte.getBoundingClientRect(); if (e.clientX < cr.left || e.clientX > cr.right) return;
@@ -1484,6 +1485,151 @@ const CGV_30 = [
     "<li>Respecter le format : par retour, 2 vidéos de 2 minutes maximum chacune, ou 3 vidéos de 45 secondes maximum chacune.</li>"],
   ["Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer ;", "Si une vidéo est inexploitable, je vous demande une seule fois de la renvoyer, sans frais ;"],
   ["<span>Version du 29 octobre 2026</span>", "<span>Version du 30 octobre 2026</span>"],
+];
+// Retour de Loan du 02/11 (captures : « quand on zoome avec deux doigts sur le trackpad, pas mal de choses ne s'affichent plus » ;
+// « en redimensionnant, la page fait des flashs blancs, tout a l'air de se redessiner »).
+// 1) Zoom : la carte graphique a un budget fixe pour les tuiles (Chrome, Dia, Edge : ≈ 512 Mo). Sur la planche II, la page gardait
+//    dessinés, sous le papier opaque de la planche, l'étude entière (feuille, photo, croquis, textures animées) et le fond « nuit »
+//    (dégradés animés, grain) : ≈ 280 Mo de tuiles à 1440 × 900 sur écran Retina, ≈ 500 Mo au zoom ×3 à 1728 × 1000 (mesuré dans
+//    Chromium, scratchpad du 02/11). Au-delà du budget, le navigateur abandonne des tuiles : morceaux de cartes manquants, rectangles
+//    sombres, photo de l'étude visible par endroits (captures de Loan). Ce qui est entièrement recouvert n'est plus dessiné
+//    (visibility: hidden) : sous la planche posée (papier opaque sur tout l'écran), l'étude et le fond « nuit » ; sous l'étude (papier
+//    blanc opaque sur tout l'écran, sans fondu), le fond « nuit » et le projecteur. Rien de visible ne change ; dès que le papier
+//    s'efface ou se décale d'un pixel, tout redevient dessiné, dans la même image.
+// 2) Redimensionnement (et zoom Cmd + / Cmd −) : les scènes ont une hauteur proportionnelle à celle de la fenêtre (svh) mais la position
+//    de défilement restait la même en pixels : en changeant la hauteur, la page sautait vers une autre scène (sur la planche II : le
+//    pied de page en rétrécissant, l'étude sur papier blanc en agrandissant — les « flashs blancs »). La page garde maintenant sa place
+//    dans la scène en cours (même proportion de la section), avant que les scènes ne se recalculent. Ordinateur seulement (souris ou
+//    trackpad) : sur téléphone, la barre d'adresse change la hauteur en plein défilement et rien ne doit y toucher.
+const COUVERT_CSS = `/* Corrections des 02 et 03/11 (scripts/construire.mjs) : ce qui est entièrement recouvert n'est plus dessiné (COUVERT_JS). */
+html.vf-cache-nuit .vf-nuit, html.vf-cache-proj .vfp-scene, html.vf-cache-proj .vfp-scene *,
+html.vf-cache-etude .vfa-scene, html.vf-cache-etude .vfa-scene * { visibility: hidden !important; }
+/* 03/11 : page agrandie au pincement (html.vf-zoom, COUVERT_JS) : ni inclinaison ni reflet au survol des cartes (chaque mouvement
+   redessinait toute la carte, 9 à 25 fois plus grande : elle restait vide le temps du dessin). */
+html.vf-zoom .vf-carte, html.vf-zoom .vf-guide__carte { transform: none !important; }
+html.vf-zoom .vf-carte::after, html.vf-zoom .vf-guide__carte::after { opacity: 0 !important; transition: none !important; } /* invisible : rien à redessiner quand la souris bouge, ni à l'entrée du mode zoom */
+`;
+const COUVERT_JS = `<script>/* Corrections des 02 et 03/11 (scripts/construire.mjs) : zoom au trackpad et redimensionnement. Voir COUVERT_CSS. */
+(() => {
+  const R = document.documentElement, vf = () => document.querySelector(".vf");
+  /* 1) Recouvert. Zones opaques, de bas en haut (ordre d'empilement de la page) : fond « nuit » (fixe, tout au fond), projecteur
+     (fond noir), étude (papier blanc, sans fondu), planche II (papier opaque ; sur mobile, son haut en fondu sur 220 px au plus),
+     pied de page (papier opaque). Une zone est cachée quand celles qui sont au-dessus d'elle couvrent ensemble tout l'écran
+     (03/11 : en bas de page, la planche et le pied de page se partagent l'écran). Marge : le navigateur peut afficher une image
+     avant que ce script ne réagisse au défilement ; chaque zone ne compte que pour ce qu'elle couvre encore après un défilement
+     de M px dans un sens ou dans l'autre (scènes épinglées : tant que leur section les retient). Exception : la planche posée
+     (data-posee, ordinateur) est précédée d'un fondu de papier (140 à 260 px, presque opaque près d'elle) qui couvre ce moment. */
+  const plein = (el, stop) => { for (let e = el; e && e !== stop; e = e.parentElement) { const cs = getComputedStyle(e), m = cs.maskImage || cs.webkitMaskImage || "none";
+      if (cs.opacity !== "1" || cs.display === "none" || (e !== el || !el.classList.contains("vfk-papier")) && m !== "none") return false; }
+    return getComputedStyle(el).visibility !== "hidden"; };
+  /* Position d'une zone après un défilement de d px (d > 0 : vers le bas) : scène épinglée (sticky, haut à 0, en tête de sa section)
+     ou zone qui suit la page. Planche posée : son fondu la prolonge vers le haut (jamais moins couverte qu'à d = 0). */
+  const zone = (el, sec, fondu, posee) => { const r = el.getBoundingClientRect(), h = r.height;
+    if (h <= 0 || r.left > 0.5 || r.right < R.clientWidth - 0.5) return null;
+    let pos = (d) => r.top - d;
+    if (sec && getComputedStyle(el).position === "sticky") { const s = sec.getBoundingClientRect(); pos = (d) => Math.min(Math.max(0, s.top - d), s.bottom - d - h);
+      if (Math.abs(pos(0) - r.top) > 1) return null; } /* pas en tête de sa section : on ne compte pas dessus */
+    return (d, ajust) => [(posee ? Math.min(pos(d), pos(0) + ajust) : pos(d)) + fondu, pos(d) + h]; };
+  /* Couvert : pour chaque défilement possible de -M à +M px (sans dépasser le haut ni le bas de la page), les zones réunies
+     couvrent tout l'écran. */
+  const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = window.innerHeight, y = window.scrollY, ymax = R.scrollHeight - H;
+    const d0 = -Math.min(M, y), d1 = Math.min(M, Math.max(0, ymax - y));
+    for (let i = 0; i <= 16; i++) { const d = d0 + (d1 - d0) * i / 16, iv = z.map((f) => f(d, ajust)).sort((a, b) => a[0] - b[0]); let bas = 0;
+      for (const [a, b] of iv) { if (a > bas + 0.5) break; bas = Math.max(bas, b); }
+      if (bas < H - 0.5) return false; }
+    return z.length > 0; };
+  let raf = 0;
+  const verifier = () => { raf = 0; const v = vf(); if (!v) return;
+    const M = Math.max(240, 0.3 * window.innerHeight), mob = window.matchMedia("(max-width: 999px)").matches;
+    const q = (s) => v.querySelector(s), vfp = q(":scope > .vfp"), vfa = q(":scope > .vfa"), vfk = q(":scope > .vfk"), pied = q(":scope > footer");
+    const scP = q(".vfp-scene"), scA = q(".vfa-scene"), pin = q(".vfk-pin"), pap = q(".vfk-papier");
+    const zP = scP && vfp && plein(scP, v) ? zone(scP, vfp, 0) : null;
+    const zA = scA && vfa && plein(scA, v) ? zone(scA, vfa, 0) : null;
+    const zK = pin && pap && vfk && +getComputedStyle(pap).opacity >= 0.999 && plein(pap, v) ? zone(pin, vfk, mob ? 230 : 0, !mob && vfk.hasAttribute("data-posee")) : null;
+    const zF = pied && plein(pied, v) ? zone(pied, null, 0) : null;
+    /* 03/11, second retour de Loan (« flashs et clignotements sur les cartes après être descendu, remonté, redescendu ») : sur la
+       planche posée, les cartes s'arrêtent pile à la limite ; un pixel de défilement (ou le zoom à deux doigts qui décale la page)
+       faisait cacher puis réafficher l'étude, et chaque fois tout était redessiné. Zone tampon : cachée quand la planche est
+       montée de 10 px au moins (et marge M), de nouveau dessinée seulement quand la planche est redescendue de plus de 24 px (le
+       fondu de papier, opaque à ≈ 90 % sur ses 24 derniers px, la recouvre encore) ou quand la marge tombe sous M / 2. */
+    const zones = { "vf-cache-etude": [zK, zF], "vf-cache-proj": [zA, zK, zF], "vf-cache-nuit": [zP, zA, zK, zF] };
+    for (const c in zones) { const deja = R.classList.contains(c), v = deja ? couvert(zones[c], M / 2, -24) : couvert(zones[c], M, 10);
+      if (v !== deja) R.classList.toggle(c, v); } };
+  /* Après les calculs des scènes de cette image (opacités posées par leurs propres requestAnimationFrame). */
+  const plusTard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = requestAnimationFrame(verifier); }); };
+  /* 2) Redimensionnement : même proportion de la section en cours (sections de la page : projecteur, étude, planche, pied de page),
+     notée à chaque défilement. Chrome refait la mise en page à la nouvelle taille (et prévient les ResizeObserver) une image avant
+     l'événement « resize » : le recalage se fait dès cette première image, sur la taille du document (html), puis au « resize ». */
+  const fin = window.matchMedia("(hover: hover) and (pointer: fine)");
+  let W = window.innerWidth, H = window.innerHeight, ancre = null;
+  const change = () => window.innerWidth !== W || window.innerHeight !== H;
+  const noter = () => { const v = vf(); if (!v) return; let a = null;
+    Array.prototype.forEach.call(v.children, (e) => { if (e.tagName !== "SECTION" && e.tagName !== "FOOTER") return; const r = e.getBoundingClientRect();
+      if (r.top <= 1 && r.height > 0) a = [e, Math.min(1, -r.top / r.height)]; });
+    ancre = a; };
+  const aller = (t) => { const s = R.style.scrollBehavior; R.style.scrollBehavior = "auto"; window.scrollTo(0, t); R.style.scrollBehavior = s; };
+  const recaler = () => { W = window.innerWidth; H = window.innerHeight;
+    if (fin.matches && ancre && ancre[0].isConnected) { const r = ancre[0].getBoundingClientRect(), t = Math.round(r.top + window.scrollY + ancre[1] * r.height);
+      if (Math.abs(t - window.scrollY) >= 1) aller(t); }
+    noter(); plusTard(); };
+  /* Au défilement : vérifié tout de suite si quelque chose redevient visible (le papier qui glisse), sans attendre une image. */
+  const surScroll = () => { if (!change()) noter(); if (/\\bvf-cache-/.test(R.className)) verifier(); plusTard(); };
+  window.addEventListener("resize", () => { if (change()) recaler(); });
+  window.addEventListener("scroll", surScroll, { passive: true });
+  window.addEventListener("load", () => { noter(); plusTard(); });
+  /* Taille du document : nouvelle taille de fenêtre (recalage) ou contenu qui change sans elle (page rendue par support.js, polices…). */
+  if (window.ResizeObserver) new ResizeObserver(() => { if (change()) recaler(); else { noter(); plusTard(); } }).observe(R);
+  /* 3) Page agrandie au pincement (trackpad ou écran tactile ; 03/11, retour de Loan) : chaque image redessinée coûte 9 à 25 fois
+     plus. Tant que le zoom dure (visualViewport.scale > 1,05 ; fin sous 1,01) : lueurs d'ambiance très lentes figées sur place (papier de l'étude,
+     44 s ; fond « nuit », 46 à 62 s ; respiration du faisceau), ni inclinaison, ni reflet, ni effet loupe au survol des cartes,
+     éclairage des cartes de la vitrine et parallaxe à la souris arrêtés (window.__ldZoom). Tout reprend où il en était au dézoom. */
+  const vv = window.visualViewport, AMB = /^(vf-derive-[abc]|vfa-jour|vfp-respire)$/;
+  let figees = null;
+  const plat = (t) => { if (!t || t === "none" || !window.DOMMatrix) return t; /* matrice 2D : la lueur figée n'a plus besoin de son propre calque */
+    try { const m = new DOMMatrix(t); if (m.is2D || [m.m13, m.m14, m.m23, m.m24, m.m31, m.m32, m.m34, m.m43].every((x) => Math.abs(x) < 1e-6) && m.m33 === 1 && m.m44 === 1)
+      return "matrix(" + [m.a, m.b, m.c, m.d, m.e, m.f].join(",") + ")"; } catch (e) {} return t; };
+  const zoom = () => { const z = !!vv && vv.scale > (window.__ldZoom ? 1.01 : 1.05); if (z === !!window.__ldZoom) return; /* zone tampon : pas de va-et-vient */ window.__ldZoom = z; R.classList.toggle("vf-zoom", z);
+    if (z) { figees = []; (document.getAnimations ? document.getAnimations() : []).forEach((a) => { const el = a.effect && a.effect.target;
+        if (!el || !el.style || !AMB.test(a.animationName || "") || a.playState !== "running") return;
+        const cs = getComputedStyle(el); figees.push([a, el, a.currentTime, el.style.transform, el.style.opacity]);
+        el.style.transform = plat(cs.transform); el.style.opacity = cs.opacity; a.cancel(); }); }
+    else if (figees) { figees.forEach(([a, el, t, tr, op]) => { try { a.currentTime = t; a.play(); } catch (e) {} el.style.transform = tr; el.style.opacity = op; }); figees = null; } };
+  if (vv) { vv.addEventListener("resize", zoom); zoom(); }
+})();
+</script>
+`;
+// CGV du 02/11 (Loan : « est-ce que les CGV sont à jour ? vérifie les noms des packs ») : il restait l'ancien mot « program » /
+// « programme » (Quarterly program) dans 9 passages par langue : remplacé par le nom de la formule (The Way of Performance /
+// Suivi Performance) ou par « abonnement ». Langue des retours (cartes : « French or English ») ajoutée à l'article 4.
+const CGV_02 = [
+  // Anglais.
+  ["I reply on WhatsApp, in writing or by voice message (also by video for The Way of Performance), within the time given in article 7.",
+    "I reply on WhatsApp, in French or English, in writing or by voice message (also by video for The Way of Performance), within the time given in article 7."],
+  ["<li><strong>Pack and program.</strong> Send your next videos", "<li><strong>Progression Pack and The Way of Performance.</strong> Send your next videos"],
+  ["For the program, a new price only applies from the next period", "For The Way of Performance, a new price only applies from the next period"],
+  ["<li>Program: its price is charged automatically", "<li>The Way of Performance: its price is charged automatically"],
+  ["The program is suspended until payment goes through", "The subscription is suspended until payment goes through"],
+  ["<li><strong>Pack or program partly performed:</strong>", "<li><strong>Progression Pack or The Way of Performance partly performed:</strong>"],
+  ["; for the program, the share of the price matching the weeks", "; for The Way of Performance, the share of the price matching the weeks"],
+  ["and, for the program, the share of the current period not provided.", "and, for The Way of Performance, the share of the current period not provided."],
+  ["<li>The program runs in 3-month periods from the date of payment.", "<li>The Way of Performance runs in 3-month periods from the date of payment."],
+  ["you can end the program at any time, at no cost", "you can end your subscription at any time, at no cost"],
+  ["<li>I can end the program at the end of a period", "<li>I can end The Way of Performance at the end of a period"],
+  ["<span>Version of 30 October 2026</span>", "<span>Version of 2 November 2026</span>"],
+  // Français.
+  ["Je vous réponds sur WhatsApp, par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance), dans le délai indiqué à l’article 7.",
+    "Je vous réponds sur WhatsApp, en français ou en anglais, par écrit ou en message vocal (aussi en vidéo pour le Suivi Performance), dans le délai indiqué à l’article 7."],
+  ["<li><strong>Pack et programme.</strong> Vous envoyez", "<li><strong>Pack Évolution et Suivi Performance.</strong> Vous envoyez"],
+  ["Pour le programme, un nouveau prix ne s’applique", "Pour le Suivi Performance, un nouveau prix ne s’applique"],
+  ["<li>Programme : son prix est prélevé automatiquement", "<li>Suivi Performance : son prix est prélevé automatiquement"],
+  ["Le programme est suspendu jusqu’au paiement", "L’abonnement est suspendu jusqu’au paiement"],
+  ["<li><strong>Pack ou programme en partie exécuté :</strong>", "<li><strong>Pack Évolution ou Suivi Performance en partie exécuté :</strong>"],
+  ["; pour le programme, la part du prix correspondant aux semaines", "; pour le Suivi Performance, la part du prix correspondant aux semaines"],
+  ["et pour le programme, la part de la période en cours non fournie.", "et pour le Suivi Performance, la part de la période en cours non fournie."],
+  ["<li>Le programme fonctionne par périodes de 3 mois", "<li>Le Suivi Performance fonctionne par périodes de 3 mois"],
+  ["vous pouvez mettre fin au programme à tout moment, sans frais", "vous pouvez mettre fin à votre abonnement à tout moment, sans frais"],
+  ["<li>Je peux mettre fin au programme à la fin d’une période", "<li>Je peux mettre fin au Suivi Performance à la fin d’une période"],
+  ["<span>Version du 30 octobre 2026</span>", "<span>Version du 2 novembre 2026</span>"],
 ];
 
 // Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
@@ -1838,6 +1984,13 @@ const CORRECTIONS = [
   { quoi: "Défilement sans arrêt : l'avancée lente de la caméra ne redessine pas la feuille de l'étude (02/11)", fichiers: VF, n: 1, avant: NETTE_AVANT, apres: NETTE_APRES },
   { quoi: "Freinage d'iPhone / iPad sur 5 écrans avant les cartes en mise en page mobile (02/11)", fichiers: VF, n: 1, avant: FREIN_AVANT, apres: FREIN_APRES },
   { quoi: "Planche II sur mobile : haut du papier en fondu (02/11)", fichiers: VF, n: 1, avant: FONDU_MOBILE_AVANT, apres: FONDU_MOBILE_APRES },
+  { quoi: "Zoom au pincement : parallaxe à la souris arrêtée (03/11)", fichiers: VF, n: 1,
+    avant: "const onMove = (e) => { if (calme) return;", apres: "const onMove = (e) => { if (calme || window.__ldZoom) return; /* Correction du 03/11 (scripts/construire.mjs) : pas pendant un zoom au pincement. */" },
+  { quoi: "Zoom au pincement : éclairage des cartes de la vitrine arrêté (03/11)", fichiers: VF, n: 1,
+    avant: "const eclairer = (Lv, ang, vm) => { if (!G.C) return;", apres: "const eclairer = (Lv, ang, vm) => { if (!G.C || window.__ldZoom) return; /* Correction du 03/11 : pas pendant un zoom au pincement (les cartes seraient redessinées à chaque image). */" },
+  { quoi: "Zoom et redimensionnement : ce qui est recouvert n'est plus dessiné, styles (02/11)", fichiers: VF, n: 1, avant: SOMMAIRE_STYLE_FIN, apres: COUVERT_CSS + SOMMAIRE_STYLE_FIN },
+  { quoi: "Zoom et redimensionnement : recouvrement, place gardée au redimensionnement (02/11)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: COUVERT_JS + '<script src="./support.js"></script>' },
   { quoi: "Défilement sans arrêt : lente avancée de la caméra sur la page blanche du projecteur (29/10)", fichiers: VF, n: 1,
     avant: POUSSEE_AVANT, apres: POUSSEE_APRES },
   { quoi: "Défilement sans arrêt : les mots de la page blanche avancent avec Loan (29/10, 02/11)", fichiers: VF, n: 1,
@@ -1906,6 +2059,7 @@ const CORRECTIONS = [
   { quoi: "Suivi Performance : 3 places (capacité affichée avant la réponse de l'API, 30/10)", fichiers: VF, n: 1,
     avant: "const PLACES = { pack: 6, prog: 2 };", apres: "const PLACES = { pack: 6, prog: 3 }; /* Correction du 30/10 : 3 places (cloudflare/api-worker.js) */" },
   ...CGV_30.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 30/10 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
+  ...CGV_02.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 02/11 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
