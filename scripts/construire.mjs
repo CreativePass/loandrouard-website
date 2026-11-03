@@ -1507,7 +1507,7 @@ html.vf-cache-etude .vfa-scene, html.vf-cache-etude .vfa-scene * { visibility: h
 /* 03/11 : page agrandie au pincement (html.vf-zoom, COUVERT_JS) : ni inclinaison ni reflet au survol des cartes (chaque mouvement
    redessinait toute la carte, 9 à 25 fois plus grande : elle restait vide le temps du dessin). */
 html.vf-zoom .vf-carte, html.vf-zoom .vf-guide__carte { transform: none !important; }
-html.vf-zoom .vf-carte::after, html.vf-zoom .vf-guide__carte::after { content: none !important; }
+html.vf-zoom .vf-carte::after, html.vf-zoom .vf-guide__carte::after { opacity: 0 !important; transition: none !important; } /* invisible : rien à redessiner quand la souris bouge, ni à l'entrée du mode zoom */
 `;
 const COUVERT_JS = `<script>/* Corrections des 02 et 03/11 (scripts/construire.mjs) : zoom au trackpad et redimensionnement. Voir COUVERT_CSS. */
 (() => {
@@ -1529,12 +1529,12 @@ const COUVERT_JS = `<script>/* Corrections des 02 et 03/11 (scripts/construire.m
     let pos = (d) => r.top - d;
     if (sec && getComputedStyle(el).position === "sticky") { const s = sec.getBoundingClientRect(); pos = (d) => Math.min(Math.max(0, s.top - d), s.bottom - d - h);
       if (Math.abs(pos(0) - r.top) > 1) return null; } /* pas en tête de sa section : on ne compte pas dessus */
-    return (d) => [(posee ? Math.min(pos(d), pos(0)) : pos(d)) + fondu, pos(d) + h]; };
+    return (d, ajust) => [(posee ? Math.min(pos(d), pos(0) + ajust) : pos(d)) + fondu, pos(d) + h]; };
   /* Couvert : pour chaque défilement possible de -M à +M px (sans dépasser le haut ni le bas de la page), les zones réunies
      couvrent tout l'écran. */
-  const couvert = (zones, M) => { const z = zones.filter(Boolean), H = window.innerHeight, y = window.scrollY, ymax = R.scrollHeight - H;
+  const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = window.innerHeight, y = window.scrollY, ymax = R.scrollHeight - H;
     const d0 = -Math.min(M, y), d1 = Math.min(M, Math.max(0, ymax - y));
-    for (let i = 0; i <= 16; i++) { const d = d0 + (d1 - d0) * i / 16, iv = z.map((f) => f(d)).sort((a, b) => a[0] - b[0]); let bas = 0;
+    for (let i = 0; i <= 16; i++) { const d = d0 + (d1 - d0) * i / 16, iv = z.map((f) => f(d, ajust)).sort((a, b) => a[0] - b[0]); let bas = 0;
       for (const [a, b] of iv) { if (a > bas + 0.5) break; bas = Math.max(bas, b); }
       if (bas < H - 0.5) return false; }
     return z.length > 0; };
@@ -1547,8 +1547,14 @@ const COUVERT_JS = `<script>/* Corrections des 02 et 03/11 (scripts/construire.m
     const zA = scA && vfa && plein(scA, v) ? zone(scA, vfa, 0) : null;
     const zK = pin && pap && vfk && +getComputedStyle(pap).opacity >= 0.999 && plein(pap, v) ? zone(pin, vfk, mob ? 230 : 0, !mob && vfk.hasAttribute("data-posee")) : null;
     const zF = pied && plein(pied, v) ? zone(pied, null, 0) : null;
-    const etat = { "vf-cache-etude": couvert([zK, zF], M), "vf-cache-proj": couvert([zA, zK, zF], M), "vf-cache-nuit": couvert([zP, zA, zK, zF], M) };
-    for (const c in etat) if (R.classList.contains(c) !== etat[c]) R.classList.toggle(c, etat[c]); };
+    /* 03/11, second retour de Loan (« flashs et clignotements sur les cartes après être descendu, remonté, redescendu ») : sur la
+       planche posée, les cartes s'arrêtent pile à la limite ; un pixel de défilement (ou le zoom à deux doigts qui décale la page)
+       faisait cacher puis réafficher l'étude, et chaque fois tout était redessiné. Zone tampon : cachée quand la planche est
+       montée de 10 px au moins (et marge M), de nouveau dessinée seulement quand la planche est redescendue de plus de 24 px (le
+       fondu de papier, opaque à ≈ 90 % sur ses 24 derniers px, la recouvre encore) ou quand la marge tombe sous M / 2. */
+    const zones = { "vf-cache-etude": [zK, zF], "vf-cache-proj": [zA, zK, zF], "vf-cache-nuit": [zP, zA, zK, zF] };
+    for (const c in zones) { const deja = R.classList.contains(c), v = deja ? couvert(zones[c], M / 2, -24) : couvert(zones[c], M, 10);
+      if (v !== deja) R.classList.toggle(c, v); } };
   /* Après les calculs des scènes de cette image (opacités posées par leurs propres requestAnimationFrame). */
   const plusTard = () => { if (!raf) raf = requestAnimationFrame(() => { raf = requestAnimationFrame(verifier); }); };
   /* 2) Redimensionnement : même proportion de la section en cours (sections de la page : projecteur, étude, planche, pied de page),
@@ -1574,7 +1580,7 @@ const COUVERT_JS = `<script>/* Corrections des 02 et 03/11 (scripts/construire.m
   /* Taille du document : nouvelle taille de fenêtre (recalage) ou contenu qui change sans elle (page rendue par support.js, polices…). */
   if (window.ResizeObserver) new ResizeObserver(() => { if (change()) recaler(); else { noter(); plusTard(); } }).observe(R);
   /* 3) Page agrandie au pincement (trackpad ou écran tactile ; 03/11, retour de Loan) : chaque image redessinée coûte 9 à 25 fois
-     plus. Tant que le zoom dure (visualViewport.scale > 1,02) : lueurs d'ambiance très lentes figées sur place (papier de l'étude,
+     plus. Tant que le zoom dure (visualViewport.scale > 1,05 ; fin sous 1,01) : lueurs d'ambiance très lentes figées sur place (papier de l'étude,
      44 s ; fond « nuit », 46 à 62 s ; respiration du faisceau), ni inclinaison, ni reflet, ni effet loupe au survol des cartes,
      éclairage des cartes de la vitrine et parallaxe à la souris arrêtés (window.__ldZoom). Tout reprend où il en était au dézoom. */
   const vv = window.visualViewport, AMB = /^(vf-derive-[abc]|vfa-jour|vfp-respire)$/;
@@ -1582,7 +1588,7 @@ const COUVERT_JS = `<script>/* Corrections des 02 et 03/11 (scripts/construire.m
   const plat = (t) => { if (!t || t === "none" || !window.DOMMatrix) return t; /* matrice 2D : la lueur figée n'a plus besoin de son propre calque */
     try { const m = new DOMMatrix(t); if (m.is2D || [m.m13, m.m14, m.m23, m.m24, m.m31, m.m32, m.m34, m.m43].every((x) => Math.abs(x) < 1e-6) && m.m33 === 1 && m.m44 === 1)
       return "matrix(" + [m.a, m.b, m.c, m.d, m.e, m.f].join(",") + ")"; } catch (e) {} return t; };
-  const zoom = () => { const z = !!vv && vv.scale > 1.02; if (z === !!window.__ldZoom) return; window.__ldZoom = z; R.classList.toggle("vf-zoom", z);
+  const zoom = () => { const z = !!vv && vv.scale > (window.__ldZoom ? 1.01 : 1.05); if (z === !!window.__ldZoom) return; /* zone tampon : pas de va-et-vient */ window.__ldZoom = z; R.classList.toggle("vf-zoom", z);
     if (z) { figees = []; (document.getAnimations ? document.getAnimations() : []).forEach((a) => { const el = a.effect && a.effect.target;
         if (!el || !el.style || !AMB.test(a.animationName || "") || a.playState !== "running") return;
         const cs = getComputedStyle(el); figees.push([a, el, a.currentTime, el.style.transform, el.style.opacity]);
