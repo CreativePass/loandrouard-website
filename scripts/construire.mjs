@@ -6,7 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
 import { SAFARI, SAFARI_IDS, SAFARI_TOUTES, VARIANTES_ESSAI, fichiersSafari, controleTextures } from "./safari.mjs";
-import { TRADUCTION, BOUTONS } from "./traduction-fr.mjs";
+import { TRADUCTION, BOUTONS, SURTITRE_ETUDE } from "./traduction-fr.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
@@ -478,6 +478,15 @@ const VF_CSS_28C = `/* Correction du 28/10, 3e retour (scripts/construire.mjs) :
   .vfp-texte { --vfp-h1: clamp(26px, 2.7vw, 46px); --vfp-lede: clamp(24px, 1.2vw + 8px, 32px); transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px))); }
   .vfp-texte .vfp-h1-p { font-size: .4em; }
   .vfp-texte .vfp-lede { font-size: var(--vfp-lede); max-width: calc(10.597em + 15px); }
+  /* 03/11 (Loan) : en français, « Comprendre chaque détail. Savoir quoi améliorer. » ajouté, la phrase fait 5 lignes au lieu
+     de 3 ; décalée de la moitié des 2 lignes gagnées, le bloc garde son haut (sinon il remonte sur le logo, écran de 720 px). */
+  html[lang="fr"] .vfp-texte { transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px) + 1.55 * var(--vfp-lede))); }
+  /* 03/11 (Loan) : étude en français, surtitre « ${SURTITRE_ETUDE} » au début (2 lignes), puis « L’analyse en action · … »
+     (1 ligne). Le texte, centré sur la hauteur, sautait au changement d'étape : la place du plus long est gardée (copie
+     invisible dans la même case), le texte court est centré dessus, à hauteur du trait. */
+  html[lang="fr"] .vfa-texte .vf-eyebrow > span { display: grid; }
+  html[lang="fr"] .vfa-texte .vf-eyebrow > span > [data-num], html[lang="fr"] .vfa-texte .vf-eyebrow > span::after { grid-area: 1 / 1; align-self: center; }
+  html[lang="fr"] .vfa-texte .vf-eyebrow > span::after { content: ${JSON.stringify(SURTITRE_ETUDE)}; visibility: hidden; }
 }
 @media (min-width: 1000px) {
   /* Planche II. Surtitre (--vfk-eb) : une ligne en anglais, deux en français (37em au plus) ; la plaque, à sa hauteur, s'arrête

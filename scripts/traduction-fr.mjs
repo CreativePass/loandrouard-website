@@ -36,6 +36,9 @@ export const BOUTONS = [
 // Envoi des vidéos (cartes et carte payée, 30/10).
 const ENVOI_FR = `2 vidéos de 2${NB}minutes maximum chacune ou 3 vidéos de 45${NB}secondes maximum chacune`;
 const ENVOI_EN = "2 videos, 2 minutes max each or 3 videos, 45 seconds max each";
+// Surtitre du début de l'étude (03/11, Loan) : texte et script de la page (écrit au défilement), sur ordinateur, la place du plus
+// long est gardée (scripts/construire.mjs, VF_CSS_28C).
+export const SURTITRE_ETUDE = "Une analyse sur mesure pour passer votre prochain palier";
 
 // Textes de Video Feedback : [anglais, français, occurrences], entre deux balises, HTML compris (<br>, <em>, &nbsp;).
 // En-tête (Home, The Journey et Press restent grisés et non cliquables), aussi sur les pages légales.
@@ -51,10 +54,11 @@ const TEXTES = [
   ["From beginner", "De débutant", 1],
   ["To pro", "À professionnel", 1],
   ["Your", "Votre", 1],
-  ["routine,", "enchaînement,", 1],
-  ["broken down", "décortiqué", 1],
+  // 03/11 (Loan) : « Votre taolu, décrypté geste par geste. » (avant : « Votre enchaînement, décortiqué geste par geste. »).
+  ["routine,", "taolu,", 1],
+  ["broken down", "décrypté", 1],
   ["move by move", "geste par geste", 1],
-  ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer.", 1],
+  ["You film. You send. We analyze your problem together.", "Vous filmez. Vous envoyez. On analyse ensemble les points à améliorer. Comprendre chaque détail. Savoir quoi améliorer.", 1], // 03/11 : deux phrases ajoutées (Loan)
   ["See the options", "Voir les options", 1], // 27/10 : « See pricing » / « Voir les tarifs », puis « Voir les formules » (28/10 : « Voir les options », demandé par Loan)
   // Offre de lancement (29/10, scripts/construire.mjs) : « Launch offer » sous See the options et, depuis le 30/10, à côté de la
   // réduction sur les 6 cartes (vitrine et planche II).
@@ -102,10 +106,14 @@ const TEXTES = [
   ["The result", "Le résultat", 1],
   ["On the carpet.", "Sur le tapis.", 1],
   // Étude : textes (le surtitre « Sample analysis » est ensuite réécrit par le script de la page, voir SCRIPT).
-  ["What to expect · ", "Concrètement · ", 1],
-  ["Sample analysis", "Analyse type", 1],
-  ["One jump. 42 frames.", "Un saut. Plein de détails.", 1],
-  ["Barely a second in real time. Slowed to a quarter, it is read frame by frame, point by point.", `À peine une seconde en temps réel. Ralenti quatre fois${NB}: une analyse image par image, point par point.`, 1],
+  // 03/11 (Loan) : le début de l'étude répond à « À quoi s'attendre ? » ; surtitre en entier dans data-num (SURTITRE_ETUDE),
+  // « L’analyse en action · Point 01 / 05 » pendant l'analyse du saut (avant : « Concrètement · Analyse type », « Un saut.
+  // Plein de détails. », « À peine une seconde en temps réel. Ralenti quatre fois : une analyse image par image, point par point. »).
+  ["What to expect · ", "", 1],
+  ["Sample analysis", SURTITRE_ETUDE, 1],
+  ["One jump. 42 frames.", "Un saut. Des détails qui font la différence.", 1],
+  ["Barely a second in real time. Slowed to a quarter, it is read frame by frame, point by point.",
+    `Une seconde en mouvement. Au ralenti, chaque détail se révèle${NB}: impulsion, placement, rotation, réception. Image par image, je décrypte votre enchaînement pour identifier ce qui vous freine et vous expliquer concrètement et précisément ce qu’il faut améliorer.`, 1],
   ["Scroll to see the analysis", "Faites défiler pour voir l’analyse", 1],
   ["The eyes lead the movement.", "Le regard guide le mouvement.", 1],
   ["The gaze pierces ahead of the blade, not at it.", "Le regard porte au-delà de la lame, sans la fixer.", 1],
@@ -149,7 +157,7 @@ const TEXTES = [
   [" / quarter", " / trimestre", 1],
   ["2 videos analyzed so you know what to improve and how.", "2 vidéos analysées pour savoir quoi améliorer et comment.", 1],
   ["6 videos analyzed across 3 feedback rounds, so you can practice, adjust and improve.", "6 vidéos analysées en 3 retours, pour pratiquer, ajuster et progresser.", 1],
-  ["24 videos analyzed over 12 weeks, to develop your practice effectively.", `24 vidéos analysées en 12${NB}semaines, pour faire évoluer votre pratique efficacement.`, 1],
+  ["24 videos analyzed over 12 weeks, to develop your practice effectively.", `24 vidéos analysées sur 12${NB}semaines, pour faire évoluer votre pratique efficacement.`, 1], // 03/11 : « sur » (avant : « en »)
   ["Send your taolu, your jumps or a specific section for more detail on particular elements.", "Envoyez votre taolu, vos sauts ou une partie ciblée pour plus de détails sur des éléments spécifiques.", 2], // carte et vitrine (31/10)
   ["I analyze your videos based on your level and your goals:", `J’analyse vos vidéos selon votre niveau et vos objectifs${NB}:`, 1],
   ["Your strengths and your priority corrections.", "Vos points forts et vos corrections prioritaires.", 1],
@@ -269,8 +277,10 @@ const SCRIPT = [
       '  pack: { nom: FR ? "Pack \\u00C9volution" : "Progression Pack", achatEn: "the Progression Pack", prix: "129\\u00A0\\u20AC", delai: FR ? "3 \\u00E0 5\\u00A0jours" : "3 to 5 days", achat: "le Pack \\u00C9volution", etat: "activ\\u00E9" },\n' +
       '  prog: { nom: FR ? "Suivi Performance" : "The Way of Performance", achatEn: "The Way of Performance", prix: "499\\u00A0\\u20AC", delai: FR ? "2 \\u00E0 3\\u00A0jours" : "2 to 3 days", achat: "le Suivi Performance", etat: "activ\\u00E9" },\n' },
   { quoi: "surtitre de l'étude écrit au défilement", n: 1,
-    avant: 'num.textContent = i === 0 ? "Sample analysis" : ',
-    apres: 'num.textContent = i === 0 ? (FR ? "Analyse type" : "Sample analysis") : ' },
+    avant: 'num.textContent = i === 0 ? "Sample analysis" : i === 6 ? "Verdict" : "Point " + String(i).padStart(2, "0") + " / 05";',
+    // Français : « Point 01 / 05 » et « · » gardés sur la ligne (écran étroit : « Point » seul en fin de ligne sinon).
+    apres: 'num.textContent = i === 0 ? (FR ? ' + JSON.stringify(SURTITRE_ETUDE) + ' : "Sample analysis") : FR ? "L\\u2019analyse en action\\u00A0\\u00B7 " + ' +
+      '(i === 6 ? "Verdict" : "Point\\u00A0" + String(i).padStart(2, "0") + "\\u00A0/\\u00A005") : i === 6 ? "Verdict" : "Point " + String(i).padStart(2, "0") + " / 05";' },
   // Avant le texte « Close » de la fenêtre de paiement (TEXTES) : ce bouton-ci est écrit par le script.
   { quoi: "bouton Close de la carte ouverte (mobile)", n: 1,
     avant: 'fermerBtn.innerHTML = "<span>Close</span>',
