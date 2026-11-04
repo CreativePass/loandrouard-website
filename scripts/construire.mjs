@@ -1642,10 +1642,17 @@ const SURTITRE_JS = `num.textContent = i === 0 ? ${texteJS(SURTITRES_ETUDE.en[0]
 const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : textes du projecteur et de l'étude (retour de Loan). */
 .vfp-lede-suite { display: block; }
 @media (min-width: 900px) {
-  .vfp-br-m { display: none; }
-  /* Phrase du projecteur sur 5 lignes au lieu de 3 (lignes imposées par Loan) : décalée de la moitié des 2 lignes gagnées, le
-     bloc garde son haut (sinon il remonte sur le logo, écran de 720 px). Formule : VF_CSS_28C. */
-  .vfp-texte { transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px) + 1.55 * var(--vfp-lede))); }
+  .vfp-br-m, .vfp-br-r { display: none; }
+  /* Phrase du projecteur (04/11, 5e retour de Loan : « sépare Film & Send du reste ; laisse-le au même endroit, le reste du bloc descend,
+     à peu près comme sur mobile ») : seule « Film & Send » reste dans le bloc du titre, 1 ligne au lieu de 3 ; décalé de la
+     moitié des 2 lignes perdues, le bloc garde son haut (formule : VF_CSS_28C). Le reste (4 lignes imposées par Loan) est
+     posé en bas à gauche, avec le même trait, aligné : centre à 83,2 % de la hauteur visible, comme sur mobile. Sa position
+     est comptée depuis le haut de « Film & Send » : 32 % de la scène (100lvh) + moitié du titre (6,02 fois sa police) +
+     marge de 3,2em + décalage ci-dessous. Le bouton « See the options », en bas à gauche, est éteint avant que le texte
+     n'apparaisse. */
+  .vfp-texte { transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px) - 1.55 * var(--vfp-lede))); }
+  .vfp-lede-reste { position: absolute; left: -1px; top: calc(83.2svh - 3.1em - 32lvh - 3.134 * var(--vfp-h1) - 3.2em + 74.575px);
+    padding-left: 14px; border-left: 1px solid rgba(246,245,241,.18); white-space: nowrap; }
   /* Étude : surtitre « ${SURTITRES_ETUDE.en[0]} » au début (2 lignes, 3 sur un écran étroit), puis « ${SURTITRES_ETUDE.en[1]} · … »
      (1 ligne). Le texte, centré sur la hauteur, sautait au changement d'étape : la place du plus long est gardée (copie
      invisible dans la même case), le texte court est centré dessus, à hauteur du trait. */
@@ -1662,7 +1669,7 @@ const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : te
   .vfp-br-o { display: none; }
   .vfp-lede-suite { position: absolute; left: -1px; top: calc(83.2svh - 3.1em - var(--hauteur-header, 64px) - 3svh - 6.03 * clamp(26px, 7.4vw, 40px) - 3.2em);
     padding-left: 14px; border-left: 1px solid rgba(246,245,241,.18); white-space: nowrap; }
-  /* Étude (retours de Loan des 04 et 05/11 : texte illisible sur le dessin, grand blanc au-dessus de la frise). Les textes sont
+  /* Étude (retours de Loan du 04/11 : texte illisible sur le dessin, grand blanc au-dessus de la frise). Les textes sont
      posés en bas : la pile prend la hauteur du texte affiché (les autres, en fondu, posés au même endroit), le surtitre le suit.
      Frise (image, plan, règle) retirée (« ça n'apporte pas grand chose ») : le texte descend à sa place, à 24 px du bas. */
   .vfa-texte .vfa-pile { display: block; position: relative; }
@@ -1670,7 +1677,7 @@ const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : te
   .vfa-texte .vfa-pile > [data-on="1"] { position: relative; }
   .vfa-pied { display: none; }
   .vfa-texte { translate: 0 54px; }
-  /* 05/11 (Loan : « un petit espace blanc quand on descend, qui se comble quand on remonte ») : la scène fait 100lvh et le
+  /* 04/11, 4e retour (Loan : « un petit espace blanc quand on descend, qui se comble quand on remonte ») : la scène fait 100lvh et le
      texte était posé au-dessus de la barre DÉPLOYÉE (78px + 100lvh − 100svh, scripts/safari.mjs, moins les 54 px ci-dessus) ;
      barre repliée, la hauteur de la barre restait vide dessous. Il suit maintenant la hauteur réellement visible (100dvh,
      tenue à jour par chaque navigateur quand sa barre se replie ou revient), à 24 px du bas, en glissant. Sans dvh : comme
@@ -1682,15 +1689,16 @@ const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : te
 }
 @media (max-width: 899px) and (max-height: 760px) and (min-height: 540px) and (orientation: portrait) {
   /* Écran de mobile court (iPhone de Loan, environ 710 px de haut) : l'export y cache la phrase, la silhouette de Loan prenant
-     la place sous le titre. Affichée quand même (05/11, Loan : « je ne vois pas le texte »), en un bloc de 5 lignes en bas à
-     gauche, à la place des deux dernières phrases : « Filmez & Envoyez / Comprendre / chaque détail. / Savoir quoi /
-     améliorer. » (sous le titre, la tête de Loan passait dessus sous 700 px de haut). « On analyse ensemble les points à
-     améliorer. » reste cachée (aucune place lisible). Centre du bloc à 83,2 % de la hauteur visible, compté depuis le haut du
-     bloc du titre (en-tête + 3svh). Sous 540 px de haut ou en paysage, phrase cachée comme dans l'export. */
-  .vfp-texte .vfp-lede { display: block; position: absolute; left: 0; margin: 0; white-space: nowrap;
-    top: calc(83.2svh - 3.875em - var(--hauteur-header, 64px) - 3svh); }
+     la place sous le titre. Affichée quand même (04/11, 3e retour de Loan : « je ne vois pas le texte ») : « Filmez & Envoyez » à sa place
+     d'origine sous le titre (04/11, 5e retour) et les deux dernières phrases en bas à gauche (même place que ci-dessus) ; « On
+     analyse ensemble les points à améliorer. » reste cachée (aucune place lisible). Sur un écran plus court que celui de Loan,
+     la marge sous le titre se réduit (0,5em au moins) pour que la tête de Loan (haut à 54,2 % de la hauteur visible) ne passe
+     pas sur « Filmez & Envoyez » ; la place des deux dernières phrases en tient compte. Sous 540 px de haut ou en paysage,
+     phrase cachée comme dans l'export. */
+  .vfp-texte .vfp-lede { display: block; margin-top: var(--vfp-lede-m);
+    --vfp-lede-m: max(.5em, min(3.2em, 51.2svh - 35px - var(--hauteur-header, 64px) - 6.03 * clamp(26px, 7.4vw, 40px))); }
   .vfp-lede-milieu { display: none; }
-  .vfp-lede-suite { position: static; padding-left: 0; border-left: 0; }
+  .vfp-lede-suite { top: calc(83.2svh - 3.1em - var(--hauteur-header, 64px) - 3svh - 6.03 * clamp(26px, 7.4vw, 40px) - var(--vfp-lede-m)); }
 }
 `;
 
