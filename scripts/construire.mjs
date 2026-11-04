@@ -6,7 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
 import { SAFARI, SAFARI_IDS, SAFARI_TOUTES, VARIANTES_ESSAI, fichiersSafari, controleTextures } from "./safari.mjs";
-import { TRADUCTION, BOUTONS } from "./traduction-fr.mjs";
+import { TRADUCTION, BOUTONS, SURTITRES_ETUDE, SUITE_SURTITRE, texteJS, PHRASE_EN, ETUDE_EN } from "./traduction-fr.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
@@ -1632,6 +1632,68 @@ const CGV_02 = [
   ["<span>Version du 30 octobre 2026</span>", "<span>Version du 2 novembre 2026</span>"],
 ];
 
+// --- Retour de Loan des 03 et 04/11 : textes du projecteur et de l'étude --------------------------------------------
+// Français validé le 03/11, anglais le 04/11 (textes : scripts/traduction-fr.mjs, PHRASE_EN, SURTITRES_ETUDE, ETUDE_EN).
+// Surtitre de l'étude écrit au défilement : en entier par le script (plus de « What to expect · » devant), « Point 01 / 05 »
+// d'un bloc (sinon « Point » seul en fin de ligne sur un écran étroit).
+const SURTITRE_AVANT = 'num.textContent = i === 0 ? "Sample analysis" : i === 6 ? "Verdict" : "Point " + String(i).padStart(2, "0") + " / 05";';
+const SURTITRE_JS = `num.textContent = i === 0 ? ${texteJS(SURTITRES_ETUDE.en[0])} : ${texteJS(SURTITRES_ETUDE.en[1] + SUITE_SURTITRE)} + ` +
+  '(i === 6 ? "Verdict" : "Point\\u00A0" + String(i).padStart(2, "0") + "\\u00A0/\\u00A005"); /* Correction du 04/11 (scripts/construire.mjs) : surtitres de Loan. */';
+const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : textes du projecteur et de l'étude (retour de Loan). */
+.vfp-lede-suite { display: block; }
+@media (min-width: 900px) {
+  .vfp-br-m { display: none; }
+  /* Phrase du projecteur sur 5 lignes au lieu de 3 (lignes imposées par Loan) : décalée de la moitié des 2 lignes gagnées, le
+     bloc garde son haut (sinon il remonte sur le logo, écran de 720 px). Formule : VF_CSS_28C. */
+  .vfp-texte { transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px) + 1.55 * var(--vfp-lede))); }
+  /* Étude : surtitre « ${SURTITRES_ETUDE.en[0]} » au début (2 lignes, 3 sur un écran étroit), puis « ${SURTITRES_ETUDE.en[1]} · … »
+     (1 ligne). Le texte, centré sur la hauteur, sautait au changement d'étape : la place du plus long est gardée (copie
+     invisible dans la même case), le texte court est centré dessus, à hauteur du trait. */
+  .vfa-texte .vf-eyebrow > span { display: grid; }
+  .vfa-texte .vf-eyebrow > span > [data-num], .vfa-texte .vf-eyebrow > span::after { grid-area: 1 / 1; align-self: center; }
+  .vfa-texte .vf-eyebrow > span::after { content: ${JSON.stringify(SURTITRES_ETUDE.en[0])}; visibility: hidden; }
+  html[lang="fr"] .vfa-texte .vf-eyebrow > span::after { content: ${JSON.stringify(SURTITRES_ETUDE.fr[0])}; }
+}
+@media (max-width: 899px) {
+  /* Projecteur : la phrase reste en un bloc ; les deux dernières phrases, sur 4 lignes courtes, descendent à gauche de la jambe
+     d'appui de Loan, au-dessus du sol (zone indiquée par Loan le 04/11), avec le même trait que la phrase, aligné sur elle.
+     La silhouette est composée sur la hauteur visible (haut à 36,6 %, hauteur 65,3 %) : centre du bloc à 83,2 % de la hauteur
+     visible. Position comptée depuis le haut de la phrase : en-tête, 3svh, titre (6,03 fois sa police), marge de 3,2em. */
+  .vfp-br-o { display: none; }
+  .vfp-lede-suite { position: absolute; left: -1px; top: calc(83.2svh - 3.1em - var(--hauteur-header, 64px) - 3svh - 6.03 * clamp(26px, 7.4vw, 40px) - 3.2em);
+    padding-left: 14px; border-left: 1px solid rgba(246,245,241,.18); white-space: nowrap; }
+  /* Étude (retours de Loan des 04 et 05/11 : texte illisible sur le dessin, grand blanc au-dessus de la frise). Les textes sont
+     posés en bas : la pile prend la hauteur du texte affiché (les autres, en fondu, posés au même endroit), le surtitre le suit.
+     Frise (image, plan, règle) retirée (« ça n'apporte pas grand chose ») : le texte descend à sa place, à 24 px du bas. */
+  .vfa-texte .vfa-pile { display: block; position: relative; }
+  .vfa-texte .vfa-pile > * { position: absolute; left: 0; right: 0; bottom: 0; }
+  .vfa-texte .vfa-pile > [data-on="1"] { position: relative; }
+  .vfa-pied { display: none; }
+  .vfa-texte { translate: 0 54px; }
+  /* 05/11 (Loan : « un petit espace blanc quand on descend, qui se comble quand on remonte ») : la scène fait 100lvh et le
+     texte était posé au-dessus de la barre DÉPLOYÉE (78px + 100lvh − 100svh, scripts/safari.mjs, moins les 54 px ci-dessus) ;
+     barre repliée, la hauteur de la barre restait vide dessous. Il suit maintenant la hauteur réellement visible (100dvh,
+     tenue à jour par chaque navigateur quand sa barre se replie ou revient), à 24 px du bas, en glissant. Sans dvh : comme
+     ci-dessus. Sur ordinateur et sans barre mobile, dvh = lvh = svh : rien ne change. */
+  @supports (height: 100dvh) {
+    .vfa .vfa-texte { translate: none; bottom: calc(24px + 100lvh - 100dvh); transition: bottom .35s ease; }
+  }
+  @media (prefers-reduced-motion: reduce) { .vfa .vfa-texte { transition: none; } }
+}
+@media (max-width: 899px) and (max-height: 760px) and (min-height: 540px) and (orientation: portrait) {
+  /* Écran de mobile court (iPhone de Loan, environ 710 px de haut) : l'export y cache la phrase, la silhouette de Loan prenant
+     la place sous le titre. Affichée quand même (05/11, Loan : « je ne vois pas le texte »), en un bloc de 5 lignes en bas à
+     gauche, à la place des deux dernières phrases : « Filmez & Envoyez / Comprendre / chaque détail. / Savoir quoi /
+     améliorer. » (sous le titre, la tête de Loan passait dessus sous 700 px de haut). « On analyse ensemble les points à
+     améliorer. » reste cachée (aucune place lisible). Centre du bloc à 83,2 % de la hauteur visible, compté depuis le haut du
+     bloc du titre (en-tête + 3svh). Sous 540 px de haut ou en paysage, phrase cachée comme dans l'export. */
+  .vfp-texte .vfp-lede { display: block; position: absolute; left: 0; margin: 0; white-space: nowrap;
+    top: calc(83.2svh - 3.875em - var(--hauteur-header, 64px) - 3svh); }
+  .vfp-lede-milieu { display: none; }
+  .vfp-lede-suite { position: static; padding-left: 0; border-left: 0; }
+}
+`;
+
 // Adresse de test seulement (ESSAI=1) : la carte payée ne s'y débloque pas (le Worker API n'accepte que loandrouard.com).
 // ?apercu=single, pack ou prog l'affiche avec le faux numéro de l'aperçu de l'éditeur (apercuPaye), et ouvre la fenêtre.
 const APERCU_ESSAI = [
@@ -2060,6 +2122,22 @@ const CORRECTIONS = [
     avant: "const PLACES = { pack: 6, prog: 2 };", apres: "const PLACES = { pack: 6, prog: 3 }; /* Correction du 30/10 : 3 places (cloudflare/api-worker.js) */" },
   ...CGV_30.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 30/10 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
   ...CGV_02.map(([avant, apres, n = 1]) => ({ quoi: `CGV du 02/11 : ${apres.replace(/<[^>]+>/g, "").slice(0, 70)}…`, fichiers: ["CGV.dc.html"], n, avant, apres })),
+  // Retour de Loan des 03 et 04/11 (constantes plus haut : SURTITRE_JS, VF_CSS_0411 ; textes : scripts/traduction-fr.mjs).
+  { quoi: "Projecteur : « Your taolu, » (04/11)", fichiers: VF, n: 1,
+    avant: '<span class="vfp-h1-p">Your</span>routine,</span>', apres: '<span class="vfp-h1-p">Your</span>taolu,</span>' },
+  { quoi: "Projecteur : « decoded » (04/11)", fichiers: VF, n: 1,
+    avant: '<span class="vfp-h1-l vfp-h1-l--b">broken down</span>', apres: '<span class="vfp-h1-l vfp-h1-l--b">decoded</span>' },
+  { quoi: "Projecteur : phrase en lignes imposées, deux phrases ajoutées (04/11)", fichiers: VF, n: 1,
+    avant: '<p class="vfp-lede">You film. You send. We analyze your problem together.</p>', apres: `<p class="vfp-lede">${PHRASE_EN}</p>` },
+  { quoi: "Étude : surtitre « A tailored analysis to reach your next level » (04/11)", fichiers: VF, n: 1,
+    avant: '<span>What to expect · <span data-num="">Sample analysis</span></span>', apres: `<span><span data-num="">${SURTITRES_ETUDE.en[0]}</span></span>` },
+  { quoi: "Étude : surtitres écrits au défilement (04/11)", fichiers: VF, n: 1, avant: SURTITRE_AVANT, apres: SURTITRE_JS },
+  { quoi: "Étude : titre « One jump. The details that make the difference. » (04/11)", fichiers: VF, n: 1,
+    avant: '<h2 class="vfa-titre">One jump. 42 frames.</h2>', apres: `<h2 class="vfa-titre">${ETUDE_EN.titre}</h2>` },
+  { quoi: "Étude : texte du début (04/11)", fichiers: VF, n: 1,
+    avant: '<p class="vfa-p">Barely a second in real time. Slowed to a quarter, it is read frame by frame, point by point.</p>', apres: `<p class="vfa-p">${ETUDE_EN.texte}</p>` },
+  { quoi: "Styles des 03 et 04/11 : phrase du projecteur, surtitre de l'étude, étude sur mobile", fichiers: VF, n: 1,
+    avant: SOMMAIRE_STYLE_FIN, apres: VF_CSS_0411 + SOMMAIRE_STYLE_FIN },
 ];
 
 // --- Cache HTTP (§ 3) : fichier lu par Cloudflare, jamais servi --------------
