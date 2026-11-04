@@ -1643,9 +1643,9 @@ const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : te
 .vfp-lede-suite { display: block; }
 @media (min-width: 900px) {
   .vfp-br-m { display: none; }
-  /* Phrase du projecteur sur 6 lignes au lieu de 3 (lignes imposées par Loan, ligne vide comprise) : décalée de la moitié des
-     3 lignes gagnées, le bloc garde son haut (sinon il remonte sur le logo, écran de 720 px). Formule : VF_CSS_28C. */
-  .vfp-texte { transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px) + 2.325 * var(--vfp-lede))); }
+  /* Phrase du projecteur sur 5 lignes au lieu de 3 (lignes imposées par Loan) : décalée de la moitié des 2 lignes gagnées, le
+     bloc garde son haut (sinon il remonte sur le logo, écran de 720 px). Formule : VF_CSS_28C. */
+  .vfp-texte { transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px) + 1.55 * var(--vfp-lede))); }
   /* Étude : surtitre « ${SURTITRES_ETUDE.en[0]} » au début (2 lignes, 3 sur un écran étroit), puis « ${SURTITRES_ETUDE.en[1]} · … »
      (1 ligne). Le texte, centré sur la hauteur, sautait au changement d'étape : la place du plus long est gardée (copie
      invisible dans la même case), le texte court est centré dessus, à hauteur du trait. */
@@ -1662,17 +1662,26 @@ const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : te
   .vfp-br-o { display: none; }
   .vfp-lede-suite { position: absolute; left: -1px; top: calc(83.2svh - 3.1em - var(--hauteur-header, 64px) - 3svh - 6.03 * clamp(26px, 7.4vw, 40px) - 3.2em);
     padding-left: 14px; border-left: 1px solid rgba(246,245,241,.18); white-space: nowrap; }
-  /* Étude (retour de Loan du 04/11 : texte illisible sur le dessin, grand blanc au-dessus de la frise). Les textes sont posés
-     en bas : la pile prend la hauteur du texte affiché (les autres, en fondu, posés au même endroit), le surtitre le suit. */
+  /* Étude (retours de Loan des 04 et 05/11 : texte illisible sur le dessin, grand blanc au-dessus de la frise). Les textes sont
+     posés en bas : la pile prend la hauteur du texte affiché (les autres, en fondu, posés au même endroit), le surtitre le suit.
+     Frise (image, plan, règle) retirée (« ça n'apporte pas grand chose ») : le texte descend à sa place, à 24 px du bas. */
   .vfa-texte .vfa-pile { display: block; position: relative; }
   .vfa-texte .vfa-pile > * { position: absolute; left: 0; right: 0; bottom: 0; }
   .vfa-texte .vfa-pile > [data-on="1"] { position: relative; }
-  /* Ouverture (avant le point 01) : frise masquée et texte descendu à sa place ; elle revient au point 01, le texte remonte. */
-  .vfa-pied > * { transition: opacity .5s ease; }
-  .vfa[data-step="0"] .vfa-pied { pointer-events: none; }
-  .vfa[data-step="0"] .vfa-pied > * { opacity: 0; }
-  .vfa-texte { transition: translate .5s ease; }
-  .vfa[data-step="0"] .vfa-texte { translate: 0 54px; }
+  .vfa-pied { display: none; }
+  .vfa-texte { translate: 0 54px; }
+}
+@media (max-width: 899px) and (max-height: 760px) and (min-height: 540px) and (orientation: portrait) {
+  /* Écran de mobile court (iPhone de Loan, environ 710 px de haut) : l'export y cache la phrase, la silhouette de Loan prenant
+     la place sous le titre. Affichée quand même (05/11, Loan : « je ne vois pas le texte »), en un bloc de 5 lignes en bas à
+     gauche, à la place des deux dernières phrases : « Filmez & Envoyez / Comprendre / chaque détail. / Savoir quoi /
+     améliorer. » (sous le titre, la tête de Loan passait dessus sous 700 px de haut). « On analyse ensemble les points à
+     améliorer. » reste cachée (aucune place lisible). Centre du bloc à 83,2 % de la hauteur visible, compté depuis le haut du
+     bloc du titre (en-tête + 3svh). Sous 540 px de haut ou en paysage, phrase cachée comme dans l'export. */
+  .vfp-texte .vfp-lede { display: block; position: absolute; left: 0; margin: 0; white-space: nowrap;
+    top: calc(83.2svh - 3.875em - var(--hauteur-header, 64px) - 3svh); }
+  .vfp-lede-milieu { display: none; }
+  .vfp-lede-suite { position: static; padding-left: 0; border-left: 0; }
 }
 `;
 

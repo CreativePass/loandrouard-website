@@ -47,14 +47,16 @@ export const SURTITRES_ETUDE = {
 export const SUITE_SURTITRE = "\u00A0\u00B7 ";
 // Texte en chaîne JavaScript pour le script de la page, caractères non ASCII en \uXXXX (comme dans le reste du script).
 export const texteJS = (t) => JSON.stringify(t).replace(/[\u0080-\uFFFF]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0"));
-// Phrase du projecteur : sur ordinateur, lignes imposées par Loan (ligne vide après la première phrase : br.vfp-br-o) ; sur
-// mobile, la phrase reste en un bloc et les deux dernières phrases (span.vfp-lede-suite) descendent à gauche de la jambe de
-// Loan, sur 4 lignes courtes (br.vfp-br-m). Arguments : phrase 1, [lignes de la phrase 2], [[mobile, mobile] × 2 dernières].
+// Phrase du projecteur : « Filmez & Envoyez » seul sur sa ligne (05/11, Loan : ligne vide du 04/11 retirée) ; sur ordinateur,
+// lignes imposées par Loan (br.vfp-br-o) ; sur mobile, la phrase reste en un bloc et les deux dernières phrases
+// (span.vfp-lede-suite) descendent à gauche de la jambe de Loan, sur 4 lignes courtes (br.vfp-br-m). Sur un écran de mobile
+// court, la phrase du milieu (span.vfp-lede-milieu) reste cachée et le reste descend en bas à gauche (scripts/construire.mjs, VF_CSS_0411).
+// Arguments : phrase 1, [lignes de la phrase 2], [[mobile, mobile] × 2 dernières].
 export const PHRASE_PROJECTEUR = (p1, [a, b], [[c1, c2], [d1, d2]]) =>
-  `${p1} <br class="vfp-br-o"><br class="vfp-br-o">${a} <br class="vfp-br-o">${b} ` +
+  `${p1}<span class="vfp-lede-milieu"><br>${a} <br class="vfp-br-o">${b}</span> ` +
   `<span class="vfp-lede-suite">${c1} <br class="vfp-br-m">${c2}<br>${d1} <br class="vfp-br-m">${d2}</span>`;
-export const PHRASE_EN = PHRASE_PROJECTEUR("You film. You send.", ["Together, we look at", "what to improve."], [["Understand", "every detail."], ["Know what", "to work on."]]);
-const PHRASE_FR = PHRASE_PROJECTEUR("Vous filmez. Vous envoyez.", ["On analyse ensemble", "les points à améliorer."], [["Comprendre", "chaque détail."], ["Savoir quoi", "améliorer."]]);
+export const PHRASE_EN = PHRASE_PROJECTEUR("Film &amp; Send", ["Together, we look at", "what to improve."], [["Understand", "every detail."], ["Know what", "to work on."]]);
+const PHRASE_FR = PHRASE_PROJECTEUR("Filmez &amp; Envoyez", ["On analyse ensemble", "les points à améliorer."], [["Comprendre", "chaque détail."], ["Savoir quoi", "améliorer."]]);
 // Titre et texte du début de l'étude (anglais : scripts/construire.mjs).
 export const ETUDE_EN = {
   titre: "One jump. The details that make the difference.",
