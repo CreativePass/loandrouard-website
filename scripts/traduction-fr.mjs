@@ -37,14 +37,13 @@ export const BOUTONS = [
 const ENVOI_FR = `2 vidéos de 2${NB}minutes maximum chacune ou 3 vidéos de 45${NB}secondes maximum chacune`;
 const ENVOI_EN = "2 videos, 2 minutes max each or 3 videos, 45 seconds max each";
 // Retour de Loan des 03 et 04/11 (anglais validé par Loan le 04/11, posé par scripts/construire.mjs, VF_CSS_0411).
-// Surtitres de l'étude : [début, pendant l'analyse du saut (suivi de « · Point 01 / 05 » ou « · Verdict »)], écrits aussi par le
-// script de la page ; sur ordinateur, la place du premier est gardée.
-export const SURTITRES_ETUDE = {
+// Titres de l'étude (h2.vfa-grand) : [début, pendant l'analyse du saut], écrits aussi par le script de la page. 04/11, 6e retour
+// de Loan : « ce que je vends, c'est l'analyse ; le saut est un exemple » : ce sont les titres, les titres des étapes (« Un saut.
+// Des détails… », « Le regard guide… ») passent en plus petit ; sur ordinateur, la place du premier est gardée.
+export const TITRES_ETUDE = {
   en: ["A tailored analysis to reach your next level", "The analysis in action"],
   fr: ["Une analyse sur mesure pour passer votre prochain palier", "L’analyse en action"],
 };
-// « · Point 01 / 05 » : le point gardé sur la ligne (et « Point 01 / 05 » d'un bloc : scripts/construire.mjs, SURTITRE_JS).
-export const SUITE_SURTITRE = "\u00A0\u00B7 ";
 // Texte en chaîne JavaScript pour le script de la page, caractères non ASCII en \uXXXX (comme dans le reste du script).
 export const texteJS = (t) => JSON.stringify(t).replace(/[\u0080-\uFFFF]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0"));
 // Phrase du projecteur : « Filmez & Envoyez » seul sur sa ligne, sous le titre (04/11, Loan). Le reste (span.vfp-lede-reste) :
@@ -129,10 +128,10 @@ const TEXTES = [
   ["The result", "Le résultat", 1],
   ["On the carpet.", "Sur le tapis.", 1],
   // Étude : textes (le surtitre « Sample analysis » est ensuite réécrit par le script de la page, voir SCRIPT).
-  // 03/11 (Loan) : le début de l'étude répond à « À quoi s'attendre ? » ; surtitre en entier dans data-num (SURTITRES_ETUDE),
-  // « L’analyse en action · Point 01 / 05 » pendant l'analyse du saut (avant : « Concrètement · Analyse type », « Un saut.
-  // Plein de détails. », « À peine une seconde en temps réel. Ralenti quatre fois : une analyse image par image, point par point. »).
-  [SURTITRES_ETUDE.en[0], SURTITRES_ETUDE.fr[0], 1],
+  // 03/11 (Loan) : le début de l'étude répond à « À quoi s'attendre ? » ; 04/11 : en titre (TITRES_ETUDE), « L’analyse en action »
+  // pendant l'analyse du saut (avant : « Concrètement · Analyse type », « Un saut. Plein de détails. », « À peine une seconde en
+  // temps réel. Ralenti quatre fois : une analyse image par image, point par point. »).
+  [TITRES_ETUDE.en[0], TITRES_ETUDE.fr[0], 1],
   [ETUDE_EN.titre, "Un saut. Des détails qui font la différence.", 1],
   [ETUDE_EN.texte,
     `Une seconde en mouvement. Au ralenti, chaque détail se révèle${NB}: impulsion, placement, rotation, réception. Image par image, je décrypte votre enchaînement pour identifier ce qui vous freine et vous expliquer concrètement et précisément ce qu’il faut améliorer.`, 1],
@@ -298,10 +297,10 @@ const SCRIPT = [
     apres: '  single: { nom: FR ? "Analyse Technique" : "Technical Analysis", achatEn: "the Technical Analysis", prix: "49\\u00A0\\u20AC", delai: FR ? "4 \\u00E0 6\\u00A0jours" : "4 to 6 days", achat: "l\\u2019Analyse Technique", etat: "activ\\u00E9e" },\n' +
       '  pack: { nom: FR ? "Pack \\u00C9volution" : "Progression Pack", achatEn: "the Progression Pack", prix: "129\\u00A0\\u20AC", delai: FR ? "3 \\u00E0 5\\u00A0jours" : "3 to 5 days", achat: "le Pack \\u00C9volution", etat: "activ\\u00E9" },\n' +
       '  prog: { nom: FR ? "Suivi Performance" : "The Way of Performance", achatEn: "The Way of Performance", prix: "499\\u00A0\\u20AC", delai: FR ? "2 \\u00E0 3\\u00A0jours" : "2 to 3 days", achat: "le Suivi Performance", etat: "activ\\u00E9" },\n' },
-  { quoi: "surtitre de l'étude écrit au défilement", n: 1,
-    avant: `num.textContent = i === 0 ? ${texteJS(SURTITRES_ETUDE.en[0])} : ${texteJS(SURTITRES_ETUDE.en[1] + SUITE_SURTITRE)} + `,
-    apres: `num.textContent = i === 0 ? (FR ? ${texteJS(SURTITRES_ETUDE.fr[0])} : ${texteJS(SURTITRES_ETUDE.en[0])}) : ` +
-      `(FR ? ${texteJS(SURTITRES_ETUDE.fr[1] + SUITE_SURTITRE)} : ${texteJS(SURTITRES_ETUDE.en[1] + SUITE_SURTITRE)}) + ` },
+  { quoi: "titre de l'étude écrit au défilement", n: 1,
+    avant: `g.textContent = i === 0 ? ${texteJS(TITRES_ETUDE.en[0])} : ${texteJS(TITRES_ETUDE.en[1])};`,
+    apres: `g.textContent = i === 0 ? (FR ? ${texteJS(TITRES_ETUDE.fr[0])} : ${texteJS(TITRES_ETUDE.en[0])}) : ` +
+      `(FR ? ${texteJS(TITRES_ETUDE.fr[1])} : ${texteJS(TITRES_ETUDE.en[1])});` },
   // Avant le texte « Close » de la fenêtre de paiement (TEXTES) : ce bouton-ci est écrit par le script.
   { quoi: "bouton Close de la carte ouverte (mobile)", n: 1,
     avant: 'fermerBtn.innerHTML = "<span>Close</span>',
