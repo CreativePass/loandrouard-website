@@ -47,8 +47,8 @@ export const SURTITRES_ETUDE = {
 export const SUITE_SURTITRE = "\u00A0\u00B7 ";
 // Texte en chaîne JavaScript pour le script de la page, caractères non ASCII en \uXXXX (comme dans le reste du script).
 export const texteJS = (t) => JSON.stringify(t).replace(/[\u0080-\uFFFF]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0"));
-// Phrase du projecteur : « Filmez & Envoyez » seul sur sa ligne, sous le titre (05/11, Loan). Le reste (span.vfp-lede-reste) :
-// sur ordinateur, détaché en bas à gauche (06/11, Loan), lignes imposées par Loan (br.vfp-br-o) ; sur mobile, la phrase du
+// Phrase du projecteur : « Filmez & Envoyez » seul sur sa ligne, sous le titre (04/11, Loan). Le reste (span.vfp-lede-reste) :
+// sur ordinateur, détaché en bas à gauche (04/11, 5e retour), lignes imposées par Loan (br.vfp-br-o) ; sur mobile, la phrase du
 // milieu (span.vfp-lede-milieu) suit « Filmez & Envoyez » et les deux dernières phrases (span.vfp-lede-suite) descendent à
 // gauche de la jambe de Loan, sur 4 lignes courtes (br.vfp-br-m) ; sur un écran de mobile court, la phrase du milieu reste
 // cachée. Styles : scripts/construire.mjs, VF_CSS_0411. Arguments : phrase 1, [lignes de la phrase 2], [[mobile, mobile] × 2].
