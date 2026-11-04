@@ -1670,6 +1670,15 @@ const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : te
   .vfa-texte .vfa-pile > [data-on="1"] { position: relative; }
   .vfa-pied { display: none; }
   .vfa-texte { translate: 0 54px; }
+  /* 05/11 (Loan : « un petit espace blanc quand on descend, qui se comble quand on remonte ») : la scène fait 100lvh et le
+     texte était posé au-dessus de la barre DÉPLOYÉE (78px + 100lvh − 100svh, scripts/safari.mjs, moins les 54 px ci-dessus) ;
+     barre repliée, la hauteur de la barre restait vide dessous. Il suit maintenant la hauteur réellement visible (100dvh,
+     tenue à jour par chaque navigateur quand sa barre se replie ou revient), à 24 px du bas, en glissant. Sans dvh : comme
+     ci-dessus. Sur ordinateur et sans barre mobile, dvh = lvh = svh : rien ne change. */
+  @supports (height: 100dvh) {
+    .vfa .vfa-texte { translate: none; bottom: calc(24px + 100lvh - 100dvh); transition: bottom .35s ease; }
+  }
+  @media (prefers-reduced-motion: reduce) { .vfa .vfa-texte { transition: none; } }
 }
 @media (max-width: 899px) and (max-height: 760px) and (min-height: 540px) and (orientation: portrait) {
   /* Écran de mobile court (iPhone de Loan, environ 710 px de haut) : l'export y cache la phrase, la silhouette de Loan prenant
