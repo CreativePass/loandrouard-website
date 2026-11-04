@@ -6,7 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { OPTIMISATIONS, FICHIERS } from "./optimisations.mjs";
 import { SAFARI, SAFARI_IDS, SAFARI_TOUTES, VARIANTES_ESSAI, fichiersSafari, controleTextures } from "./safari.mjs";
-import { TRADUCTION, BOUTONS, SURTITRES_ETUDE, SUITE_SURTITRE, texteJS, PHRASE_EN, ETUDE_EN } from "./traduction-fr.mjs";
+import { TRADUCTION, BOUTONS, TITRES_ETUDE, texteJS, PHRASE_EN, ETUDE_EN } from "./traduction-fr.mjs";
 
 const RACINE = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(RACINE, "public");
@@ -1633,33 +1633,47 @@ const CGV_02 = [
 ];
 
 // --- Retour de Loan des 03 et 04/11 : textes du projecteur et de l'étude --------------------------------------------
-// Français validé le 03/11, anglais le 04/11 (textes : scripts/traduction-fr.mjs, PHRASE_EN, SURTITRES_ETUDE, ETUDE_EN).
-// Surtitre de l'étude écrit au défilement : en entier par le script (plus de « What to expect · » devant), « Point 01 / 05 »
-// d'un bloc (sinon « Point » seul en fin de ligne sur un écran étroit).
+// Français validé le 03/11, anglais le 04/11 (textes : scripts/traduction-fr.mjs, PHRASE_EN, TITRES_ETUDE, ETUDE_EN).
+// Étude (04/11, 6e retour de Loan : « ce que je vends, c'est l'analyse, le saut est un exemple ») : le titre (h2.vfa-grand,
+// ajouté sous le surtitre, dans div.vfa-tete) est écrit au défilement, « A tailored analysis… » au début, « The analysis in
+// action » ensuite ; le surtitre ne garde que le compteur (« Point 01 / 05 » d'un bloc, « Verdict »), vide au début.
 const SURTITRE_AVANT = 'num.textContent = i === 0 ? "Sample analysis" : i === 6 ? "Verdict" : "Point " + String(i).padStart(2, "0") + " / 05";';
-const SURTITRE_JS = `num.textContent = i === 0 ? ${texteJS(SURTITRES_ETUDE.en[0])} : ${texteJS(SURTITRES_ETUDE.en[1] + SUITE_SURTITRE)} + ` +
-  '(i === 6 ? "Verdict" : "Point\\u00A0" + String(i).padStart(2, "0") + "\\u00A0/\\u00A005"); /* Correction du 04/11 (scripts/construire.mjs) : surtitres de Loan. */';
+const SURTITRE_JS = 'num.textContent = i === 0 ? "" : i === 6 ? "Verdict" : "Point\\u00A0" + String(i).padStart(2, "0") + "\\u00A0/\\u00A005"; ' +
+  `{ const g = sec.querySelector("[data-grand]"); if (g) g.textContent = i === 0 ? ${texteJS(TITRES_ETUDE.en[0])} : ${texteJS(TITRES_ETUDE.en[1])}; } ` +
+  "/* Correction du 04/11 (scripts/construire.mjs) : titres de Loan. */";
+// Titres des étapes de l'étude : h3, plus petits, sous le titre de l'étude.
+const TITRES_ETAPES = ["One jump. 42 frames.", "The eyes lead the movement.", "The arms make the pose.", "The hip makes the extension.",
+  "The movement ends at the toes.", "Tuck as high as you can.", "Putting the pieces together."];
+const ETUDE_TETE_AVANT = '<div class="vf-eyebrow vf-eyebrow--gauche"><i></i><span>What to expect · <span data-num="">Sample analysis</span></span></div>';
+const ETUDE_TETE_APRES = '<div class="vfa-tete"><div class="vfa-tete-i"><div class="vf-eyebrow vf-eyebrow--gauche"><i></i><span><span data-num=""></span></span></div>' +
+  `<h2 class="vfa-grand" data-grand="">${TITRES_ETUDE.en[0]}</h2></div></div>`;
 const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : textes du projecteur et de l'étude (retour de Loan). */
 .vfp-lede-suite { display: block; }
+/* Étude (04/11, 6e retour) : titre de l'étude à la taille de l'ancien titre des étapes ; titres des étapes plus petits ; au
+   début, pas de compteur. */
+.vfa-grand { margin: 16px 0 0; font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; letter-spacing: .01em; line-height: 1.06; text-wrap: balance; font-size: clamp(30px, 3.2vw, 46px); }
+.vfa-texte .vfa-titre { margin-top: 12px; font-size: clamp(21px, 1.7vw, 28px); }
+.vfa[data-step="0"] .vfa-texte .vf-eyebrow { visibility: hidden; }
 @media (min-width: 900px) {
   .vfp-br-m, .vfp-br-r { display: none; }
-  /* Phrase du projecteur (04/11, 5e retour de Loan : « sépare Film & Send du reste ; laisse-le au même endroit, le reste du bloc descend,
-     à peu près comme sur mobile ») : seule « Film & Send » reste dans le bloc du titre, 1 ligne au lieu de 3 ; décalé de la
-     moitié des 2 lignes perdues, le bloc garde son haut (formule : VF_CSS_28C). Le reste (4 lignes imposées par Loan) est
-     posé en bas à gauche, avec le même trait, aligné : centre à 83,2 % de la hauteur visible, comme sur mobile. Sa position
-     est comptée depuis le haut de « Film & Send » : 32 % de la scène (100lvh) + moitié du titre (6,02 fois sa police) +
-     marge de 3,2em + décalage ci-dessous. Le bouton « See the options », en bas à gauche, est éteint avant que le texte
-     n'apparaisse. */
+  /* Phrase du projecteur (04/11, 5e retour de Loan : « sépare Film & Send du reste ; laisse-le au même endroit ») : seule
+     « Film & Send » reste dans le bloc du titre, 1 ligne au lieu de 3 ; décalé de la moitié des 2 lignes perdues, le bloc
+     garde son haut (formule : VF_CSS_28C). Le reste (4 lignes imposées par Loan), avec le même trait, aligné, est posé à
+     2,5em sous « Film & Send » (6e retour : « réduis l'espacement » ; avant : en bas de l'écran). */
   .vfp-texte { transform: translateY(calc(-50% + .1239 * var(--vfp-h1) + 3.925 * (var(--vfp-lede) - 19px) - 1.55 * var(--vfp-lede))); }
-  .vfp-lede-reste { position: absolute; left: -1px; top: calc(83.2svh - 3.1em - 32lvh - 3.134 * var(--vfp-h1) - 3.2em + 74.575px);
+  .vfp-lede-reste { position: absolute; left: -1px; top: calc(1.55em + 2.5em);
     padding-left: 14px; border-left: 1px solid rgba(246,245,241,.18); white-space: nowrap; }
-  /* Étude : surtitre « ${SURTITRES_ETUDE.en[0]} » au début (2 lignes, 3 sur un écran étroit), puis « ${SURTITRES_ETUDE.en[1]} · … »
-     (1 ligne). Le texte, centré sur la hauteur, sautait au changement d'étape : la place du plus long est gardée (copie
-     invisible dans la même case), le texte court est centré dessus, à hauteur du trait. */
-  .vfa-texte .vf-eyebrow > span { display: grid; }
-  .vfa-texte .vf-eyebrow > span > [data-num], .vfa-texte .vf-eyebrow > span::after { grid-area: 1 / 1; align-self: center; }
-  .vfa-texte .vf-eyebrow > span::after { content: ${JSON.stringify(SURTITRES_ETUDE.en[0])}; visibility: hidden; }
-  html[lang="fr"] .vfa-texte .vf-eyebrow > span::after { content: ${JSON.stringify(SURTITRES_ETUDE.fr[0])}; }
+  /* Étude : le titre, centré sur la hauteur avec le reste, sautait au changement d'étape (« ${TITRES_ETUDE.en[0]} » sur
+     plusieurs lignes au début, « ${TITRES_ETUDE.en[1]} » sur une ensuite) : la place du plus long est gardée (copie
+     invisible du titre, sous la hauteur du compteur, dans la même case) et compteur + titre sont posés en bas de cette place,
+     sur les titres des étapes, qui ne bougent pas. */
+  .vfa-tete { display: grid; }
+  .vfa-tete-i, .vfa-tete::after { grid-area: 1 / 1; }
+  .vfa-tete-i { align-self: end; }
+  .vfa-tete .vf-eyebrow > span { line-height: 1.65; }
+  .vfa-tete::after { content: ${JSON.stringify(TITRES_ETUDE.en[0])}; visibility: hidden; padding-top: calc(1.65 * 12.5px + 16px);
+    font-family: 'Cormorant SC', Georgia, serif; font-weight: 600; letter-spacing: .01em; line-height: 1.06; text-wrap: balance; font-size: clamp(30px, 3.2vw, 46px); }
+  html[lang="fr"] .vfa-tete::after { content: ${JSON.stringify(TITRES_ETUDE.fr[0])}; }
 }
 @media (max-width: 899px) {
   /* Projecteur : la phrase reste en un bloc ; les deux dernières phrases, sur 4 lignes courtes, descendent à gauche de la jambe
@@ -1677,6 +1691,10 @@ const VF_CSS_0411 = `/* Correction des 03 et 04/11 (scripts/construire.mjs) : te
   .vfa-texte .vfa-pile > [data-on="1"] { position: relative; }
   .vfa-pied { display: none; }
   .vfa-texte { translate: 0 54px; }
+  /* Titres (04/11, 6e retour) ; compteur « Point 01 / 05 » retiré comme la frise (il passait sur le dessin au verdict,
+     écran de 710 px). */
+  .vfa-grand { font-size: 27px; margin-top: 0; } .vfa-texte .vfa-titre { font-size: 20px; margin-top: 10px; }
+  .vfa-texte .vf-eyebrow { display: none; }
   /* 04/11, 4e retour (Loan : « un petit espace blanc quand on descend, qui se comble quand on remonte ») : la scène fait 100lvh et le
      texte était posé au-dessus de la barre DÉPLOYÉE (78px + 100lvh − 100svh, scripts/safari.mjs, moins les 54 px ci-dessus) ;
      barre repliée, la hauteur de la barre restait vide dessous. Il suit maintenant la hauteur réellement visible (100dvh,
@@ -2137,11 +2155,11 @@ const CORRECTIONS = [
     avant: '<span class="vfp-h1-l vfp-h1-l--b">broken down</span>', apres: '<span class="vfp-h1-l vfp-h1-l--b">decoded</span>' },
   { quoi: "Projecteur : phrase en lignes imposées, deux phrases ajoutées (04/11)", fichiers: VF, n: 1,
     avant: '<p class="vfp-lede">You film. You send. We analyze your problem together.</p>', apres: `<p class="vfp-lede">${PHRASE_EN}</p>` },
-  { quoi: "Étude : surtitre « A tailored analysis to reach your next level » (04/11)", fichiers: VF, n: 1,
-    avant: '<span>What to expect · <span data-num="">Sample analysis</span></span>', apres: `<span><span data-num="">${SURTITRES_ETUDE.en[0]}</span></span>` },
-  { quoi: "Étude : surtitres écrits au défilement (04/11)", fichiers: VF, n: 1, avant: SURTITRE_AVANT, apres: SURTITRE_JS },
-  { quoi: "Étude : titre « One jump. The details that make the difference. » (04/11)", fichiers: VF, n: 1,
-    avant: '<h2 class="vfa-titre">One jump. 42 frames.</h2>', apres: `<h2 class="vfa-titre">${ETUDE_EN.titre}</h2>` },
+  { quoi: "Étude : titre « A tailored analysis to reach your next level », compteur seul au-dessus (04/11)", fichiers: VF, n: 1,
+    avant: ETUDE_TETE_AVANT, apres: ETUDE_TETE_APRES },
+  { quoi: "Étude : titre et compteur écrits au défilement (04/11)", fichiers: VF, n: 1, avant: SURTITRE_AVANT, apres: SURTITRE_JS },
+  ...TITRES_ETAPES.map((t, i) => ({ quoi: `Étude : titre de l'étape ${i} en plus petit (h3) (04/11)`, fichiers: VF, n: 1,
+    avant: `<h2 class="vfa-titre">${t}</h2>`, apres: `<h3 class="vfa-titre">${i === 0 ? ETUDE_EN.titre : t}</h3>` })),
   { quoi: "Étude : texte du début (04/11)", fichiers: VF, n: 1,
     avant: '<p class="vfa-p">Barely a second in real time. Slowed to a quarter, it is read frame by frame, point by point.</p>', apres: `<p class="vfa-p">${ETUDE_EN.texte}</p>` },
   { quoi: "Styles des 03 et 04/11 : phrase du projecteur, surtitre de l'étude, étude sur mobile", fichiers: VF, n: 1,
