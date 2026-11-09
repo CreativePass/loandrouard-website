@@ -847,29 +847,47 @@ Symptôme : « sur mobile, dès que je zoome avec mes deux doigts le site crash 
 - Estimation (calques de Chromium au format iPhone, modèle de WebKit ci-dessus) : 110 à 270 Mo au repos selon l'endroit, 1,3 à 1,7 fois plus au zoom ×1,5 à ×3, sans compter les deux images au moment du changement. Dans l'étude, les deux caméras peuvent atteindre 156 Mo chacune au zoom.
 - CGV, Privacy, Legal et Sponsors : 3 à 10 calques, pas concernées.
 
-**Écarté** : garder le zoom en éteignant les effets pendant qu'il dure (`html.vf-zoom`). Les calques les plus lourds au zoom sont le contenu lui-même (caméras de l'étude : photo, dessin, textes) ; rien ne garantit que le script réagisse avant que Safari ne redessine ; impossible à valider sans l'iPhone.
+**Première correction, écartée** (`pincement`, publiée sur l'adresse de test seulement, version `5ae9f0bc`) : pas de zoom à deux doigts sur la page d'accueil, sur écran tactile (`touch-action: pan-x pan-y` sur chaque élément, respecté par Safari : `WKTouchActionGestureRecognizer.mm`). Retour de Loan : « je ne peux même plus zoomer, le zoom ne marche plus ». Gardée dans `scripts/safari.mjs` comme candidat écarté.
 
-**Correction `pincement`** (`scripts/safari.mjs`, page d'accueil seulement) : `touch-action: pan-x pan-y` sur tous les éléments, sur écran tactile (`any-pointer: coarse`).
-- Safari iOS refuse alors le pincement (`WKTouchActionGestureRecognizer.mm` : pincement permis seulement avec `pinch-zoom` ou `manipulation`). `user-scalable=no` ne marche pas : Safari l'ignore depuis iOS 10.
-- Sur chaque élément, pas seulement `<html>` : un bloc qui défile (fenêtre, carte ouverte sur mobile, guide) repart de « auto » (`StyleAdjuster.cpp`, `computeUsedTouchAction`).
-- Double-tap : Safari ne zoome pas au double-tap une page `width=device-width` restée à l'échelle 1 (`WKWebViewIOS.mm`, `_allowsDoubleTapGestures`). Aucun champ de saisie sur la page (pas de zoom automatique sur un champ).
-- Défilement, toucher des cartes et liens inchangés. Ordinateur inchangé (règle réservée aux écrans tactiles ; le zoom au trackpad garde le mode zoom du 03/11).
-- Page malgré tout agrandie (état rendu par le navigateur, etc.) : le mode zoom (`html.vf-zoom`, échelle > 1,05) rend le pincement pour pouvoir dézoomer ; la protection reprend à l'échelle 1.
-- Accessibilité : le Zoom d'iOS (Réglages › Accessibilité, trois doigts) et la taille du texte de Safari (« aA ») restent possibles ; les pages légales gardent le zoom à deux doigts.
+**Correction `zoomplat`** (`scripts/safari.mjs`, page d'accueil, écran tactile) : le zoom reste possible ; c'est la manière de dessiner la page qui change tant qu'elle est agrandie. Le danger ne vient pas de ce qui est dessiné mais du **nombre de calques séparés** : chacun est redessiné en entier à l'échelle du zoom. Un élément sans calque est dessiné dans la zone qui le contient (scène épinglée, en-tête), que Safari découpe en tuiles : sa mémoire suit la partie visible de l'écran, quel que soit le zoom.
+- Pendant le zoom (`html.vf-zoom`, échelle > 1,05, fin sous 1,01 : mode zoom du 03/11, qui fige déjà en 2D les lueurs d'ambiance), classe `vf-zoom-plat` :
+  - éléments déplacés par le script : `translate3d(x, y, 0)` réécrit en `translate(x, y)` (même position ; valeurs `calc()` comprises), à chaque image du script (MutationObserver sur les styles, avant l'affichage) ;
+  - `will-change` retiré partout, sauf « See pricing » (son flou doit garder son calque : ligne rose de Safari 27, correction `affiche`) ;
+  - `backface-visibility` rendue « visible » dans le projecteur et l'étude (rien n'y tourne en 3D ; elle donnait un calque à la silhouette, aux faisceaux et à la feuille de l'étude dans Chrome) ;
+  - apparitions du projecteur terminées (`vfp-frappe`, `vfp-chauffe`, `vfp-apparait`, qui finissent sur l'état normal : opacité 1, aucune transformation) arrêtées : sinon le navigateur peut les garder actives, donc en calques ;
+  - toiles de poussière (projecteur) et de sable d'or (pied de page) cachées : une toile a toujours son calque, et tout ce qui est dessiné par-dessus en reçoit un aussi.
+- Première mesure sans les deux réglages ci-dessus : calques divisés par deux, mais mémoire estimée presque inchangée (un calque « par-dessus » du halo restait à 156 Mo). Avec eux, au projecteur au zoom ×3 : 9 calques au lieu de 24, et plus aucun gros calque.
+- Restent en calques : scènes épinglées, en-tête, fond « nuit » (fixe), cartes qui se retournent (3D, petites). Image identique (voir les captures au zoom ci-dessous) ; seules les poussières disparaissent pendant le zoom.
+- Coût : pendant le zoom, faire défiler redessine davantage (projecteur et étude bougent sans calques) ; c'est plus lent, sans risque pour la mémoire.
+- Au dézoom, la classe est retirée et le défilement suivant remet tout en place (calques, poussières).
+- Ordinateur (zoom au trackpad) inchangé : mode zoom du 03/11 seulement (`any-pointer: coarse` faux).
+- Zones recouvertes (`COUVERT_JS`) : sur iPhone, une page agrandie a une hauteur visible (`innerHeight`) plus petite que l'écran de mise en page auquel se rapportent les positions ; la vérification couvre désormais le plus grand des deux (une zone visible au zoom n'est jamais cachée). Sans zoom, rien ne change.
+- Non démontré ici : que Safari applique le dessin à plat avant de redessiner au nouveau zoom. Le mode zoom démarre dès 1,05 pendant le geste (l'événement `visualViewport` « resize » est traité avant la mise à jour de l'affichage, dans la même image) ; à confirmer sur l'iPhone.
 
 **Optimisations** (même fichier, image identique) : calques invisibles qui gardaient leur mémoire graphique (relevé Safari du 08/10, « en réserve »).
 - `eteints` : mur de la vitrine (26,9 Mo dans Safari) libéré quand il est éteint, comme les autres calques éteints du projecteur ; cartes de la vitrine (13,4 Mo) non dessinées tant qu'elle est fermée (elles étaient déjà transparentes et inertes), cachées 1,1 s après la fermeture, visibles dès l'ouverture.
 - `lueur` : lueur du papier de l'étude (cercle de 95vmax, ≈ 23 Mo sur iPhone) dessinée 5 fois plus petite au même centre puis agrandie, comme `compact`. Rendu de Safari simulé (dégradé dessiné petit puis agrandi ×5 et ×5,75, posé sur le papier) : écart maximal 3 nuances sur 255, moyen 0,3, comme `compact`.
 
-**Vérifié dans Chromium** (`node scripts/verif-pincement.mjs <construction d'avant>`, format iPhone 393 × 852 et ordinateur 1440 × 900 ; `SECTIONS=4,5` pour une partie seulement) :
-- **Pincement** (deux points de contact qui s'écartent, soumis à `touch-action` comme de vrais doigts ; `Input.synthesizePinchGesture` ne convient pas : en « touch », il ne zoome jamais) : avant ×5 (le maximum) en haut de page, au projecteur (P 0,75), dans l'étude, sur les cartes et au pied de page ; après ×1 partout. CGV, Privacy, Legal, Sponsors : ×5 (zoom gardé). Page agrandie ×2,5 par un autre moyen : mode zoom actif, `touch-action: auto`, dézoom aux deux doigts jusqu'à ×1, puis protection revenue. Glissé d'un doigt : la page défile de 435 px, avant comme après.
-- **touch-action** : « pan-x pan-y » sur les 1 152 éléments au format iPhone ; « auto » sur les 1 157 éléments sur ordinateur.
+**Vérifié dans Chromium** (`node scripts/verif-pincement.mjs <construction d'avant>`, format iPhone 393 × 852 et ordinateur 1440 × 900 ; `SECTIONS=1,3` pour une partie seulement) :
+- **Zoom à deux doigts** (deux points de contact qui s'écartent, comme de vrais doigts) : ×5 avant comme après, en haut de page, au projecteur (P 0,45 et 0,75), dans l'étude (début et bascule), sur les cartes et au pied de page. Pendant le zoom : page à plat, 0 élément en `translate3d` (24 à 28 avant), 0 `will-change` (28 avant), toiles cachées. Glissé d'un doigt pendant le zoom : la vue descend (2 700 px), Loan suit le défilement, toujours à plat. Dézoom : retour à l'état normal (`translate3d`, `will-change`, toiles). Ordinateur au zoom ×2 : mode zoom du 03/11 seulement. CGV, Privacy, Legal, Sponsors : ×5, aucune erreur. Sans zoom : rien ne change.
 - **Vitrine** (iPhone et ordinateur) : fermée, cartes et mur cachés (cartes inertes) ; visibles 0,1 s après l'ouverture, avant le début de leur fondu ; ouverte, opacité 1 ; 0,5 s après la fermeture, cartes encore visibles (fondu en cours) ; 3 s après, cachées. Aucune erreur JS.
-- **Captures** AVANT / APRÈS, animations figées au même instant (12 endroits, du haut au pied de page, vitrine ouverte et refermée) : projecteur, vitrine, cartes et pied de page **identiques au pixel** (ou au niveau du témoin AVANT / AVANT) ; étude au format iPhone : seul écart, la lueur, 2 nuances sur 255 au plus (moyenne 0,2) ; étude sur ordinateur : écarts du même ordre que le témoin (caméra de l'étude, à moins d'un pixel près).
-- **Calques** (Chromium au format iPhone, mémoire estimée avec le modèle de WebKit à ×1) : projecteur 27 → 25 calques, 196 → 154 Mo (haut), 258 → 213 Mo (P 0,75) ; vitrine refermée 199 → 154 Mo ; étude 175 → 153 Mo et 147 → 125 Mo.
-- **Adresse de test** (version Cloudflare `5ae9f0bc`) : 138 fichiers servis identiques à `public/` ; pincement → ×1 au format iPhone, anglais et français ; aucune erreur JS (iPhone et ordinateur, page parcourue jusqu'en bas).
+- **Captures sans zoom**, AVANT / APRÈS, animations figées au même instant, caméras posées (12 endroits, du haut au pied de page, vitrine ouverte et refermée) : identiques au pixel au format iPhone (étude : lueur, 2 nuances sur 255 au plus) ; sur ordinateur, identiques ou au niveau du témoin, sauf « étude 3 » (3,7 %) : texture de la photo selon que la feuille a déjà été reposée nette (correction du 27/10), écart vu aussi entre deux captures AVANT au passage précédent (3,66 %).
+- **Captures au zoom ×2,5** (iPhone) : même image (silhouette, lumières, textes, cartes). La page à plat est dessinée directement à la résolution du zoom au lieu d'être agrandie après coup : grain de la photo rééchantillonné, contours décalés de moins d'un pixel (cartes). Comparaison de la forme (niveaux de gris floutés de 3 px, écart > 24/255) : 0 à 0,3 % des pixels, 1,9 % sur les cartes (décalage de moins d'un pixel).
+- **Calques au zoom** (Chromium au format iPhone, mémoire estimée avec le modèle de WebKit ci-dessus, partie visible seulement) :
 
-**Reste à confirmer sur l'iPhone de Loan** (adresse de test) : plus d'arrêt en essayant de zoomer, défilement et cartes inchangés. Non couvert : le zoom par la taille du texte de Safari (« aA »), qui agrandit la mise en page au lieu de zoomer ; à revoir seulement s'il pose problème.
+| Endroit | ×1 avant → après | ×2 | ×3 | ×5 |
+|---|---|---|---|---|
+| Haut de page | 106 → 85 Mo | 182 → 28 Mo (12 → 2 calques) | 218 → 28 | 241 → 28 |
+| Projecteur P 0,45 | 149 → 126 | 223 → 41 | 339 → 60 | 278 → 41 |
+| Projecteur P 0,75 | 181 → 158 | 300 → 41 (23 → 3) | 444 → 135 (24 → 8) | 347 → 41 |
+| Étude, début | 208 → 186 | 235 → 141 | 272 → 166 | 307 → 177 |
+| Étude, bascule | 156 → 135 | 232 → 43 | 274 → 61 | 358 → 121 |
+| Cartes, pied de page | 275 → 253 | 323 → 112 | 357 → 116 | 385 → 105 |
+
+  Dans l'étude, Chrome garde les tracés en calques à cause de leur masque (grain du crayon) ; Safari dessine un masque sans calque séparé : l'étude y sera probablement plus légère encore.
+- **Adresse de test** (version Cloudflare `88984de4`) : 138 fichiers servis identiques à `public/` ; au format iPhone, anglais et français : zoom ×5, page à plat pendant le zoom et pendant 30 pas de défilement, aucune erreur JS ; ordinateur : état normal, aucune erreur JS.
+
+**Reste à confirmer sur l'iPhone de Loan** (adresse de test) : zoomer à plusieurs endroits (haut, projecteur, étude, cartes), faire défiler en étant zoomé, dézoomer. Points à surveiller : plus d'arrêt ; image inchangée pendant le zoom (seule la poussière disparaît) ; défilement moins fluide pendant le zoom (attendu). Non couvert : la taille du texte de Safari (« aA »), qui agrandit la mise en page au lieu de zoomer.
 
 ## Vérifications
 

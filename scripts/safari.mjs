@@ -206,11 +206,9 @@ const TOUTES = [
   // La page d'accueil a ≈ 100 calques dans Safari (215 Mo au repos mesurés sur l'iPhone de Loan le 08/10 ; arrêts vers 490 Mo) :
   // au relâcher du zoom, tous sont redessinés en même temps et iOS arrête la page. CGV, Privacy, Legal et Sponsors (3 à 10
   // calques) ne sont pas concernées et gardent le zoom.
-  // Correction : pas de pincement sur cette page, sur écran tactile (touch-action: pan-x pan-y, que Safari iOS respecte :
-  // WKTouchActionGestureRecognizer.mm). Sur chaque élément, car un bloc qui défile (fenêtre, carte ouverte, guide) repart de
-  // « auto ». Le double-tap ne zoome pas une page en width=device-width à l'échelle 1 (WKWebViewIOS.mm,
-  // _allowsDoubleTapGestures). Défilement inchangé. Si la page est malgré tout agrandie (html.vf-zoom, échelle > 1,05, posée
-  // par COUVERT_JS de scripts/construire.mjs : état rendu par le navigateur…), le pincement revient pour pouvoir dézoomer.
+  // CANDIDAT ÉCARTÉ le 09/11 (Loan, sur l'adresse de test : « je ne peux même plus zoomer ») — pas de pincement sur cette page,
+  // sur écran tactile (touch-action: pan-x pan-y, que Safari iOS respecte : WKTouchActionGestureRecognizer.mm). Remplacé par
+  // « zoomplat » ci-dessous, qui garde le zoom.
   { id: "pincement", quoi: "Pas de zoom à deux doigts sur la page d'accueil (écrans tactiles)", fichiers: VF, n: 1,
     avant: "</style>\n</helmet>",
     apres: SAF + "pas de zoom à deux doigts sur écran tactile (au zoom, Safari redessinait tous les calques et arrêtait la page). */\n" +
@@ -243,6 +241,55 @@ const TOUTES = [
       ".vfa-papier i { left: 13vmax; top: 3vmax; width: 19vmax; height: 19vmax; transform: scale(5); }\n" +
       "@keyframes vfa-jour { from { transform: translate3d(0,0,0) scale(5); } to { transform: translate3d(38vw, 22vh, 0) scale(5.75); } }\n" +
       "</style>\n</helmet>" },
+
+  // « Zoom à plat » (retour de Loan du 09/11, après « pincement » : « je ne peux même plus zoomer ») : le zoom à deux doigts
+  // reste possible ; c'est la page qui change de manière de se dessiner tant qu'elle est agrandie, sur écran tactile.
+  // Hors zoom, rien ne change. Pendant le zoom (html.vf-zoom, échelle > 1,05, posée par COUVERT_JS de scripts/construire.mjs,
+  // qui fige déjà les lueurs d'ambiance en 2D), les calques séparés sont supprimés : les éléments déplacés par le script
+  // (translate3d → translate, même position), will-change retiré, backface-visibility rendue « visible » dans le projecteur et
+  // l'étude (rien n'y tourne en 3D), apparitions du projecteur terminées arrêtées (elles finissent sur l'état normal), toiles de
+  // poussière et de sable d'or cachées (une toile fait passer en calques séparés tout ce qui est dessiné par-dessus). Tout se dessine alors dans quelques grandes zones
+  // (scènes épinglées, en-tête), découpées en tuiles par Safari : leur mémoire suit la partie visible de l'écran et ne
+  // grandit plus avec le zoom. Image identique ; le défilement pendant le zoom redessine davantage (plus lent, sans arrêt).
+  // Gardés : « See pricing » (flou dans son calque, correction « affiche ») et les cartes qui se retournent (3D, petites).
+  // Au dézoom (échelle < 1,01), tout redevient comme avant au défilement suivant.
+  { id: "zoomplat", quoi: "Zoom à deux doigts : page dessinée à plat tant qu'elle est agrandie (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "page agrandie au pincement, écran tactile : plus de calques séparés (mémoire graphique bornée). */\n" +
+      "html.vf-zoom-plat .vf *:not(.vfp-affiche), html.vf-zoom-plat .vf *::before, html.vf-zoom-plat .vf *::after { will-change: auto !important; }\n" +
+      "html.vf-zoom-plat .vf canvas { visibility: hidden !important; }\n" +
+      "html.vf-zoom-plat .vfp *, html.vf-zoom-plat .vfa * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; } /* rien n'y tourne en 3D */\n" +
+      "</style>\n</helmet>" },
+  { id: "zoomplat", quoi: "Zoom à deux doigts : page dessinée à plat tant qu'elle est agrandie (script)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>',
+    apres: "<script>" + SAF + "page agrandie au pincement sur écran tactile : dessinée à plat (voir les styles « vf-zoom-plat »). */\n" +
+      "(() => {\n" +
+      "  const R = document.documentElement, tactile = window.matchMedia ? window.matchMedia(\"(any-pointer: coarse)\") : { matches: false };\n" +
+      "  /* translate3d(x, y, z) → translate(x, y) : même position, sans calque séparé (valeurs avec calc() comprises). */\n" +
+      "  const deux = (t) => { let i = t.indexOf(\"translate3d(\"); while (i >= 0) { let j = i + 12, p = 1; const a = [], d0 = j; let d = d0;\n" +
+      "      for (; j < t.length && p; j++) { const c = t[j]; if (c === \"(\") p++; else if (c === \")\") { if (!--p) break; } else if (c === \",\" && p === 1) { a.push(t.slice(d, j)); d = j + 1; } }\n" +
+      "      if (p) return t; a.push(t.slice(d, j)); if (a.length !== 3) return t;\n" +
+      "      t = t.slice(0, i) + \"translate(\" + a[0].trim() + \", \" + a[1].trim() + \")\" + t.slice(j + 1); i = t.indexOf(\"translate3d(\", i + 10); }\n" +
+      "    return t; };\n" +
+      "  const plat = (el) => { const t = el.style && el.style.transform; if (t && t.indexOf(\"translate3d(\") >= 0) { const n = deux(t); if (n !== t) el.style.transform = n; } };\n" +
+      "  let obs = null;\n" +
+      "  const suivre = () => { const z = R.classList.contains(\"vf-zoom\") && tactile.matches;\n" +
+      "    if (z && !obs) { R.classList.add(\"vf-zoom-plat\"); document.querySelectorAll('.vf [style*=\"translate3d\"]').forEach(plat);\n" +
+      "      /* Apparitions du projecteur terminées (elles finissent sur l'état normal : opacité 1, aucune transformation) : arrêtées, sinon\n" +
+      "         gardées actives (et en calques) par le navigateur. */\n" +
+      "      (document.getAnimations ? document.getAnimations() : []).forEach((a) => { if (/^vfp-(frappe|chauffe|apparait)$/.test(a.animationName || \"\") && a.playState === \"finished\") try { a.cancel(); } catch (e) {} });\n" +
+      "      obs = new MutationObserver((l) => { for (const r of l) plat(r.target); }); /* chaque image du script : remis à plat avant d'être dessiné */\n" +
+      "      obs.observe(document.body, { attributes: true, attributeFilter: [\"style\"], subtree: true }); }\n" +
+      "    else if (!z && obs) { obs.disconnect(); obs = null; R.classList.remove(\"vf-zoom-plat\"); window.dispatchEvent(new Event(\"scroll\")); } };\n" +
+      "  new MutationObserver(suivre).observe(R, { attributes: true, attributeFilter: [\"class\"] }); suivre(); /* page ouverte déjà agrandie */\n" +
+      "})();\n" +
+      "</script>\n" + '<script src="./support.js"></script>' },
+  // Zones recouvertes (COUVERT_JS, 02 et 03/11) : sur iPhone, une page agrandie a une hauteur visible (innerHeight) plus petite
+  // que l'écran de mise en page auquel se rapportent les positions des zones. La vérification couvre désormais tout cet écran
+  // (le plus grand des deux) : une zone n'est jamais cachée alors qu'une partie agrandie la montre. Sans zoom, rien ne change.
+  { id: "zoomplat", quoi: "Zones recouvertes : hauteur de l'écran de mise en page quand la page est agrandie", fichiers: VF, n: 1,
+    avant: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = window.innerHeight,",
+    apres: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = Math.max(window.innerHeight, R.clientHeight) /* Correction Safari (scripts/safari.mjs) : page agrandie */," },
 ];
 
 // Fichiers ajoutés par une correction (copiés seulement si une page construite l'utilise).
@@ -256,9 +303,10 @@ const choix = process.env.SAFARI;
 // « compact », 3 sur 3 sans ; mémoire graphique 490 → 215 Mo ; ligne rose disparue avec « affiche »).
 // « lvh » et « camera » (retour de Loan du 08/10 : bande noire en bas, yin-yang lent) : proposés pour la page publiée ; sans effet
 // visible sur ordinateur (lvh = svh ; caméra identique à 60 images/s, traits exacts au repos). À confirmer sur l'iPhone.
-// « pincement », « eteints » et « lueur » (retour de Loan du 09/11 : arrêt de la page au zoom à deux doigts sur mobile) : voir
+// « zoomplat », « eteints » et « lueur » (retour de Loan du 09/11 : arrêt de la page au zoom à deux doigts sur mobile) : voir
 // PERFORMANCE.md, « Retour de Loan du 09/11 ». Image identique (Chromium) ; à confirmer sur l'iPhone (adresse de test).
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "pincement", "eteints", "lueur"];
+// « pincement » (zoom bloqué) écarté : Loan veut garder le zoom.
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "zoomplat"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).
