@@ -198,6 +198,51 @@ const TOUTES = [
     apres: '      clearTimeout(tNet); tNet = setTimeout(() => { cam.style.willChange = cam2.style.willChange = "auto"; kPose = +kEx; cam.style.setProperty("--k", kEx); cam2.style.setProperty("--k", kEx); }, 220);\n' },
   { id: "camera", quoi: "Étude : mémoire de l'épaisseur posée", fichiers: VF, n: 1,
     avant: "    let tNet = 0;\n", apres: '    let tNet = 0, kPose = 0, kEx = "1";\n' },
+
+  // « Zoom à deux doigts » (retour de Loan du 09/11 : « sur mobile, dès que je zoome avec mes deux doigts le site crash
+  // instantanément »). Cause, lue dans le code de WebKit (GraphicsLayerCA.cpp) : au zoom, Safari redessine chaque calque à
+  // l'échelle du zoom ; un calque de moins de 1 280 px CSS × zoom garde UNE image entière, dont la mémoire grandit comme le
+  // carré du zoom (×4 à ×2, ×9 à ×3, jusqu'à ≈ 60 Mo par calque ; un calque réduit par la caméra de l'étude, jusqu'à 156 Mo).
+  // La page d'accueil a ≈ 100 calques dans Safari (215 Mo au repos mesurés sur l'iPhone de Loan le 08/10 ; arrêts vers 490 Mo) :
+  // au relâcher du zoom, tous sont redessinés en même temps et iOS arrête la page. CGV, Privacy, Legal et Sponsors (3 à 10
+  // calques) ne sont pas concernées et gardent le zoom.
+  // Correction : pas de pincement sur cette page, sur écran tactile (touch-action: pan-x pan-y, que Safari iOS respecte :
+  // WKTouchActionGestureRecognizer.mm). Sur chaque élément, car un bloc qui défile (fenêtre, carte ouverte, guide) repart de
+  // « auto ». Le double-tap ne zoome pas une page en width=device-width à l'échelle 1 (WKWebViewIOS.mm,
+  // _allowsDoubleTapGestures). Défilement inchangé. Si la page est malgré tout agrandie (html.vf-zoom, échelle > 1,05, posée
+  // par COUVERT_JS de scripts/construire.mjs : état rendu par le navigateur…), le pincement revient pour pouvoir dézoomer.
+  { id: "pincement", quoi: "Pas de zoom à deux doigts sur la page d'accueil (écrans tactiles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "pas de zoom à deux doigts sur écran tactile (au zoom, Safari redessinait tous les calques et arrêtait la page). */\n" +
+      "@media (any-pointer: coarse) { html:not(.vf-zoom), html:not(.vf-zoom) * { touch-action: pan-x pan-y; } }\n" +
+      "</style>\n</helmet>" },
+
+  // Calques invisibles qui gardaient leur mémoire graphique (relevé Safari du 08/10 sur l'iPhone de Loan, « en réserve ») :
+  // - mur de la vitrine (26,9 Mo) : transparent hors de la vitrine (opacité 0), mais gardé dessiné. Il est libéré comme les
+  //   autres calques éteints du projecteur (code d'origine : brume, rayons, exposition, éclat, blanc, rémanence) ;
+  // - cartes de la vitrine (13,4 Mo) : transparentes et inertes (ni clic ni clavier) tant que la vitrine est fermée. Cachées
+  //   1,1 s après la fermeture (leur fondu dure 1 s au plus), visibles dès l'ouverture (leur fondu commence 0,4 s après).
+  // Rien ne change à l'écran : ces éléments étaient déjà transparents.
+  { id: "eteints", quoi: "Projecteur : mur de la vitrine libéré quand il est éteint", fichiers: VF, n: 1,
+    avant: "[brume, rayons, expo, eclat, blanc, reman].forEach((e) => {",
+    apres: "[brume, rayons, expo, eclat, blanc, reman, mur].forEach((e) => { " + SAF + "mur de la vitrine compris. */" },
+  { id: "eteints", quoi: "Vitrine fermée : cartes non dessinées", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "vitrine fermée : cartes (transparentes, inertes) non dessinées, après leur fondu de fermeture. */\n" +
+      ".vfp-cartes { visibility: hidden; transition: visibility 0s linear 1.1s; }\n" +
+      ".vfp-scene[data-vitrine] .vfp-cartes { visibility: visible; transition: visibility 0s; }\n" +
+      "</style>\n</helmet>" },
+
+  // Lueur du papier de l'étude (cercle de 95vmax qui dérive en 44 s) : calque de 810 × 810 px sur iPhone, soit ≈ 23 Mo dans
+  // Safari, pour un simple dégradé radial. Même principe que « compact » (validé sur l'iPhone le 08/10) : dessinée dans un
+  // cadre 5 fois plus petit (19vmax), au même centre, puis agrandie ×5 par transform (×5,75 en fin de dérive au lieu de ×1,15).
+  // Même géométrie à chaque instant ; « réduire les animations » : scale(5) fixe, comme l'original immobile. ≈ 1 Mo.
+  { id: "lueur", quoi: "Étude : lueur du papier en texture compacte", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "lueur du papier de l'étude dessinée 5 fois plus petite puis agrandie (même centre, même taille à l'écran). */\n" +
+      ".vfa-papier i { left: 13vmax; top: 3vmax; width: 19vmax; height: 19vmax; transform: scale(5); }\n" +
+      "@keyframes vfa-jour { from { transform: translate3d(0,0,0) scale(5); } to { transform: translate3d(38vw, 22vh, 0) scale(5.75); } }\n" +
+      "</style>\n</helmet>" },
 ];
 
 // Fichiers ajoutés par une correction (copiés seulement si une page construite l'utilise).
@@ -211,7 +256,9 @@ const choix = process.env.SAFARI;
 // « compact », 3 sur 3 sans ; mémoire graphique 490 → 215 Mo ; ligne rose disparue avec « affiche »).
 // « lvh » et « camera » (retour de Loan du 08/10 : bande noire en bas, yin-yang lent) : proposés pour la page publiée ; sans effet
 // visible sur ordinateur (lvh = svh ; caméra identique à 60 images/s, traits exacts au repos). À confirmer sur l'iPhone.
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera"];
+// « pincement », « eteints » et « lueur » (retour de Loan du 09/11 : arrêt de la page au zoom à deux doigts sur mobile) : voir
+// PERFORMANCE.md, « Retour de Loan du 09/11 ». Image identique (Chromium) ; à confirmer sur l'iPhone (adresse de test).
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "pincement", "eteints", "lueur"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).

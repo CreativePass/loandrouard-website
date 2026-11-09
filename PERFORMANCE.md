@@ -676,7 +676,7 @@ Onglet Calques : **489,55 Mo** de mémoire graphique à P 0,75.
   - en-tête à sa hauteur réelle ;
   - vitrine et Pricing jusqu'au lien Stripe, sans paiement ;
   - aucune erreur JavaScript.
-- **Mise en ligne** : avec l'accord de Loan, après un dernier coup d'œil sur l'adresse de test (voir `MISE-EN-LIGNE.md`). Les calques encore lourds (`vfp-mur`, `vfp-cartes`, `vfp-coeur`) restent en réserve, à reprendre seulement si des arrêts réapparaissent.
+- **Mise en ligne** : avec l'accord de Loan, après un dernier coup d'œil sur l'adresse de test (voir `MISE-EN-LIGNE.md`). Les calques encore lourds (`vfp-mur`, `vfp-cartes`, `vfp-coeur`) restent en réserve, à reprendre seulement si des arrêts réapparaissent. (09/11 : `vfp-mur` et `vfp-cartes` repris, voir « Retour de Loan du 09/11 ».)
 
 ## Retour de Loan du 08/10 (iPhone, adresse de test)
 
@@ -835,6 +835,41 @@ Vérifié avec `node scripts/verif-chargement.mjs`, qui pose la même extension 
 - témoin (même page, sans la correction) : 22,1 s.
 
 Non vérifiable ici : Safari lui-même (WebKit ne se télécharge pas, refus du proxy). La règle (trace seulement pour http(s)) est la même dans tous les navigateurs. Confirmé par Loan sur son Mac le 28/10 (« ça charge désormais beaucoup plus vite ») ; en ligne sur loandrouard.com le 28/10 (version `22c4a599`).
+
+## Retour de Loan du 09/11 : arrêt de la page au zoom à deux doigts (mobile)
+
+Symptôme : « sur mobile, dès que je zoome avec mes deux doigts le site crash instantanément » (iPhone, Safari).
+
+**Cause** (code source de WebKit, le moteur de Safari, lu le 09/11 ; non reproductible ici, faute de Safari) :
+- Au zoom, Safari redessine chaque calque à l'échelle du zoom (`GraphicsLayerCA::updateContentsScale` : échelle de l'écran × zoom).
+- Sur iPhone, un calque de moins de **1 280 px CSS × zoom** garde **une seule image entière** (`requiresTiledLayer`, `cMaxPixelDimension = 1280`) : sa mémoire grandit comme le **carré du zoom** (×4 à ×2, ×9 à ×3), jusqu'à ≈ 60 Mo par calque. Au-delà, il passe en tuiles, mais un calque réduit par une transformation (la feuille de l'étude, 1 200 × 800 px réduite par la caméra) garde alors toute sa surface en tuiles, jusqu'au plafond de **156 Mo par calque** (`cMaxScaledTiledLayerMemorySize`).
+- La page d'accueil compte ≈ 100 calques dans Safari (215 Mo au repos mesurés sur l'iPhone de Loan le 08/10 ; les arrêts du test d'endurance survenaient vers 490 Mo). Au relâcher du zoom, tous sont redessinés en même temps (l'ancienne image et la nouvelle coexistent un instant) : la mémoire dépasse la limite d'iOS, qui arrête la page (« A problem repeatedly occurred »).
+- Estimation (calques de Chromium au format iPhone, modèle de WebKit ci-dessus) : 110 à 270 Mo au repos selon l'endroit, 1,3 à 1,7 fois plus au zoom ×1,5 à ×3, sans compter les deux images au moment du changement. Dans l'étude, les deux caméras peuvent atteindre 156 Mo chacune au zoom.
+- CGV, Privacy, Legal et Sponsors : 3 à 10 calques, pas concernées.
+
+**Écarté** : garder le zoom en éteignant les effets pendant qu'il dure (`html.vf-zoom`). Les calques les plus lourds au zoom sont le contenu lui-même (caméras de l'étude : photo, dessin, textes) ; rien ne garantit que le script réagisse avant que Safari ne redessine ; impossible à valider sans l'iPhone.
+
+**Correction `pincement`** (`scripts/safari.mjs`, page d'accueil seulement) : `touch-action: pan-x pan-y` sur tous les éléments, sur écran tactile (`any-pointer: coarse`).
+- Safari iOS refuse alors le pincement (`WKTouchActionGestureRecognizer.mm` : pincement permis seulement avec `pinch-zoom` ou `manipulation`). `user-scalable=no` ne marche pas : Safari l'ignore depuis iOS 10.
+- Sur chaque élément, pas seulement `<html>` : un bloc qui défile (fenêtre, carte ouverte sur mobile, guide) repart de « auto » (`StyleAdjuster.cpp`, `computeUsedTouchAction`).
+- Double-tap : Safari ne zoome pas au double-tap une page `width=device-width` restée à l'échelle 1 (`WKWebViewIOS.mm`, `_allowsDoubleTapGestures`). Aucun champ de saisie sur la page (pas de zoom automatique sur un champ).
+- Défilement, toucher des cartes et liens inchangés. Ordinateur inchangé (règle réservée aux écrans tactiles ; le zoom au trackpad garde le mode zoom du 03/11).
+- Page malgré tout agrandie (état rendu par le navigateur, etc.) : le mode zoom (`html.vf-zoom`, échelle > 1,05) rend le pincement pour pouvoir dézoomer ; la protection reprend à l'échelle 1.
+- Accessibilité : le Zoom d'iOS (Réglages › Accessibilité, trois doigts) et la taille du texte de Safari (« aA ») restent possibles ; les pages légales gardent le zoom à deux doigts.
+
+**Optimisations** (même fichier, image identique) : calques invisibles qui gardaient leur mémoire graphique (relevé Safari du 08/10, « en réserve »).
+- `eteints` : mur de la vitrine (26,9 Mo dans Safari) libéré quand il est éteint, comme les autres calques éteints du projecteur ; cartes de la vitrine (13,4 Mo) non dessinées tant qu'elle est fermée (elles étaient déjà transparentes et inertes), cachées 1,1 s après la fermeture, visibles dès l'ouverture.
+- `lueur` : lueur du papier de l'étude (cercle de 95vmax, ≈ 23 Mo sur iPhone) dessinée 5 fois plus petite au même centre puis agrandie, comme `compact`. Rendu de Safari simulé (dégradé dessiné petit puis agrandi ×5 et ×5,75, posé sur le papier) : écart maximal 3 nuances sur 255, moyen 0,3, comme `compact`.
+
+**Vérifié dans Chromium** (`node scripts/verif-pincement.mjs <construction d'avant>`, format iPhone 393 × 852 et ordinateur 1440 × 900 ; `SECTIONS=4,5` pour une partie seulement) :
+- **Pincement** (deux points de contact qui s'écartent, soumis à `touch-action` comme de vrais doigts ; `Input.synthesizePinchGesture` ne convient pas : en « touch », il ne zoome jamais) : avant ×5 (le maximum) en haut de page, au projecteur (P 0,75), dans l'étude, sur les cartes et au pied de page ; après ×1 partout. CGV, Privacy, Legal, Sponsors : ×5 (zoom gardé). Page agrandie ×2,5 par un autre moyen : mode zoom actif, `touch-action: auto`, dézoom aux deux doigts jusqu'à ×1, puis protection revenue. Glissé d'un doigt : la page défile de 435 px, avant comme après.
+- **touch-action** : « pan-x pan-y » sur les 1 152 éléments au format iPhone ; « auto » sur les 1 157 éléments sur ordinateur.
+- **Vitrine** (iPhone et ordinateur) : fermée, cartes et mur cachés (cartes inertes) ; visibles 0,1 s après l'ouverture, avant le début de leur fondu ; ouverte, opacité 1 ; 0,5 s après la fermeture, cartes encore visibles (fondu en cours) ; 3 s après, cachées. Aucune erreur JS.
+- **Captures** AVANT / APRÈS, animations figées au même instant (12 endroits, du haut au pied de page, vitrine ouverte et refermée) : projecteur, vitrine, cartes et pied de page **identiques au pixel** (ou au niveau du témoin AVANT / AVANT) ; étude au format iPhone : seul écart, la lueur, 2 nuances sur 255 au plus (moyenne 0,2) ; étude sur ordinateur : écarts du même ordre que le témoin (caméra de l'étude, à moins d'un pixel près).
+- **Calques** (Chromium au format iPhone, mémoire estimée avec le modèle de WebKit à ×1) : projecteur 27 → 25 calques, 196 → 154 Mo (haut), 258 → 213 Mo (P 0,75) ; vitrine refermée 199 → 154 Mo ; étude 175 → 153 Mo et 147 → 125 Mo.
+- **Adresse de test** (version Cloudflare `5ae9f0bc`) : 138 fichiers servis identiques à `public/` ; pincement → ×1 au format iPhone, anglais et français ; aucune erreur JS (iPhone et ordinateur, page parcourue jusqu'en bas).
+
+**Reste à confirmer sur l'iPhone de Loan** (adresse de test) : plus d'arrêt en essayant de zoomer, défilement et cartes inchangés. Non couvert : le zoom par la taille du texte de Safari (« aA »), qui agrandit la mise en page au lieu de zoomer ; à revoir seulement s'il pose problème.
 
 ## Vérifications
 
