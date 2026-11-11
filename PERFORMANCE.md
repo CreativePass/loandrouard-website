@@ -889,6 +889,40 @@ Symptôme : « sur mobile, dès que je zoome avec mes deux doigts le site crash 
 
 **Reste à confirmer sur l'iPhone de Loan** (adresse de test) : zoomer à plusieurs endroits (haut, projecteur, étude, cartes), faire défiler en étant zoomé, dézoomer. Points à surveiller : plus d'arrêt ; image inchangée pendant le zoom (seule la poussière disparaît) ; défilement moins fluide pendant le zoom (attendu). Non couvert : la taille du texte de Safari (« aA »), qui agrandit la mise en page au lieu de zoomer.
 
+### Retour de Loan du 11/11 : « ça crash encore, particulièrement sur les cartes et pendant la séparation yin yang »
+
+Version testée : `88984de4` (adresse de test, `zoomplat` du 09/11).
+
+**Ce qui manquait** (code de WebKit, `RenderLayerCompositor.cpp`, lu le 11/11) :
+- **Un filtre CSS donne toujours un calque** : `requiresCompositingForFilters` renvoie vrai dès qu'un élément a un filtre, et WebKit2 garde tous les déclencheurs permis (`ChromeClient::allowedCompositingTriggers`, `AllTriggers`, que ni `WebChromeClient` ni sa version iOS ne restreignent). Le mode à plat du 09/11 ne les supprimait pas.
+  - Séparation du yin-yang : lueur dorée des corrections (`.vfa-svg--or`, deux `drop-shadow`, feuille de 1 200 × 800 px réduite par la caméra), négatif (`img.vfa-negatif`, `invert`), ombre des deux moitiés du taiji (CSS, plus flou et ombre posés par le script pendant la séparation).
+  - Cartes : lueur de bordure (`.vfk-eclat`), cadre doré (`.vf-or`, carte choisie).
+- **Cartes en 3D pendant leur retournement** (`.vfk-flip` en `preserve-3d`, recto et verso) : chaque face a son calque tant que la carte n'est pas retournée.
+- **Moment du passage à plat** : il attendait l'événement de zoom (`visualViewport`). Si Safari redessine au nouveau zoom avant (non vérifiable ici), la page est redessinée une fois avec tous ses calques, comme la version d'origine.
+
+**Mesure selon les règles de WebKit** (`node scripts/verif-calques-webkit.mjs`, nouvel outil : calques déduits des règles de `RenderLayerCompositor` et non du découpage de Chromium ; calques « par recouvrement » non comptés ; mémoire avec le modèle de `GraphicsLayerCA`, partie visible) :
+
+| Endroit (format iPhone) | Origine ×1 → ×3 | Version testée (09/11) ×3 | Version du 11/11 ×3 |
+|---|---|---|---|
+| Projecteur P 0,75 | 209 → 358 Mo (18 calques) | 77 Mo (4) | 77 Mo (4) |
+| Cartes | 198 → 452 Mo (12) | 186 Mo (6), dont la lueur dorée de l'étude 93 Mo | 71 à 93 Mo (4 à 5) |
+| Séparation du yin-yang | 135 → 236 Mo (8) | 68 à 89 Mo (2 à 6) | 14 Mo (1) |
+
+- La version testée gardait donc la lueur dorée (jusqu'à 93 Mo au zoom ×3, 156 Mo au-delà), le taiji et les cartes en 3D. Mais ses 186 Mo restent proches de la page au repos, qui ne s'arrête pas : le moment du passage à plat est la cause la plus probable de l'arrêt persistant (non démontré).
+
+**Corrections du 11/11** (`zoomplat`, `scripts/safari.mjs`) :
+- **À plat dès que deux doigts touchent l'écran** (écouteurs `touchstart` / `touchend` passifs), donc avant tout zoom ; doigts relevés sans zoom : retour à la normale 0,45 s après. Le zoom (`vf-zoom`, échelle > 1,01) garde la page à plat.
+- Filtres décoratifs retirés pendant le zoom : lueur dorée des corrections, ombres du taiji et des titres, lueur de bordure des cartes (`filter: none !important`, plus fort que les filtres posés par le script).
+- Retournement des cartes sans 3D pendant le zoom (`.vfk-flip`, `.vfk-dos` : `transform: none`, `transform-style: flat`) ; la bonne face reste affichée (le script cache l'autre à 90°).
+- `backface-visibility` visible aussi dans la planche (`.vfk *`).
+- Grain généré (`feTurbulence`, opacité 5 à 7 %) masqué pendant le zoom : Safari le recalcule à la taille du zoom (tuile de 180 px → 2 700 px à ×5 sur iPhone).
+- Gardés : négatif de l'étude (indispensable au dessin), filtres des photos de Loan, cadre doré de la carte choisie, « See pricing ».
+- Visible pendant le zoom seulement : plus de halo doré autour des corrections, plus d'ombre autour du taiji et des titres, plus de grain du papier, pas de rotation des cartes (elles changent de face d'un coup), poussière cachée.
+
+**Vérifié** (Chromium, `SECTIONS=1 node scripts/verif-pincement.mjs …`) : zoom ×5 partout et page à plat (0 élément 3D, 0 `will-change`) ; un doigt posé : pas à plat ; deux doigts posés, avant tout mouvement : à plat en 60 ms ; deux doigts relevés sans zoom : état normal ; défilement pendant le zoom, dézoom, ordinateur et pages légales : inchangés ; aucune erreur JS. Adresse de test, version `4b58c5f6` : 138 fichiers servis identiques à `public/`, zoom ×5 et page à plat au format iPhone (anglais et français), aucune erreur JS.
+
+Essai WebKitGTK (11/11) : installable par apt (2.52, même `RenderLayerCompositor` que Safari), mais ni journal `Compositing` dans cette version publiée ni inspecteur distant utilisable ici ; sans bac à sable, refusé (à juste titre). Mesure faite par les règles ci-dessus.
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).

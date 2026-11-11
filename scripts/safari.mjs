@@ -251,14 +251,28 @@ const TOUTES = [
   // poussière et de sable d'or cachées (une toile fait passer en calques séparés tout ce qui est dessiné par-dessus). Tout se dessine alors dans quelques grandes zones
   // (scènes épinglées, en-tête), découpées en tuiles par Safari : leur mémoire suit la partie visible de l'écran et ne
   // grandit plus avec le zoom. Image identique ; le défilement pendant le zoom redessine davantage (plus lent, sans arrêt).
-  // Gardés : « See pricing » (flou dans son calque, correction « affiche ») et les cartes qui se retournent (3D, petites).
+  // 11/11 (retour de Loan : « ça crash encore, particulièrement sur les cartes et pendant la séparation yin yang ») : dans Safari,
+  // tout élément qui porte un filtre CSS a son calque (RenderLayerCompositor::requiresCompositingForFilters, FilterTrigger permis
+  // par défaut), et les cartes qui se retournent sont en vraie 3D. Pendant le zoom : halos décoratifs retirés (lueur dorée des
+  // corrections de l'étude, ombres du taiji et des titres, lueur de bordure des cartes), retournement des cartes sans 3D.
+  // Gardés : « See pricing » (flou dans son calque, correction « affiche »), le négatif de l'étude (invert, indispensable), les
+  // filtres des photos de Loan et du cadre doré de la carte choisie.
   // Au dézoom (échelle < 1,01), tout redevient comme avant au défilement suivant.
+  // 11/11 : le passage à plat commence dès que deux doigts touchent l'écran (avant le zoom lui-même : la version du 09/11
+  // attendait l'événement de zoom, peut-être trop tard pour Safari) ; grain généré (feTurbulence) masqué pendant le zoom.
   { id: "zoomplat", quoi: "Zoom à deux doigts : page dessinée à plat tant qu'elle est agrandie (styles)", fichiers: VF, n: 1,
     avant: "</style>\n</helmet>",
     apres: SAF + "page agrandie au pincement, écran tactile : plus de calques séparés (mémoire graphique bornée). */\n" +
       "html.vf-zoom-plat .vf *:not(.vfp-affiche), html.vf-zoom-plat .vf *::before, html.vf-zoom-plat .vf *::after { will-change: auto !important; }\n" +
       "html.vf-zoom-plat .vf canvas { visibility: hidden !important; }\n" +
-      "html.vf-zoom-plat .vfp *, html.vf-zoom-plat .vfa * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; } /* rien n'y tourne en 3D */\n" +
+      "/* 11/11 : grain généré (SVG feTurbulence, opacité 5 à 7 %) masqué pendant le zoom : Safari le recalcule à la taille du zoom. */\n" +
+      "html.vf-zoom-plat .vf-nuit u, html.vf-zoom-plat .vfp-grain, html.vf-zoom-plat .vfa-papier u, html.vf-zoom-plat .vfa-noir u { visibility: hidden !important; }\n" +
+      "html.vf-zoom-plat .vfp *, html.vf-zoom-plat .vfa *, html.vf-zoom-plat .vfk * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; } /* plus rien n'y tourne en 3D */\n" +
+      "/* 11/11 : un filtre CSS donne toujours un calque séparé dans Safari (RenderLayerCompositor : FilterTrigger). Halos décoratifs retirés pendant le zoom :\n" +
+      "   lueur dorée des corrections de l'étude, ombres du taiji et des titres yin / yang (aussi posées par le script), lueur de bordure des cartes. */\n" +
+      "html.vf-zoom-plat .vfa-svg--or, html.vf-zoom-plat .vfa-taiji, html.vf-zoom-plat .vfa-taiji img, html.vf-zoom-plat .vfk-eclat { filter: none !important; }\n" +
+      "/* Cartes de la planche : retournement sans 3D pendant le zoom (la bonne face reste affichée : le script cache l'autre à 90°). */\n" +
+      "html.vf-zoom-plat .vfk-flip, html.vf-zoom-plat .vfk-dos { transform: none !important; -webkit-transform-style: flat !important; transform-style: flat !important; }\n" +
       "</style>\n</helmet>" },
   { id: "zoomplat", quoi: "Zoom à deux doigts : page dessinée à plat tant qu'elle est agrandie (script)", fichiers: VF, n: 1,
     avant: '<script src="./support.js"></script>',
@@ -272,8 +286,9 @@ const TOUTES = [
       "      t = t.slice(0, i) + \"translate(\" + a[0].trim() + \", \" + a[1].trim() + \")\" + t.slice(j + 1); i = t.indexOf(\"translate3d(\", i + 10); }\n" +
       "    return t; };\n" +
       "  const plat = (el) => { const t = el.style && el.style.transform; if (t && t.indexOf(\"translate3d(\") >= 0) { const n = deux(t); if (n !== t) el.style.transform = n; } };\n" +
-      "  let obs = null;\n" +
-      "  const suivre = () => { const z = R.classList.contains(\"vf-zoom\") && tactile.matches;\n" +
+      "  let obs = null, doigts = false;\n" +
+      "  const vv = window.visualViewport;\n" +
+      "  const suivre = () => { const z = (doigts || R.classList.contains(\"vf-zoom\") || (!!vv && vv.scale > 1.01)) && tactile.matches;\n" +
       "    if (z && !obs) { R.classList.add(\"vf-zoom-plat\"); document.querySelectorAll('.vf [style*=\"translate3d\"]').forEach(plat);\n" +
       "      /* Apparitions du projecteur terminées (elles finissent sur l'état normal : opacité 1, aucune transformation) : arrêtées, sinon\n" +
       "         gardées actives (et en calques) par le navigateur. */\n" +
@@ -282,6 +297,13 @@ const TOUTES = [
       "      obs.observe(document.body, { attributes: true, attributeFilter: [\"style\"], subtree: true }); }\n" +
       "    else if (!z && obs) { obs.disconnect(); obs = null; R.classList.remove(\"vf-zoom-plat\"); window.dispatchEvent(new Event(\"scroll\")); } };\n" +
       "  new MutationObserver(suivre).observe(R, { attributes: true, attributeFilter: [\"class\"] }); suivre(); /* page ouverte déjà agrandie */\n" +
+      "  /* 11/11 : à plat dès que deux doigts touchent l'écran (début possible d'un zoom), donc AVANT que Safari ne redessine au nouveau\n" +
+      "     zoom ; au lâcher, retour à la normale si l'échelle est restée à 1. Écouteurs passifs : le défilement n'attend jamais. */\n" +
+      "  const poser = (e) => { if (e.touches && e.touches.length >= 2 && !doigts) { doigts = true; suivre(); } };\n" +
+      "  const lacher = (e) => { if (doigts && (!e.touches || !e.touches.length)) { doigts = false; setTimeout(suivre, 450); } };\n" +
+      "  document.addEventListener(\"touchstart\", poser, { passive: true, capture: true });\n" +
+      "  document.addEventListener(\"touchend\", lacher, { passive: true, capture: true }); document.addEventListener(\"touchcancel\", lacher, { passive: true, capture: true });\n" +
+      "  if (vv) vv.addEventListener(\"resize\", suivre);\n" +
       "})();\n" +
       "</script>\n" + '<script src="./support.js"></script>' },
   // Zones recouvertes (COUVERT_JS, 02 et 03/11) : sur iPhone, une page agrandie a une hauteur visible (innerHeight) plus petite

@@ -103,6 +103,21 @@ for (const [nom, aller] of [["haut de page", null], ["projecteur P 0,45", (p) =>
   ok(s < 1.01 && !e2.zoom && !e2.plat && e2.t3 > 0 && e2.wc > 0 && e2.toiles > 0, `Dézoom aux deux doigts → ×${s.toFixed(2)} : mode zoom ${e2.zoom ? "actif" : "fini"}, à plat ${e2.plat ? "oui" : "non"}, translate3d ${e2.t3}, will-change ${e2.wc}, toiles visibles ${e2.toiles} (comme avant le zoom)`);
   ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close();
 }
+{ // 11/11 : à plat dès que deux doigts touchent l'écran (avant tout zoom) ; doigts relevés sans zoom : retour à la normale.
+  // Un seul doigt (défilement) : jamais à plat.
+  const o = await ouvrir("apres"); await allerP(o.page, 0.45); await o.page.waitForTimeout(1500);
+  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 196, y: 600, id: 1 }] });
+  await o.page.waitForTimeout(150); const e0 = await etatPlat(o.page);
+  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await o.page.waitForTimeout(300);
+  ok(!e0.plat, `Un doigt posé : à plat ${e0.plat ? "OUI" : "non"}`);
+  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 150, y: 420, id: 1 }, { x: 240, y: 420, id: 2 }] });
+  await o.page.waitForTimeout(60); const e1 = await etatPlat(o.page);
+  ok(e1.plat && !e1.t3 && !e1.wc, `Deux doigts posés, avant tout mouvement (60 ms) : à plat ${e1.plat ? "oui" : "NON"}, translate3d ${e1.t3}, will-change ${e1.wc}, échelle ×${(await echelle(o.page)).toFixed(2)}`);
+  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await o.page.waitForTimeout(900);
+  await o.page.evaluate(() => window.scrollBy(0, 2)); await o.page.waitForTimeout(700); const e2 = await etatPlat(o.page);
+  ok(!e2.plat && e2.t3 > 0 && e2.wc > 0, `Deux doigts relevés sans zoom : à plat ${e2.plat ? "OUI" : "non"}, translate3d ${e2.t3}, will-change ${e2.wc} (état normal)`);
+  ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close();
+}
 { // Ordinateur (zoom au trackpad) : mode zoom du 03/11 seulement, pas de dessin à plat.
   const o = await ouvrir("apres", "/", BUREAU); const s = await zoomer(o, 2); const e = await etatPlat(o.page);
   ok(s > 1.5 && e.zoom && !e.plat && e.t3 > 0, `Ordinateur, zoom ×${s.toFixed(2)} : mode zoom ${e.zoom ? "actif" : "inactif"}, à plat ${e.plat ? "OUI" : "non"} (inchangé)`); await o.ctx.close();
