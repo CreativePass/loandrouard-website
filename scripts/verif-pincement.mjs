@@ -1,14 +1,14 @@
-// Vérification LOCALE (Chromium) des corrections du 09/11 (scripts/safari.mjs : « zoomplat », « eteints », « lueur »).
+// Vérification LOCALE (Chromium) des corrections des 09 et 14/11 (scripts/safari.mjs : « loupe », « eteints », « lueur »).
 // Retour de Loan : « sur mobile, dès que je zoome avec mes deux doigts le site crash instantanément ».
 // Chromium n'est pas Safari : il ne s'arrête pas au zoom (tuiles) et ne dessine pas les calques comme lui. Ce script contrôle
 // ce qui se vérifie ici ; le comportement réel se voit sur l'iPhone (adresse de test).
-//   1. Zoom à deux doigts simulé (vrais événements tactiles) : il marche partout ; pendant le zoom, la page d'accueil se
-//      dessine à plat (plus de translate3d, de will-change ni de toile) ; défilement au doigt pendant le zoom ; dézoom : tout
-//      redevient comme avant ; ordinateur et pages légales inchangés.
+//   1. Loupe (14/11), vrais événements tactiles : zoom de Safari bloqué sur l'accueil et remplacé par la loupe ; image agrandie
+//      fidèle (fond fixe, en-tête, point sous les doigts, cible d'un toucher) ; glissé d'un doigt ; scènes en pause ; retour à ×1 ;
+//      un doigt sans loupe défile ; ordinateur et pages légales inchangés.
 //   3. Vitrine : cartes et mur visibles dès l'ouverture, libérés après la fermeture (fondu terminé).
-//   4. Captures AVANT / APRÈS identiques (animations figées au même instant), le long de toute la page, sans zoom et au zoom ×2,5 ;
-//      témoin AVANT / AVANT.
-//   5. Calques dessinés (Chromium) et mémoire estimée selon le modèle de WebKit iOS (GraphicsLayerCA), sans zoom et au zoom.
+//   4. Captures AVANT / APRÈS identiques sans zoom (animations figées au même instant), le long de toute la page ; témoin
+//      AVANT / AVANT. Loupe ×2,5 : même image que l'écran d'origine agrandi.
+//   5. Mémoire estimée selon le modèle de WebKit iOS (GraphicsLayerCA) : zoom de Safari (origine) contre loupe.
 // Usage : node scripts/verif-pincement.mjs <dossier AVANT> [dossier APRÈS = public]
 //   (AVANT : par ex. SAFARI=entete,textures,compact,affiche,lvh,camera npm run construire, puis copie de public/)
 import fs from "node:fs";
@@ -81,53 +81,70 @@ const glisser = async (o, dy) => { await o.cdp.send("Input.dispatchTouchEvent", 
   for (let i = 1; i <= 15; i++) { await o.cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: 196, y: 600 - i * dy / 15, id: 1 }] }); await o.page.waitForTimeout(16); }
   await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await o.page.waitForTimeout(1200); };
 
-// ——— 1. Zoom à deux doigts ———
+// ——— 1. Loupe (14/11) ———
+// État de la loupe : active, échelle et déplacement lus sur .vf, échelle du zoom de Safari, éléments en 3D.
+const etatLoupe = (page) => page.evaluate(() => { const v = document.querySelector(".vf"), m = v && getComputedStyle(v).transform !== "none" ? new DOMMatrix(getComputedStyle(v).transform) : null;
+  return { loupe: document.documentElement.classList.contains("vf-loupe"), s: m ? m.a : 1, vv: visualViewport.scale, y: scrollY,
+    t3: v ? [...v.querySelectorAll("*")].filter((e) => e.style && /translate3d\(/.test(e.style.transform)).length : 0 }; });
+// Deux doigts qui s'écartent (ou se rapprochent) autour de (cx, cy).
+const pincerEn = async (o, cx, cy, d0, d1) => { const tp = (d) => [{ x: cx - d, y: cy, id: 1 }, { x: cx + d, y: cy, id: 2 }];
+  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: tp(d0) });
+  for (let i = 1; i <= 20; i++) { await o.cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: tp(d0 + (d1 - d0) * i / 20) }); await o.page.waitForTimeout(16); }
+  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await o.page.waitForTimeout(600); };
+const glisserDoigt = async (o, x0, y0, dx, dy) => { await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x0, y: y0, id: 1 }] });
+  for (let i = 1; i <= 12; i++) { await o.cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x0 + dx * i / 12, y: y0 + dy * i / 12, id: 1 }] }); await o.page.waitForTimeout(16); }
+  await o.page.waitForTimeout(150); await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await o.page.waitForTimeout(500); };
 if (section(1)) {
-console.log("\n1. Zoom à deux doigts (format iPhone 393 × 852) : il marche, et la page se dessine à plat tant qu'elle est agrandie");
-for (const [nom, aller] of [["haut de page", null], ["projecteur P 0,45", (p) => allerP(p, 0.45)], ["projecteur P 0,75", (p) => allerP(p, 0.75)], ["étude", (p) => allerEl(p, "#analysis", 0.6)], ["étude, bascule", (p) => allerEl(p, "#analysis", 8)], ["cartes", (p) => allerEl(p, ".vfk", 1.2)], ["pied de page", allerBas]]) {
-  const r = {};
-  for (const v of ["avant", "apres"]) { const o = await ouvrir(v); if (aller) { await aller(o.page); await o.page.waitForTimeout(1500); }
-    r[v] = await pincer(o); await o.page.evaluate(() => window.scrollBy(0, 4)); await o.page.waitForTimeout(600); r[v + "E"] = await etatPlat(o.page); r[v + "err"] = o.erreurs; await o.ctx.close(); }
-  const e = r.apresE;
-  ok(r.avant > 1.5 && r.apres > 1.5 && e.zoom && e.plat && !e.t3 && !e.wc && !e.toiles && !r.apreserr.length,
-    `Accueil, ${nom} : zoom ×${r.apres.toFixed(2)} (avant ×${r.avant.toFixed(2)}) ; à plat ${e.plat ? "oui" : "NON"}, translate3d ${e.t3} (avant ${r.avantE.t3}), will-change ${e.wc} (avant ${r.avantE.wc}), toiles visibles ${e.toiles} (avant ${r.avantE.toiles})` + (r.apreserr.length ? " ; ERREURS " + r.apreserr.join(" / ") : ""));
+console.log("\n1. Loupe au pincement (format iPhone 393 × 852)");
+for (const [nom, aller] of [["haut de page", null], ["projecteur P 0,75", (p) => allerP(p, 0.75)], ["étude", (p) => allerEl(p, "#analysis", 0.6)], ["étude, bascule", (p) => allerEl(p, "#analysis", 8)], ["cartes", (p) => allerEl(p, ".vfk", 1.2)], ["pied de page", allerBas]]) {
+  const o = await ouvrir("apres"); if (aller) { await aller(o.page); await o.page.waitForTimeout(2500); }
+  /* Repères avant la loupe : en-tête (épinglé), fond « nuit » (fixe), point sous les doigts. */
+  const avant = await o.page.evaluate(() => { const r = (q) => { const e = document.querySelector(q); if (!e) return null; const b = e.getBoundingClientRect(); return [b.left, b.top, b.width, b.height]; };
+    const e = document.elementFromPoint(150, 300); return { tete: r(".vf > .ld-header"), nuit: r(".vf-nuit"), sous: e ? e.tagName + "." + (e.className || "").toString().split(" ")[0] : "" }; });
+  await pincerEn(o, 196, 420, 30, 75); /* ×2,5 autour du centre */
+  const e = await etatLoupe(o.page);
+  const apres = await o.page.evaluate(() => { const r = (q) => { const e = document.querySelector(q); if (!e) return null; const b = e.getBoundingClientRect(); return [b.left, b.top, b.width, b.height]; };
+    const v = document.querySelector(".vf"), m = new DOMMatrix(getComputedStyle(v).transform), s = m.a;
+    /* (x, y) vu sans loupe → (s·x + tx, s·y + ty) : on retrouve t à partir de la place de .vf. */
+    return { tete: r(".vf > .ld-header"), nuit: r(".vf-nuit"), s }; });
+  /* t déduit du fond « nuit » (fixe en 0, 0 sans loupe) : il doit être agrandi de s et placé en (tx, ty). */
+  const s1 = apres.s, tx = apres.nuit ? apres.nuit[0] : 0, ty = apres.nuit ? apres.nuit[1] : 0;
+  const attendu = (r) => r && [s1 * r[0] + tx, s1 * r[1] + ty, s1 * r[2], s1 * r[3]];
+  const ecartR = (a, b) => (a && b ? Math.max(...a.map((x, i) => Math.abs(x - b[i]))) : 0);
+  const sous = await o.page.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? e.tagName + "." + (e.className || "").toString().split(" ")[0] : ""; }, [s1 * 150 + tx, s1 * 300 + ty]);
+  const centre = [(196 - tx) / s1, (420 - ty) / s1];
+  ok(e.loupe && Math.abs(e.vv - 1) < 0.01 && s1 > 2.3 && s1 < 2.7 && ecartR(apres.nuit, attendu(avant.nuit)) < 1.5 && ecartR(apres.tete, attendu(avant.tete)) < 1.5 && Math.hypot(centre[0] - 196, centre[1] - 420) < 3 && sous === avant.sous,
+    `${nom} : loupe ×${s1.toFixed(2)}, zoom de Safari ×${e.vv.toFixed(2)} ; fond fixe et en-tête à leur place agrandie (écarts ${ecartR(apres.nuit, attendu(avant.nuit)).toFixed(1)} et ${ecartR(apres.tete, attendu(avant.tete)).toFixed(1)} px) ; point sous les doigts resté sous les doigts (${centre.map((x) => x.toFixed(0)).join(", ")}) ; toucher visant « ${sous} » comme avant`);
+  ok(!o.erreurs.length, `${nom} : aucune erreur JS` + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close();
 }
-{ // Défilement au doigt pendant le zoom, puis dézoom : tout redevient comme avant.
-  const o = await ouvrir("apres"); await allerP(o.page, 0.45); await o.page.waitForTimeout(1500); await pincer(o);
-  /* Position affichée (visualViewport.pageTop) : au zoom, un glissé déplace d'abord la partie agrandie dans l'écran, puis la page. */
-  const t0 = await o.page.evaluate(() => document.querySelector(".vfp-fig").style.transform), y0 = await o.page.evaluate(() => [visualViewport.pageTop, scrollY]);
-  for (let k = 0; k < 8; k++) await glisser(o, 300);
-  const t1 = await o.page.evaluate(() => document.querySelector(".vfp-fig").style.transform), y1 = await o.page.evaluate(() => [visualViewport.pageTop, scrollY]), e1 = await etatPlat(o.page);
-  ok(y1[0] - y0[0] > 100 && y1[1] > y0[1] && t1 !== t0 && /^translate\(/.test(t1) && !e1.t3, `Glissé d'un doigt pendant le zoom : vue descendue de ${Math.round(y1[0] - y0[0])} px (page ${Math.round(y1[1] - y0[1])} px), Loan suit le défilement (${t1.slice(0, 34)}…), translate3d ${e1.t3}`);
-  const s = await pincer(o, false); await o.page.evaluate(() => window.scrollBy(0, 2)); await o.page.waitForTimeout(800); const e2 = await etatPlat(o.page);
-  ok(s < 1.01 && !e2.zoom && !e2.plat && e2.t3 > 0 && e2.wc > 0 && e2.toiles > 0, `Dézoom aux deux doigts → ×${s.toFixed(2)} : mode zoom ${e2.zoom ? "actif" : "fini"}, à plat ${e2.plat ? "oui" : "non"}, translate3d ${e2.t3}, will-change ${e2.wc}, toiles visibles ${e2.toiles} (comme avant le zoom)`);
+{ // Déplacement d'un doigt, pause des scènes, retour à ×1.
+  const o = await ouvrir("apres"); await allerP(o.page, 0.45); await o.page.waitForTimeout(2500);
+  await pincerEn(o, 196, 420, 30, 90); const e1 = await etatLoupe(o.page);
+  const fig0 = await o.page.evaluate(() => document.querySelector(".vfp-fig").style.transform); /* relevé loupe active (la caméra du projecteur a pu finir de se poser avant) */
+  const nuit1 = await o.page.evaluate(() => { const b = document.querySelector(".vf-nuit").getBoundingClientRect(); return [b.left, b.top]; });
+  await glisserDoigt(o, 200, 600, -60, -160); await o.page.waitForTimeout(800);
+  const e2 = await etatLoupe(o.page), nuit2 = await o.page.evaluate(() => { const b = document.querySelector(".vf-nuit").getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; });
+  ok(e2.loupe && Math.abs(e2.y - e1.y) < 1 && nuit2[1] < nuit1[1] - 100 && nuit2[0] <= 0.5 && nuit2[1] <= 0.5 && nuit2[2] >= 392.5 && nuit2[3] >= 851.5,
+    `Glissé d'un doigt agrandi : vue déplacée (${(nuit2[0] - nuit1[0]).toFixed(0)}, ${(nuit2[1] - nuit1[1]).toFixed(0)} px, élan compris), page non défilée (${e1.y} → ${e2.y}), l'écran agrandi couvre toujours l'écran`);
+  await o.page.evaluate(() => window.dispatchEvent(new Event("scroll"))); await o.page.waitForTimeout(500);
+  const fig1 = await o.page.evaluate(() => document.querySelector(".vfp-fig").style.transform);
+  ok(fig1 === fig0, `Scènes en pause pendant la loupe (silhouette de Loan inchangée)`);
+  await pincerEn(o, 196, 420, 120, 20); await o.page.waitForTimeout(500); const e3 = await etatLoupe(o.page);
+  await o.page.evaluate(() => window.scrollBy(0, 300)); await o.page.waitForTimeout(1500);
+  const fig2 = await o.page.evaluate(() => document.querySelector(".vfp-fig").style.transform), y3 = await o.page.evaluate(() => scrollY);
+  ok(!e3.loupe && e3.s === 1 && fig2 !== fig0 && y3 > e1.y, `Pincement inverse : retour à ×1 (loupe ${e3.loupe ? "active" : "finie"}), page de nouveau défilable et animée (silhouette déplacée au défilement)`);
   ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close();
 }
-{ // 11/11 : à plat dès que deux doigts touchent l'écran (avant tout zoom) ; doigts relevés sans zoom : retour à la normale.
-  // Un seul doigt (défilement) : jamais à plat.
-  const o = await ouvrir("apres"); await allerP(o.page, 0.45); await o.page.waitForTimeout(1500);
-  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 196, y: 600, id: 1 }] });
-  await o.page.waitForTimeout(150); const e0 = await etatPlat(o.page);
-  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await o.page.waitForTimeout(300);
-  ok(!e0.plat, `Un doigt posé : à plat ${e0.plat ? "OUI" : "non"}`);
-  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 150, y: 420, id: 1 }, { x: 240, y: 420, id: 2 }] });
-  await o.page.waitForTimeout(60); const e1 = await etatPlat(o.page);
-  ok(e1.plat && !e1.t3 && !e1.wc, `Deux doigts posés, avant tout mouvement (60 ms) : à plat ${e1.plat ? "oui" : "NON"}, translate3d ${e1.t3}, will-change ${e1.wc}, échelle ×${(await echelle(o.page)).toFixed(2)}`);
-  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await o.page.waitForTimeout(900);
-  await o.page.evaluate(() => window.scrollBy(0, 2)); await o.page.waitForTimeout(700); const e2 = await etatPlat(o.page);
-  ok(!e2.plat && e2.t3 > 0 && e2.wc > 0, `Deux doigts relevés sans zoom : à plat ${e2.plat ? "OUI" : "non"}, translate3d ${e2.t3}, will-change ${e2.wc} (état normal)`);
-  ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close();
+{ // Un seul doigt sans loupe : défilement normal, pas de loupe.
+  const o = await ouvrir("apres"); const y0 = await o.page.evaluate(() => scrollY); await glisserDoigt(o, 196, 700, 0, -400); const e = await etatLoupe(o.page);
+  ok(!e.loupe && e.y > y0 + 200, `Un doigt sans loupe : la page défile (${Math.round(e.y - y0)} px), pas de loupe`); await o.ctx.close();
 }
-{ // Ordinateur (zoom au trackpad) : mode zoom du 03/11 seulement, pas de dessin à plat.
-  const o = await ouvrir("apres", "/", BUREAU); const s = await zoomer(o, 2); const e = await etatPlat(o.page);
-  ok(s > 1.5 && e.zoom && !e.plat && e.t3 > 0, `Ordinateur, zoom ×${s.toFixed(2)} : mode zoom ${e.zoom ? "actif" : "inactif"}, à plat ${e.plat ? "OUI" : "non"} (inchangé)`); await o.ctx.close();
+{ // Ordinateur : rien ne change (pas d'écran tactile).
+  const o = await ouvrir("apres", "/", BUREAU); const r = await o.page.evaluate(() => ({ ta: getComputedStyle(document.body).touchAction, l: document.documentElement.classList.contains("vf-loupe") }));
+  ok(r.ta === "auto" && !r.l, `Ordinateur : touch-action « ${r.ta} », pas de loupe`); await o.ctx.close();
 }
 for (const chemin of ["/CGV.dc.html", "/Privacy.dc.html", "/Legal.dc.html", "/Sponsors.dc.html"]) {
-  const o = await ouvrir("apres", chemin); const s = await pincer(o); ok(s > 1.5 && !o.erreurs.length, `${chemin} : zoom ×${s.toFixed(2)}, aucune erreur JS`); await o.ctx.close();
-}
-{ // Sans zoom : rien ne change (aucun reste de la correction écartée « pincement »).
-  const o = await ouvrir("apres"); const r = await o.page.evaluate(() => ({ ta: getComputedStyle(document.body).touchAction, plat: document.documentElement.classList.contains("vf-zoom-plat") }));
-  ok(r.ta === "auto" && !r.plat, `Sans zoom : touch-action « ${r.ta} », à plat ${r.plat ? "OUI" : "non"}`); await o.ctx.close();
+  const o = await ouvrir("apres", chemin); const sc = await pincer(o); ok(sc > 1.5 && !o.erreurs.length, `${chemin} : zoom de Safari gardé (×${sc.toFixed(2)}), aucune erreur JS`); await o.ctx.close();
 }
 }
 // ——— 3. Vitrine ———
@@ -176,18 +193,14 @@ for (const [profil, P] of [["iPhone", MOBILE], ["ordinateur", BUREAU]]) {
     ok(d.visible <= Math.max(0.05, t.visible * 1.5 + 0.02), `${profil}, ${nom} : pixels différents ${d.visible} % (moyen ${d.moyen}, max ${d.max}) ; témoin avant/avant ${t.visible} % (max ${t.max})`); }
   ok(!a.err.length && !c.err.length, `${profil} : aucune erreur JS` + ([...a.err, ...c.err].length ? " : " + [...a.err, ...c.err].join(" / ") : ""));
 }
-// Au zoom ×2,5 (format iPhone) : page dessinée à plat contre page d'origine, même zoom, mêmes animations figées.
-const ZPOSES = [["P0", (p) => allerP(p, 0)], ["P0,45", (p) => allerP(p, 0.45)], ["P0,75", (p) => allerP(p, 0.75)], ["étude 0,6", (p) => allerEl(p, "#analysis", 0.6)], ["étude 8", (p) => allerEl(p, "#analysis", 8)], ["cartes", (p) => allerEl(p, ".vfk", 1.2)]];
-const capturerZoom = async (version, tag) => { const f = {}, err = [];
-  for (const [nom, aller] of ZPOSES) { const o = await ouvrir(version, "/", MOBILE, { polices: false }); await o.page.waitForTimeout(3000); await aller(o.page); await o.page.waitForTimeout(/^étude/.test(nom) ? 4500 : 3500);
-    await zoomer(o, 2.5); await o.page.waitForTimeout(1200);
-    await o.page.evaluate(() => { document.getAnimations().forEach((a) => { try { a.pause(); a.currentTime = 6000; } catch (e) {} }); document.querySelectorAll("canvas").forEach((c) => (c.style.visibility = "hidden")); });
-    await o.page.waitForTimeout(500); const { data } = await o.cdp.send("Page.captureScreenshot", { format: "png" });
-    f[nom] = path.join(MESURES, `zoom-${tag}-${nom.replace(/[ ,]/g, "_")}.png`); fs.writeFileSync(f[nom], Buffer.from(data, "base64")); err.push(...o.erreurs); await o.ctx.close(); }
-  return { f, err }; };
-// Au zoom, la page à plat est dessinée directement à la résolution du zoom (avant : calques agrandis après coup) : grain de la
-// photo rééchantillonné, contours décalés de moins d'un pixel. On compare donc la FORME : niveaux de gris floutés (rayon 3 px),
-// part des pixels qui diffèrent de plus de 24 niveaux sur 255.
+// Loupe ×2,5 (format iPhone) : l'image agrandie doit être celle de l'écran d'origine, agrandie autour des doigts (centre de
+// l'écran). On compare la FORME (niveaux de gris floutés de 3 px, écart > 24/255) entre la capture pendant la loupe et la capture
+// sans loupe, découpée et agrandie de 2,5 (la loupe agrandit l'image : grain et netteté diffèrent, pas la forme).
+const ZPOSES = [["P0", (p) => allerP(p, 0)], ["P0,75", (p) => allerP(p, 0.75)], ["étude 0,6", (p) => allerEl(p, "#analysis", 0.6)], ["étude 8", (p) => allerEl(p, "#analysis", 8)], ["cartes", (p) => allerEl(p, ".vfk", 1.2)]];
+const agrandir = (fichier, cx, cy, k, sortie) => { const A = PNG.sync.read(fs.readFileSync(fichier)), W = A.width, H = A.height, B = new PNG({ width: W, height: H }), x0 = cx - cx / k, y0 = cy - cy / k;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const sx = Math.min(W - 1.001, x0 + x / k), sy = Math.min(H - 1.001, y0 + y / k), ix = Math.floor(sx), iy = Math.floor(sy), fx = sx - ix, fy = sy - iy;
+    for (let c = 0; c < 4; c++) { const v = (1 - fx) * (1 - fy) * A.data[4 * (iy * W + ix) + c] + fx * (1 - fy) * A.data[4 * (iy * W + ix + 1) + c] + (1 - fx) * fy * A.data[4 * ((iy + 1) * W + ix) + c] + fx * fy * A.data[4 * ((iy + 1) * W + ix + 1) + c]; B.data[4 * (y * W + x) + c] = v; } }
+  fs.writeFileSync(sortie, PNG.sync.write(B)); return sortie; };
 const forme = (a, b) => { const A = PNG.sync.read(fs.readFileSync(a)), B = PNG.sync.read(fs.readFileSync(b)), W = A.width, H = A.height;
   const gris = (P) => { let g = new Float32Array(W * H); for (let i = 0; i < W * H; i++) g[i] = 0.299 * P.data[4 * i] + 0.587 * P.data[4 * i + 1] + 0.114 * P.data[4 * i + 2];
     for (let passe = 0; passe < 2; passe++) { const h = new Float32Array(W * H), v = new Float32Array(W * H), r = 3;
@@ -195,38 +208,49 @@ const forme = (a, b) => { const A = PNG.sync.read(fs.readFileSync(a)), B = PNG.s
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { let s = 0, n = 0; for (let k = -r; k <= r; k++) { const yy = y + k; if (yy >= 0 && yy < H) { s += h[yy * W + x]; n++; } } v[y * W + x] = s / n; }
       g = v; } return g; };
   const ga = gris(A), gb = gris(B); let n = 0; for (let i = 0; i < W * H; i++) if (Math.abs(ga[i] - gb[i]) > 24) n++; return +(100 * n / (W * H)).toFixed(2); };
-{ const a = await capturerZoom("avant", "avant-a"), b = await capturerZoom("avant", "avant-b"), c = await capturerZoom("apres", "apres");
-  for (const [nom] of ZPOSES) { const t = ecart(a.f[nom], b.f[nom]), d = ecart(a.f[nom], c.f[nom]), ft = forme(a.f[nom], b.f[nom]), fd = forme(a.f[nom], c.f[nom]);
-    ok(fd <= ft + 2.5, `iPhone zoom ×2,5, ${nom} : forme ${fd} % (témoin ${ft} %) ; au pixel ${d.visible} % (témoin ${t.visible} %)`); }
-  ok(!a.err.length && !c.err.length, "Zoom : aucune erreur JS" + ([...a.err, ...c.err].length ? " : " + [...a.err, ...c.err].join(" / ") : "")); }
+{ const err = [];
+  for (const [nom, aller] of ZPOSES) { const o = await ouvrir("apres", "/", MOBILE, { polices: false }); await o.page.waitForTimeout(3000); await aller(o.page); await o.page.waitForTimeout(/^étude/.test(nom) ? 4500 : 3500);
+    const figer = () => o.page.evaluate(() => { document.getAnimations().forEach((a) => { try { a.pause(); a.currentTime = 6000; } catch (e) {} }); document.querySelectorAll("canvas").forEach((c) => (c.style.visibility = "hidden")); });
+    await figer(); await o.page.waitForTimeout(400); const fa = path.join(MESURES, `loupe-sans-${nom.replace(/[ ,]/g, "_")}.png`); await o.page.screenshot({ path: fa });
+    await o.page.evaluate(() => document.getAnimations().forEach((a) => { try { a.play(); } catch (e) {} }));
+    await pincerEn(o, 196, 426, 30, 75); await figer(); await o.page.waitForTimeout(600);
+    const s1 = await o.page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector(".vf")).transform).a);
+    const fb = path.join(MESURES, `loupe-avec-${nom.replace(/[ ,]/g, "_")}.png`); await o.page.screenshot({ path: fb });
+    const fr = agrandir(fa, 196 * 3, 426 * 3, s1, path.join(MESURES, `loupe-attendu-${nom.replace(/[ ,]/g, "_")}.png`));
+    const f = forme(fr, fb); ok(f <= 2.5, `Loupe ×${s1.toFixed(2)}, ${nom} : forme de l'image agrandie ${f} % de pixels différents de l'écran d'origine agrandi`);
+    err.push(...o.erreurs); await o.ctx.close(); }
+  ok(!err.length, "Loupe : aucune erreur JS" + (err.length ? " : " + err.join(" / ") : "")); }
 }
 // ——— 5. Calques ———
 // Modèle de WebKit iOS (GraphicsLayerCA) : calque de moins de 1 280 px CSS × zoom → une image entière, l × h × (3 × zoom)² × 4
 // octets ; au-delà, tuiles sur la partie visible (agrandie si le calque est réduit par une transformation), 156 Mo au plus.
+// « zoom » = zoom de Safari (visualViewport.scale) : la loupe ne le change pas.
 const memoire = (w, h, r, vis, z) => { if (!w || !h) return 0; let inter = (vis[2] - vis[0]) * (vis[3] - vis[1]), sx = 1, sy = 1;
   if (r) { const ix = Math.min(r[2], vis[2]) - Math.max(r[0], vis[0]), iy = Math.min(r[3], vis[3]) - Math.max(r[1], vis[1]); if (ix <= 0 || iy <= 0) return 0;
     inter = ix * iy; sx = Math.max(0.05, (r[2] - r[0]) / w); sy = Math.max(0.05, (r[3] - r[1]) / h); }
   if (Math.max(w, h) * z <= 1280) return w * h * 36 * z * z;
   return Math.min(156 * 1048576, Math.min(w * h, 1.2 * inter / (sx * sy)) * 36 * z * z); };
 if (section(5)) {
-console.log("\n5. Calques dessinés (Chromium, iPhone) et mémoire estimée avec le modèle de WebKit iOS, sans zoom puis au zoom");
-const POS = [["haut", (p) => allerP(p, 0)], ["P0,45", (p) => allerP(p, 0.45)], ["P0,75", (p) => allerP(p, 0.75)], ["étude 0,6", (p) => allerEl(p, "#analysis", 0.6)], ["étude 8", (p) => allerEl(p, "#analysis", 8)], ["cartes", (p) => allerEl(p, ".vfk", 1.2)], ["pied", allerBas]];
-const calques = async (version, z) => { const res = {};
+console.log("\n5. Mémoire estimée (Chromium, iPhone, modèle de WebKit iOS) : zoom de Safari ×2,5 (version d'origine) contre loupe ×2,5");
+const POS = [["haut", (p) => allerP(p, 0)], ["P0,75", (p) => allerP(p, 0.75)], ["étude 0,6", (p) => allerEl(p, "#analysis", 0.6)], ["étude 8", (p) => allerEl(p, "#analysis", 8)], ["cartes", (p) => allerEl(p, ".vfk", 1.2)]];
+const calques = async (version, mode) => { const res = {};
   for (const [nom, aller] of POS) { const o = await ouvrir(version); await o.page.waitForTimeout(2000); let L = [];
     o.cdp.on("LayerTree.layerTreeDidChange", (e) => { if (e.layers) L = e.layers; }); await o.cdp.send("LayerTree.enable"); await o.cdp.send("DOM.enable");
-    await aller(o.page); await o.page.waitForTimeout(/^étude/.test(nom) ? 4000 : 1500); const ze = z > 1 ? await zoomer(o, z) : 1;
-    await o.page.evaluate(() => window.scrollBy(0, 2)); await o.page.waitForTimeout(1500);
-    const vis = await o.page.evaluate(() => { const v = visualViewport; return [v.offsetLeft, v.offsetTop, v.offsetLeft + v.width, v.offsetTop + v.height]; });
+    await aller(o.page); await o.page.waitForTimeout(/^étude/.test(nom) ? 4000 : 1500);
+    if (mode === "zoom") await zoomer(o, 2.5); else if (mode === "loupe") await pincerEn(o, 196, 420, 30, 75);
+    await o.page.waitForTimeout(1500);
+    const z = await echelle(o.page), vis = await o.page.evaluate(() => { const v = visualViewport; return [v.offsetLeft, v.offsetTop, v.offsetLeft + v.width, v.offsetTop + v.height]; });
     let mo = 0, n = 0;
     for (const l of L.filter((l) => l.drawsContent)) { let r = null;
       if (l.backendNodeId) try { const { object } = await o.cdp.send("DOM.resolveNode", { backendNodeId: l.backendNodeId });
         const { result } = await o.cdp.send("Runtime.callFunctionOn", { objectId: object.objectId, returnByValue: true, functionDeclaration: "function(){ const e = this.nodeType === 1 ? this : this.parentElement; if (e === document.documentElement || e === document.body) return null; const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom, e.tagName]; }" });
         r = result.value || null; } catch (e) {}
-      const m = memoire(l.width, l.height, r, vis, r && r[4] === "CANVAS" ? 1 : ze); if (m > 0) { mo += m; n++; } }
-    res[nom] = { n, mo: Math.round(mo / 1048576), z: ze }; await o.ctx.close(); }
+      /* Pendant la loupe, les rectangles mesurés sont agrandis : on les ramène à l'écran d'origine pour le modèle. */
+      const m = memoire(l.width, l.height, r, mode === "loupe" ? [0, 0, 393, 852] : vis, r && r[4] === "CANVAS" ? 1 : z); if (m > 0) { mo += m; n++; } }
+    res[nom] = { n, mo: Math.round(mo / 1048576), z }; await o.ctx.close(); }
   return res; };
-for (const z of [1, 2, 3, 5]) { const ca = await calques("avant", z), cb = await calques("apres", z);
-  console.log(`  zoom ×${z}`); for (const nom in ca) console.log(`    ${nom.padEnd(10)} avant ${String(ca[nom].n).padStart(3)} calques visibles ≈ ${String(ca[nom].mo).padStart(4)} Mo   après ${String(cb[nom].n).padStart(3)} calques ≈ ${String(cb[nom].mo).padStart(4)} Mo` + (z > 1 ? `   (zoom obtenu ×${ca[nom].z.toFixed(2)} / ×${cb[nom].z.toFixed(2)})` : "")); }
+const r0 = await calques("avant", "sans"), r1 = await calques("avant", "zoom"), r2 = await calques("apres", "sans"), r3 = await calques("apres", "loupe");
+for (const nom in r0) console.log(`  ${nom.padEnd(10)} origine sans zoom ${String(r0[nom].mo).padStart(4)} Mo | origine, zoom de Safari ×${r1[nom].z.toFixed(1)} : ${String(r1[nom].mo).padStart(4)} Mo | nouvelle sans zoom ${String(r2[nom].mo).padStart(4)} Mo | nouvelle, loupe ×2,5 (Safari ×${r3[nom].z.toFixed(1)}) : ${String(r3[nom].mo).padStart(4)} Mo`);
 }
 
 console.log(echecs ? `\n${echecs} contrôle(s) en échec.` : "\nTous les contrôles passent.");

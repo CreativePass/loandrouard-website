@@ -17,6 +17,87 @@ const SAF = "/* Correction Safari (scripts/safari.mjs) : ";
 const TEX = "assets/lumiere/";
 const img = (cls, nom, extra = "") => `<img class="${cls}" src="${TEX}${nom}.png" alt="" aria-hidden="true" decoding="async"${extra}>`;
 
+// Loupe de la page d'accueil sur écran tactile (correction « loupe », 14/11 ; voir le commentaire de la correction plus bas).
+const LOUPE_CSS = `${SAF}loupe au pincement (écran tactile) : le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner. */
+@media (any-pointer: coarse) { html:not(.vf-zoom), html:not(.vf-zoom) * { touch-action: pan-x pan-y; } }
+html.vf-loupe { overflow: hidden !important; }
+html.vf-loupe body { overflow: clip !important; } /* la page agrandie déborde de l'écran : débordement coupé, sinon le navigateur agrandit la zone de mise en page (vu dans Chrome) ou dézoome */
+html.vf-loupe, html.vf-loupe * { touch-action: none !important; }
+html.vf-loupe .vf { transform-origin: 0 0; will-change: transform; }
+html.vf-loupe .vf-nuit, html.vf-loupe .vfk-c[data-grand], html.vf-loupe .vf-modale { translate: var(--loupe-x, 0px) var(--loupe-y, 0px) !important;
+  right: auto !important; bottom: auto !important; box-sizing: border-box !important; width: var(--loupe-l, 100vw) !important; height: var(--loupe-h, 100vh) !important; } /* .vf devient leur repère : taille de l'écran gardée */
+`;
+const LOUPE_JS = `<script>${SAF}loupe au pincement sur écran tactile (14/11, retour de Loan : « que je puisse zoomer comme si je zoomais sur l'écran »). */
+(() => {
+  const R = document.documentElement, tactile = window.matchMedia ? window.matchMedia("(any-pointer: coarse)") : { matches: false }, vv = window.visualViewport;
+  const SMAX = 4, SEUIL = 1.06;
+  let s = 1, tx = 0, ty = 0, actif = false, raf = 0, geste = null, anim = 0, ox = 0, oy = 0;
+  const vf = () => document.querySelector(".vf");
+  const largeur = () => R.clientWidth, hauteur = () => window.innerHeight;
+  const borner = () => { tx = Math.min(0, Math.max(largeur() * (1 - s), tx)); ty = Math.min(0, Math.max(hauteur() * (1 - s), ty)); };
+  /* Un point vu en (x, y) sans loupe est affiché en (s·x + tx, s·y + ty). .vf (origine 0 0) est déplacé d'autant, compte tenu de sa
+     place dans l'écran ; ses éléments fixes (fond « nuit », carte ouverte, fenêtre de paiement), dont .vf devient le repère, sont
+     remis à leur place d'écran (--loupe-x, --loupe-y). Une transformation n'est jamais redessinée par Safari : les calques déjà
+     dessinés sont simplement agrandis, comme une loupe sur l'écran. Mémoire graphique inchangée, mouvement fluide. */
+  const appliquer = () => { raf = 0; const v = vf(); if (!v || !actif) return;
+    const px = ox - window.scrollX, py = oy - window.scrollY;
+    v.style.transform = "translate(" + (tx + (s - 1) * px).toFixed(2) + "px," + (ty + (s - 1) * py).toFixed(2) + "px) scale(" + s.toFixed(4) + ")";
+    R.style.setProperty("--loupe-x", (-px).toFixed(2) + "px"); R.style.setProperty("--loupe-y", (-py).toFixed(2) + "px");
+    R.style.setProperty("--loupe-l", largeur() + "px"); R.style.setProperty("--loupe-h", hauteur() + "px"); };
+  const planifier = () => { if (!raf) raf = requestAnimationFrame(appliquer); };
+  const activer = () => { if (actif) return true; const v = vf(); if (!v) return false;
+    const b = v.getBoundingClientRect(); ox = b.left + window.scrollX; oy = b.top + window.scrollY;
+    actif = true; window.__ldLoupeTactile = true; window.__ldZoom = true; R.classList.add("vf-loupe"); appliquer(); return true; };
+  const desactiver = () => { cancelAnimationFrame(anim); anim = 0; cancelAnimationFrame(raf); raf = 0; actif = false; geste = null; s = 1; tx = ty = 0;
+    const v = vf(); if (v) v.style.transform = ""; ["--loupe-x", "--loupe-y", "--loupe-l", "--loupe-h"].forEach((k) => R.style.removeProperty(k)); R.classList.remove("vf-loupe");
+    window.__ldLoupeTactile = false; window.__ldZoom = false; requestAnimationFrame(() => window.dispatchEvent(new Event("scroll"))); };
+  /* Retour à la taille normale en douceur (0,2 s). */
+  const revenir = () => { cancelAnimationFrame(anim); const s0 = s, x0 = tx, y0 = ty, t0 = performance.now();
+    const pas = (now) => { const k = Math.min(1, (now - t0) / 200), e = 1 - Math.pow(1 - k, 3); s = s0 + (1 - s0) * e; tx = x0 * (1 - e); ty = y0 * (1 - e); appliquer();
+      if (k < 1) anim = requestAnimationFrame(pas); else desactiver(); };
+    anim = requestAnimationFrame(pas); };
+  /* Élan après un glissé d'un doigt, freiné, arrêté au bord. */
+  const lancer = (vx, vy) => { cancelAnimationFrame(anim); let t0 = performance.now();
+    const pas = (now) => { const dt = Math.min(40, now - t0); t0 = now; tx += vx * dt; ty += vy * dt; const f = Math.pow(0.94, dt / 16); vx *= f; vy *= f;
+      const x = tx, y = ty; borner(); if (x !== tx) vx = 0;
+      if (y !== ty) { const c = document.querySelector(".vfk-c[data-grand]"), av = c ? c.scrollTop : 0; if (c) c.scrollTop -= (y - ty) / s; if (!c || c.scrollTop === av) vy = 0; } /* élan transmis à la carte ouverte */
+      appliquer();
+      anim = Math.abs(vx) + Math.abs(vy) > 0.02 ? requestAnimationFrame(pas) : 0; };
+    anim = requestAnimationFrame(pas); };
+  const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  const glisse = (t) => ({ type: "glisse", x: t.clientX, y: t.clientY, x0: tx, y0: ty, vx: 0, vy: 0, tp: performance.now(), px: t.clientX, py: t.clientY });
+  const debut = (e) => { const t = e.touches; if (!tactile.matches || (vv && vv.scale > 1.01)) return;
+    if (t.length === 2) { if (!activer()) return; cancelAnimationFrame(anim); anim = 0;
+      geste = { type: "pince", d0: Math.max(10, dist(t[0], t[1])), mx: (t[0].clientX + t[1].clientX) / 2, my: (t[0].clientY + t[1].clientY) / 2, s0: s, x0: tx, y0: ty, sy: window.scrollY }; }
+    else if (t.length === 1 && actif) { cancelAnimationFrame(anim); anim = 0; geste = glisse(t[0]); }
+    else geste = null; };
+  const bouge = (e) => { const t = e.touches; if (!geste || !actif) return;
+    if (geste.type === "pince" && t.length >= 2) { const mx = (t[0].clientX + t[1].clientX) / 2, my = (t[0].clientY + t[1].clientY) / 2;
+      s = Math.min(SMAX, Math.max(1, geste.s0 * dist(t[0], t[1]) / geste.d0));
+      /* Point de la page sous les doigts au début du geste (corrigé d'un éventuel défilement du tout début), qui suit les doigts. */
+      const qx = (geste.mx - geste.x0) / geste.s0, qy = (geste.my - geste.y0) / geste.s0 - (window.scrollY - geste.sy);
+      tx = mx - s * qx; ty = my - s * qy; borner(); planifier(); }
+    else if (geste.type === "glisse" && t.length === 1) { const now = performance.now(), dt = Math.max(1, now - geste.tp);
+      geste.vx = 0.6 * geste.vx + 0.4 * (t[0].clientX - geste.px) / dt; geste.vy = 0.6 * geste.vy + 0.4 * (t[0].clientY - geste.py) / dt;
+      geste.px = t[0].clientX; geste.py = t[0].clientY; geste.tp = now;
+      tx = geste.x0 + t[0].clientX - geste.x; const brut = geste.y0 + t[0].clientY - geste.y; ty = brut; borner(); planifier();
+      /* Au bord de la vue agrandie, la carte ouverte (qui défile seule) continue de défiler dessous : on la lit en entier sans dézoomer. */
+      const deb = brut - ty, c = document.querySelector(".vfk-c[data-grand]"); if (c && deb !== geste.deb) c.scrollTop -= (deb - (geste.deb || 0)) / s; geste.deb = deb; } };
+  const finir = (e) => { const t = e.touches; if (!geste || !actif) return;
+    if (geste.type === "pince") { if (t.length >= 2) return; if (s < SEUIL) { geste = null; revenir(); return; } geste = t.length === 1 ? glisse(t[0]) : null; return; }
+    if (geste.type === "glisse" && !t.length) { const g = geste; geste = null; if (performance.now() - g.tp < 80) lancer(g.vx, g.vy); } };
+  /* Écouteurs passifs : le défilement normal (un doigt, sans loupe) n'attend jamais le script. */
+  document.addEventListener("touchstart", debut, { passive: true, capture: true });
+  document.addEventListener("touchmove", bouge, { passive: true, capture: true });
+  document.addEventListener("touchend", finir, { passive: true, capture: true });
+  document.addEventListener("touchcancel", finir, { passive: true, capture: true });
+  window.addEventListener("scroll", () => { if (actif) planifier(); }, { passive: true });
+  window.addEventListener("resize", () => { if (actif && !geste) desactiver(); });
+  window.addEventListener("orientationchange", () => { if (actif) desactiver(); });
+})();
+</script>
+`;
+
 const TOUTES = [
   // En-tête : --hauteur-header vaut 68 px dans le design system, mais l'en-tête mesure 134 px sur iPhone (3 lignes) et
   // ~96 px dans Safari sur Mac. Son margin-bottom négatif (−68 px) laissait alors une bande vide au-dessus du
@@ -242,6 +323,7 @@ const TOUTES = [
       "@keyframes vfa-jour { from { transform: translate3d(0,0,0) scale(5); } to { transform: translate3d(38vw, 22vh, 0) scale(5.75); } }\n" +
       "</style>\n</helmet>" },
 
+  // CANDIDAT ÉCARTÉ le 14/11 (arrêts persistants sur les cartes, défilement saccadé pendant le zoom) : remplacé par « loupe ».
   // « Zoom à plat » (retour de Loan du 09/11, après « pincement » : « je ne peux même plus zoomer ») : le zoom à deux doigts
   // reste possible ; c'est la page qui change de manière de se dessiner tant qu'elle est agrandie, sur écran tactile.
   // Hors zoom, rien ne change. Pendant le zoom (html.vf-zoom, échelle > 1,05, posée par COUVERT_JS de scripts/construire.mjs,
@@ -312,6 +394,32 @@ const TOUTES = [
   { id: "zoomplat", quoi: "Zones recouvertes : hauteur de l'écran de mise en page quand la page est agrandie", fichiers: VF, n: 1,
     avant: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = window.innerHeight,",
     apres: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = Math.max(window.innerHeight, R.clientHeight) /* Correction Safari (scripts/safari.mjs) : page agrandie */," },
+
+  // « Loupe » (14/11, retour de Loan après « zoomplat » : « ça crashe toujours sur les cartes […] quand je zoome et que je scrolle,
+  // ce n'est pas fluide du tout. Le but, c'est juste que je puisse zoomer comme si je me rapprochais, comme si je zoomais sur
+  // l'écran »). Le zoom de Safari redessine TOUJOURS chaque calque à la nouvelle échelle (GraphicsLayerCA::updateContentsScale :
+  // échelle de l'écran × zoom ; aucune exception par calque, RenderLayerBacking ne fournit pas customContentsScale) : c'est voulu
+  // pour un texte net, et c'est ce qui sature la mémoire sur cette page. Une transformation CSS, elle, n'est jamais redessinée
+  // (updateRootRelativeScale désactivé) : les calques déjà dessinés sont agrandis tels quels, comme une loupe sur l'écran.
+  // Sur la page d'accueil, écran tactile : le pincement de Safari est désactivé (touch-action) et remplacé par cette loupe.
+  // - Pincer : agrandit l'écran autour des doigts, jusqu'à ×4 ; relâcher sous ×1,06 : retour à la normale en douceur.
+  // - Agrandi : un doigt déplace la vue dans l'écran agrandi (avec élan) ; la page ne défile pas et ses animations attendent ;
+  //   un toucher reste un toucher (liens, cartes). Pour aller ailleurs dans la page : revenir à ×1, défiler, rezoomer.
+  // - Mémoire graphique inchangée par rapport à la page sans zoom, mouvement fluide ; le texte agrandi est moins net que le zoom
+  //   de Safari (c'est l'image de l'écran qui est agrandie).
+  // CGV, Privacy, Legal et Sponsors (légères) gardent le zoom de Safari. Ordinateur inchangé.
+  { id: "loupe", quoi: "Loupe au pincement sur la page d'accueil (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>", apres: LOUPE_CSS + "</style>\n</helmet>" },
+  { id: "loupe", quoi: "Loupe au pincement sur la page d'accueil (script)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: LOUPE_JS + '<script src="./support.js"></script>' },
+  // Pendant la loupe, les scènes animées au défilement (projecteur, étude, cartes) et la vérification des zones recouvertes
+  // attendent : elles lisent la position des éléments à l'écran, que la loupe agrandit. Elles reprennent au retour à ×1.
+  { id: "loupe", quoi: "Loupe : projecteur et étude en pause", fichiers: VF, n: 2,
+    avant: "    const maj = () => {\n      raf = 0;\n", apres: "    const maj = () => {\n      raf = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
+  { id: "loupe", quoi: "Loupe : cartes en pause", fichiers: VF, n: 1,
+    avant: "    const maj = () => {\n      rafS = 0;\n", apres: "    const maj = () => {\n      rafS = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
+  { id: "loupe", quoi: "Loupe : zones recouvertes en pause", fichiers: VF, n: 1,
+    avant: "const verifier = () => { raf = 0; const v = vf(); if (!v) return;", apres: "const verifier = () => { raf = 0; const v = vf(); if (!v || window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */" },
 ];
 
 // Fichiers ajoutés par une correction (copiés seulement si une page construite l'utilise).
@@ -328,7 +436,9 @@ const choix = process.env.SAFARI;
 // « zoomplat », « eteints » et « lueur » (retour de Loan du 09/11 : arrêt de la page au zoom à deux doigts sur mobile) : voir
 // PERFORMANCE.md, « Retour de Loan du 09/11 ». Image identique (Chromium) ; à confirmer sur l'iPhone (adresse de test).
 // « pincement » (zoom bloqué) écarté : Loan veut garder le zoom.
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "zoomplat"];
+// « zoomplat » écarté le 14/11 (arrêts persistants sur les cartes, défilement saccadé pendant le zoom) : remplacé par « loupe »
+// (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « 14/11 ».
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).

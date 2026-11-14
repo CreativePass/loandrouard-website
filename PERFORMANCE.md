@@ -923,6 +923,30 @@ Version testée : `88984de4` (adresse de test, `zoomplat` du 09/11).
 
 Essai WebKitGTK (11/11) : installable par apt (2.52, même `RenderLayerCompositor` que Safari), mais ni journal `Compositing` dans cette version publiée ni inspecteur distant utilisable ici ; sans bac à sable, refusé (à juste titre). Mesure faite par les règles ci-dessus.
 
+### Retour de Loan du 14/11 : la loupe remplace le zoom de Safari sur la page d'accueil
+
+Retour sur la version `4b58c5f6` : « ça crashe toujours sur les cartes. Parfois ça s'ouvre, ça marche ; après je ferme, j'en ouvre une autre, je zoome, et là ça ne marche plus. Sur le yin-yang, et même avant, quand je zoome et que je fais défiler, ce n'est pas fluide du tout. Le but, c'est juste que je puisse zoomer comme si je me rapprochais, comme si je zoomais sur l'écran. »
+
+**Pourquoi le zoom de Safari ne peut pas être allégé davantage** (code de WebKit) : à chaque zoom, Safari redessine chaque calque de la page à l'échelle de l'écran × zoom (`GraphicsLayerCA::updateContentsScale`), sans exception possible par calque (`customContentsScale` n'est fourni par aucun `RenderLayerBacking`). C'est voulu (texte net), et c'est ce qui sature la mémoire de cette page ; le mode à plat réduisait le nombre de calques mais redessinait toute la page à chaque image pendant le défilement (saccades), et des arrêts restaient sur les cartes (cause exacte non établie ici).
+
+**Loupe** (`loupe`, `scripts/safari.mjs`, page d'accueil, écran tactile) : le pincement de Safari est désactivé (`touch-action: pan-x pan-y`) et remplacé par une loupe du site. Une transformation CSS n'est jamais redessinée par Safari (`updateRootRelativeScale` désactivé) : la loupe agrandit les calques déjà dessinés, comme un zoom sur l'écran.
+- Pincer : agrandit autour des doigts, jusqu'à ×4 ; relâcher sous ×1,06 : retour à la normale en 0,2 s.
+- Agrandi : un doigt déplace la vue (avec élan), bornée à l'écran agrandi ; la page ne défile pas (`overflow: hidden` sur `<html>`, comme pour la carte ouverte) ; un toucher reste un toucher (liens, cartes). Carte ouverte : au bord de la vue, elle continue de défiler dessous (on la lit en entier sans dézoomer). Pour aller ailleurs dans la page : revenir à ×1, défiler, rezoomer.
+- Projecteur, étude, cartes et zones recouvertes attendent pendant la loupe (ils lisent les positions à l'écran, que la loupe agrandit) ; ils reprennent au retour à ×1.
+- Technique : `.vf` (toute la page) reçoit `translate(…) scale(s)` (origine 0 0, `will-change: transform`) ; ses éléments fixes (fond « nuit », carte ouverte, fenêtre de paiement), dont `.vf` devient le repère, sont remis à leur place d'écran et à la taille de l'écran (`--loupe-x/y/l/h`) ; débordement de la page agrandie coupé (`overflow: clip` sur `<body>`, sinon Chrome agrandissait la zone de mise en page à 1 494 px) ; indicateur `window.__ldLoupeTactile` (`__ldLoupe` est déjà pris par l'effet loupe des listes du 01/11).
+- Mémoire graphique : celle de la page sans zoom (le zoom de Safari reste à ×1). Mouvement fluide (aucun redessin). Texte agrandi moins net qu'avec le zoom de Safari (c'est l'image de l'écran qui est agrandie : à ×2,5, environ la netteté d'un écran ordinaire).
+- CGV, Privacy, Legal et Sponsors gardent le zoom de Safari ; ordinateur inchangé. `zoomplat` écarté (gardé dans `scripts/safari.mjs`).
+
+**Vérifié dans Chromium** (`node scripts/verif-pincement.mjs <construction d'avant>`, format iPhone 393 × 852) :
+- **Loupe**, en haut de page, au projecteur (P 0,75), dans l'étude (début et séparation du yin-yang), sur les cartes et au pied de page : ×2,5 au pincement, zoom de Safari resté à ×1 ; fond « nuit » (fixe) et en-tête (épinglé) exactement à leur place agrandie (écart 0,0 px) ; le point sous les doigts reste sous les doigts ; un toucher vise le même élément qu'avant la loupe.
+- Glissé d'un doigt agrandi : vue déplacée avec élan, page non défilée, l'écran agrandi couvre toujours l'écran. Scènes en pause pendant la loupe ; pincement inverse : retour à ×1, page de nouveau défilable et animée. Un doigt sans loupe : défilement normal. Ordinateur : rien ne change. CGV, Privacy, Legal, Sponsors : zoom de Safari ×5 gardé.
+- **Carte ouverte** (scénario de Loan : ouvrir, zoomer, refermer, en ouvrir une autre, zoomer) : la carte et son fond suivent la loupe (fond à (−294, −630) et 983 × 2 130 px à ×2,5 autour du centre, attendu) ; glissé vers le haut au bord de la vue : la carte défile de 0 à 450 px, page immobile ; aucune erreur JS.
+- **Captures** : sans zoom, identiques à la version d'origine (iPhone et ordinateur ; étude au format iPhone : lueur compacte, 2 nuances sur 255 au plus). Avec la loupe ×2,5 : même image que l'écran d'origine agrandi (forme : 0 à 0,7 % de pixels différents).
+- **Mémoire estimée** (modèle de WebKit, partie visible) : version d'origine sans zoom 106 à 276 Mo, avec le zoom de Safari ×2,5 : 192 à 376 Mo ; nouvelle version sans zoom 85 à 254 Mo, avec la loupe ×2,5 : 70 à 221 Mo (le zoom de Safari reste à ×1).
+- **Adresse de test** (version Cloudflare `84f2e39a`) : 138 fichiers servis identiques à `public/` ; loupe ×4 au format iPhone (anglais et français), zoom de Safari ×1, aucune erreur JS ; ordinateur inchangé.
+
+**Reste à confirmer sur l'iPhone de Loan** : plus d'arrêt, loupe fluide, texte assez lisible agrandi ; aisance du geste (pincer, glisser, revenir).
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).
