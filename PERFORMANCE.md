@@ -947,6 +947,28 @@ Retour sur la version `4b58c5f6` : « ça crashe toujours sur les cartes. Parfoi
 
 **Reste à confirmer sur l'iPhone de Loan** : plus d'arrêt, loupe fluide, texte assez lisible agrandi ; aisance du geste (pincer, glisser, revenir).
 
+### Retour de Loan du 16/11 : arrêts « quand je zoome pendant que ça défile » — filet de sécurité
+
+Retour sur la version `84f2e39a` (loupe) : « ça plante encore, on dirait que ça n'a pas marché ; ça plante aussi en dehors des cartes quand je zoome pendant que ça défile ». La page servie contenait bien la loupe (HTML revalidé à chaque ouverture : `max-age=0, must-revalidate`).
+
+**Cause trouvée** (WebKit, `WKContentViewInteraction.mm`) : `_shouldIgnoreTouchEvent` → `isInterruptingMomentumScrollingWithEvent`. Des doigts posés **pendant l'élan d'un défilement** ne sont pas transmis à la page : leur `touch-action` n'est jamais enregistré (`_handleTouchActionsForTouchEvent` n'est pas appelé), donc `WKTouchActionGestureRecognizer` ne peut pas empêcher le pincement, et la loupe ne voit pas ces doigts. Safari fait alors son propre zoom et redessine toute la page en grand. Aux cartes, la page arrive presque toujours sur sa lancée (freinage et rebond de l'arrêt sur les cartes) : d'où les arrêts surtout là. Ce zoom ne peut pas être empêché par la page.
+- Autre piste fermée : sur iPhone, Safari ne sait pas afficher une image « telle quelle » dans un calque (`GraphicsLayerCARemote::canDirectlyCompositeNativeImage` renvoie faux : « PlatformCALayerRemote can't currently proxy directly composited image contents ») ; toute image d'un calque est redessinée au zoom.
+
+**Filet** (`filet`, `scripts/safari.mjs`, en plus de la loupe) : la page doit survivre à ce zoom-là.
+- **Élan interrompu** : un défilement qui s'arrête net (deux images immobiles) après au moins 4 images de défilement continu à plus de 0,15 px/ms, sans doigt transmis à la page, est le signe que des doigts viennent d'interrompre l'élan. La page passe aussitôt à plat, niveau **léger** (image identique : `translate3d` → `translate`, `will-change` retiré, faces arrière visibles dans le projecteur et l'étude, apparitions terminées arrêtées), bien avant la fin du pincement. 2,5 s, prolongées tant que la page bouge encore ; un nouveau toucher transmis (défilement ou loupe) la rend normale aussitôt. Une fin d'élan naturelle (vitesse déjà très faible) et un saut de position (lien, script) ne déclenchent rien.
+- **Zoom de Safari** (`visualViewport.scale` > 1,01) : niveau **complet** tant que dure le zoom (poussière, sable d'or et grain cachés, halos décoratifs retirés, cartes sans 3D), comme `zoomplat` ; le pincement de Safari reste permis pour dézoomer (`html.vf-zoom`).
+- La loupe reste le chemin normal (doigts transmis : pas de zoom de Safari).
+
+**Diagnostic de l'adresse de test** (`optimise/diag.js`, `optimise/resultats.html`) : chaque relevé note maintenant le zoom (`z` zoom de Safari, `L` loupe, `f` / `F` page à plat léger / complet, `O` carte ouverte), écrit aussitôt à chaque changement. Après un arrêt, `resultats.html` montre l'état juste avant.
+
+**Vérifié dans Chromium** (`node scripts/verif-pincement.mjs …`, section 2 nouvelle ; l'élan de Safari est simulé par un défilement image par image qui ralentit, sans toucher transmis, car Chromium sans écran ne produit pas d'élan ; le zoom de Safari, par `Input.synthesizePinchGesture` en « default », qui passe outre `touch-action` comme les doigts non transmis) :
+- zoom de Safari ×2,5 sur les cartes : à plat complet (0 élément 3D, toiles cachées), loupe inactive ; dézoom : état normal ;
+- élan qui ralentit jusqu'à l'arrêt (795 px) : rien ; élan arrêté net (2,5 px/ms, ou lent : 0,35 px/ms) : à plat léger 0,15 s après, image identique (toiles gardées) ; 2,9 s plus tard, sans zoom : normal ; nouveau toucher transmis : normal aussitôt ; élan arrêté puis zoom de Safari : déjà à plat avant le zoom, puis à plat complet ; saut de position : rien ;
+- loupe (section 1) et captures sans zoom (section 4) : inchangées, tous les contrôles passent ; aucune erreur JS.
+- Adresse de test (version Cloudflare `435683fe`) : 138 fichiers servis identiques à `public/` ; loupe ×4 au format iPhone (anglais et français), aucune erreur JS ; diagnostic avec la colonne « zoom ».
+
+**Non démontré** : que l'arrêt net de l'élan arrive, sur l'iPhone, avant que Safari ne redessine au nouveau zoom (attendu : dès que les doigts touchent l'écran, donc tout au long du pincement) ; qu'aucun autre chemin ne zoome sans prévenir. Le diagnostic le dira au prochain arrêt.
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).

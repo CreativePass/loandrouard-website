@@ -5,6 +5,8 @@
 //   1. Loupe (14/11), vrais événements tactiles : zoom de Safari bloqué sur l'accueil et remplacé par la loupe ; image agrandie
 //      fidèle (fond fixe, en-tête, point sous les doigts, cible d'un toucher) ; glissé d'un doigt ; scènes en pause ; retour à ×1 ;
 //      un doigt sans loupe défile ; ordinateur et pages légales inchangés.
+//   2. Filet (16/11) : zoom de Safari quand les doigts ne sont pas transmis (simulé) → page à plat complet ; élan arrêté net → à plat
+//      léger aussitôt, puis normal ; fin d'élan naturelle et saut de position : rien.
 //   3. Vitrine : cartes et mur visibles dès l'ouverture, libérés après la fermeture (fondu terminé).
 //   4. Captures AVANT / APRÈS identiques sans zoom (animations figées au même instant), le long de toute la page ; témoin
 //      AVANT / AVANT. Loupe ×2,5 : même image que l'écran d'origine agrandi.
@@ -38,7 +40,7 @@ const MOBILE = { viewport: { width: 393, height: 852 }, deviceScaleFactor: 3, is
 const BUREAU = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 };
 
 // SECTIONS=4,5 : seulement ces contrôles.
-const SECTIONS = (process.env.SECTIONS || "1,3,4,5").split(",").map(Number), section = (n) => SECTIONS.includes(n);
+const SECTIONS = (process.env.SECTIONS || "1,2,3,4,5").split(",").map(Number), section = (n) => SECTIONS.includes(n);
 // Ouvrir / fermer la vitrine par le bouton lui-même (un clic à la souris peut tomber sur la scène encore en mouvement).
 const ouvrirVitrine = (p) => p.evaluate(() => document.querySelector(".vfp-affiche").click());
 const fermerVitrine = (p) => p.evaluate(() => { const b = document.querySelector(".vfp-voir-f button, .vfp-voir-f a, .vfp-voir-f [role=button]"); if (b) b.click(); });
@@ -146,6 +148,38 @@ for (const [nom, aller] of [["haut de page", null], ["projecteur P 0,75", (p) =>
 for (const chemin of ["/CGV.dc.html", "/Privacy.dc.html", "/Legal.dc.html", "/Sponsors.dc.html"]) {
   const o = await ouvrir("apres", chemin); const sc = await pincer(o); ok(sc > 1.5 && !o.erreurs.length, `${chemin} : zoom de Safari gardé (×${sc.toFixed(2)}), aucune erreur JS`); await o.ctx.close();
 }
+}
+// ——— 2. Filet (16/11) : quand Safari zoome lui-même (doigts posés pendant l'élan, non transmis à la page) ———
+const etatFilet = (page) => page.evaluate(() => { const R = document.documentElement, v = document.querySelector(".vf");
+  return { plat: R.classList.contains("vf-zoom-plat"), natif: R.classList.contains("vf-zoom-natif"), loupe: R.classList.contains("vf-loupe"), z: +visualViewport.scale.toFixed(2),
+    t3: [...v.querySelectorAll("*")].filter((e) => e.style && /translate3d\(/.test(e.style.transform)).length, toiles: [...v.querySelectorAll("canvas")].filter((c) => getComputedStyle(c).visibility !== "hidden").length }; });
+/* Élan comme dans Safari : défilement image par image qui ralentit, sans toucher transmis ; arret = image où il s'arrête net. */
+const elan = (o, v0, arret) => o.page.evaluate(([v0, arret]) => new Promise((ok) => { document.documentElement.style.scrollBehavior = "auto"; let v = v0, n = 0, t = performance.now();
+  const pas = (now) => { const dt = now - t; t = now; n++; if (arret && n >= arret) return ok(Math.round(scrollY)); scrollBy(0, v * dt); v *= Math.pow(0.95, dt / 16); if (v < 0.02) return ok(Math.round(scrollY)); requestAnimationFrame(pas); };
+  requestAnimationFrame(pas); }), [v0, arret]);
+if (section(2)) {
+console.log("\n2. Filet : zoom de Safari quand les doigts ne sont pas transmis (simulé), élan interrompu");
+{ const o = await ouvrir("apres"); await allerEl(o.page, ".vfk", 1); await o.page.waitForTimeout(2500); const e0 = await etatFilet(o.page);
+  await zoomer(o, 2.5); const e1 = await etatFilet(o.page);
+  ok(!e0.plat && e1.z > 2 && e1.plat && e1.natif && !e1.t3 && !e1.toiles && !e1.loupe, `Zoom de Safari ×${e1.z} sur les cartes : à plat complet ${e1.plat && e1.natif ? "oui" : "NON"}, translate3d ${e1.t3}, toiles visibles ${e1.toiles}, loupe ${e1.loupe ? "OUI" : "non"}`);
+  await o.cdp.send("Input.synthesizePinchGesture", { x: 100, y: 200, scaleFactor: 0.4, relativeSpeed: 800, gestureSourceType: "default" }).catch(() => {}); await o.page.waitForTimeout(1200);
+  await o.page.evaluate(() => scrollBy(0, 2)); await o.page.waitForTimeout(800); const e2 = await etatFilet(o.page);
+  ok(e2.z <= 1.01 && !e2.plat && !e2.natif && e2.t3 > 0, `Dézoom (×${e2.z}) : état normal`); ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close(); }
+{ const o = await ouvrir("apres"); const y0 = await o.page.evaluate(() => scrollY), y1 = await elan(o, 2.5, 0); await o.page.waitForTimeout(200); const e = await etatFilet(o.page);
+  ok(y1 - y0 > 300 && !e.plat, `Élan qui ralentit jusqu'à l'arrêt (${Math.round(y1 - y0)} px) : à plat ${e.plat ? "OUI" : "non"}`); await o.ctx.close(); }
+{ const o = await ouvrir("apres"); await elan(o, 2.5, 12); await o.page.waitForTimeout(150); const e1 = await etatFilet(o.page); await o.page.waitForTimeout(2900); const e2 = await etatFilet(o.page);
+  ok(e1.plat && !e1.natif && !e1.t3 && e1.toiles > 0, `Élan arrêté net en pleine lancée : à plat léger 0,15 s après (translate3d ${e1.t3}, toiles gardées ${e1.toiles})`);
+  ok(!e2.plat, `2,9 s plus tard, sans zoom : état normal`);
+  await elan(o, 2.5, 12); await o.page.waitForTimeout(150); const e3 = await etatFilet(o.page);
+  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 196, y: 600, id: 1 }] }); await o.page.waitForTimeout(100); const e4 = await etatFilet(o.page); await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  ok(e3.plat && !e4.plat, `Nouveau toucher transmis après un élan arrêté : état normal aussitôt`);
+  await elan(o, 2.5, 12); await o.page.waitForTimeout(150); const e5 = await etatFilet(o.page); await zoomer(o, 2.5); const e6 = await etatFilet(o.page);
+  ok(e5.plat && e6.plat && e6.natif && e6.z > 2, `Élan arrêté puis zoom de Safari : déjà à plat avant le zoom, puis à plat complet à ×${e6.z}`);
+  ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close(); }
+{ const o = await ouvrir("apres"); await elan(o, 0.35, 10); await o.page.waitForTimeout(150); const e = await etatFilet(o.page);
+  ok(e.plat, `Élan lent (0,35 px/ms) arrêté net : à plat léger ${e.plat ? "oui" : "NON"}`); await o.ctx.close(); }
+{ const o = await ouvrir("apres"); await o.page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; scrollTo(0, 6000); }); await o.page.waitForTimeout(400); const e = await etatFilet(o.page);
+  ok(!e.plat, `Saut de position instantané (lien, script) : à plat ${e.plat ? "OUI" : "non"}`); await o.ctx.close(); }
 }
 // ——— 3. Vitrine ———
 if (section(3)) {

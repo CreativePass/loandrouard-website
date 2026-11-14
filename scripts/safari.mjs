@@ -17,6 +17,61 @@ const SAF = "/* Correction Safari (scripts/safari.mjs) : ";
 const TEX = "assets/lumiere/";
 const img = (cls, nom, extra = "") => `<img class="${cls}" src="${TEX}${nom}.png" alt="" aria-hidden="true" decoding="async"${extra}>`;
 
+// Filet de sécurité quand Safari zoome lui-même (correction « filet », 16/11 ; voir le commentaire de la correction plus bas).
+const FILET_CSS = `${SAF}filet : page à plat (sans calques séparés) quand Safari zoome lui-même ou peut le faire (élan interrompu). */
+/* Niveau léger (image identique) : will-change retiré, faces arrière visibles dans le projecteur et l'étude (rien n'y tourne en 3D). */
+html.vf-zoom-plat .vf *:not(.vfp-affiche), html.vf-zoom-plat .vf *::before, html.vf-zoom-plat .vf *::after { will-change: auto !important; }
+html.vf-zoom-plat .vfp *, html.vf-zoom-plat .vfa * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; }
+/* Niveau complet, seulement si Safari a vraiment zoomé : poussière, sable d'or et grain cachés ; halos décoratifs retirés (un filtre
+   donne toujours un calque dans Safari) ; cartes de la planche sans 3D (la bonne face reste affichée). */
+html.vf-zoom-natif .vf canvas, html.vf-zoom-natif .vf-nuit u, html.vf-zoom-natif .vfp-grain, html.vf-zoom-natif .vfa-papier u, html.vf-zoom-natif .vfa-noir u { visibility: hidden !important; }
+html.vf-zoom-natif .vfa-svg--or, html.vf-zoom-natif .vfa-taiji, html.vf-zoom-natif .vfa-taiji img, html.vf-zoom-natif .vfk-eclat { filter: none !important; }
+html.vf-zoom-natif .vfk * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; }
+html.vf-zoom-natif .vfk-flip, html.vf-zoom-natif .vfk-dos { transform: none !important; -webkit-transform-style: flat !important; transform-style: flat !important; }
+`;
+const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même (16/11). Des doigts posés pendant l'élan d'un défilement ne sont pas
+   transmis à la page (WebKit : isInterruptingMomentumScrollingWithEvent) : ni touch-action ni la loupe ne les voient, et Safari zoome en
+   redessinant toute la page. La page passe donc à plat dès que le défilement s'arrête net en pleine lancée (niveau léger, image
+   identique), et complètement si Safari a zoomé. */
+(() => {
+  const R = document.documentElement, tactile = window.matchMedia ? window.matchMedia("(any-pointer: coarse)") : { matches: false }, vv = window.visualViewport;
+  /* translate3d(x, y, z) → translate(x, y) : même position, sans calque séparé (valeurs avec calc() comprises). */
+  const deux = (t) => { let i = t.indexOf("translate3d("); while (i >= 0) { let j = i + 12, p = 1; const a = []; let d = j;
+      for (; j < t.length && p; j++) { const c = t[j]; if (c === "(") p++; else if (c === ")") { if (!--p) break; } else if (c === "," && p === 1) { a.push(t.slice(d, j)); d = j + 1; } }
+      if (p) return t; a.push(t.slice(d, j)); if (a.length !== 3) return t;
+      t = t.slice(0, i) + "translate(" + a[0].trim() + ", " + a[1].trim() + ")" + t.slice(j + 1); i = t.indexOf("translate3d(", i + 10); }
+    return t; };
+  const plat = (el) => { const t = el.style && el.style.transform; if (t && t.indexOf("translate3d(") >= 0) { const n = deux(t); if (n !== t) el.style.transform = n; } };
+  let obs = null, interrompu = false, tInt = 0, doigts = 0;
+  const natif = () => (!!vv && vv.scale > 1.01) || R.classList.contains("vf-zoom");
+  const suivre = () => { const n = natif() && tactile.matches, z = n || (interrompu && tactile.matches);
+    if (R.classList.contains("vf-zoom-natif") !== n) R.classList.toggle("vf-zoom-natif", n);
+    if (z && !obs) { R.classList.add("vf-zoom-plat"); document.querySelectorAll('.vf [style*="translate3d"]').forEach(plat);
+      /* Apparitions du projecteur terminées (elles finissent sur l'état normal) : arrêtées, sinon gardées en calques. */
+      (document.getAnimations ? document.getAnimations() : []).forEach((a) => { if (/^vfp-(frappe|chauffe|apparait)$/.test(a.animationName || "") && a.playState === "finished") try { a.cancel(); } catch (e) {} });
+      obs = new MutationObserver((l) => { for (const r of l) plat(r.target); }); /* chaque image du script : remis à plat avant d'être dessiné */
+      obs.observe(document.body, { attributes: true, attributeFilter: ["style"], subtree: true }); }
+    else if (!z && obs) { obs.disconnect(); obs = null; R.classList.remove("vf-zoom-plat"); window.dispatchEvent(new Event("scroll")); } };
+  new MutationObserver(suivre).observe(R, { attributes: true, attributeFilter: ["class"] }); suivre();
+  if (vv) vv.addEventListener("resize", suivre);
+  /* Élan interrompu : défilement arrêté net (deux images immobiles) après une vitesse > 0,15 px/ms, sans doigt transmis à la page.
+     Page à plat (léger) pendant 2,5 s, prolongé tant que la page bouge encore (pincement qui la déplace) ; un nouveau toucher
+     transmis (défilement ou loupe) la rend aussitôt normale. Une fin d'élan naturelle (vitesse déjà faible) ne déclenche rien. */
+  const fin = () => { interrompu = false; suivre(); };
+  const armer = () => { clearTimeout(tInt); tInt = setTimeout(fin, 2500); };
+  let y0 = 0, t0 = 0, v = 0, immobile = 0, mouv = 0, boucle = 0;
+  const pas = (now) => { const y = window.scrollY, dy = y - y0, dt = Math.max(1, now - t0); y0 = y; t0 = now;
+    if (dy !== 0) { v = 0.5 * v + 0.5 * dy / dt; immobile = 0; mouv++; boucle = requestAnimationFrame(pas); return; }
+    if (++immobile < 2) { boucle = requestAnimationFrame(pas); return; }
+    /* au moins 4 images de défilement continu : un saut de position instantané (lien, script) n'est pas un élan */
+    boucle = 0; if (mouv >= 4 && Math.abs(v) > 0.15 && !doigts && tactile.matches) { interrompu = true; suivre(); armer(); } v = 0; mouv = 0; };
+  window.addEventListener("scroll", () => { if (!boucle) { y0 = window.scrollY; t0 = performance.now(); immobile = 0; mouv = 0; boucle = requestAnimationFrame(pas); } if (interrompu) armer(); }, { passive: true });
+  const toucher = (e) => { doigts = e.touches ? e.touches.length : 0; if (e.type === "touchstart" && interrompu) { clearTimeout(tInt); fin(); } };
+  ["touchstart", "touchend", "touchcancel"].forEach((t) => document.addEventListener(t, toucher, { passive: true, capture: true }));
+})();
+</script>
+`;
+
 // Loupe de la page d'accueil sur écran tactile (correction « loupe », 14/11 ; voir le commentaire de la correction plus bas).
 const LOUPE_CSS = `${SAF}loupe au pincement (écran tactile) : le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner. */
 @media (any-pointer: coarse) { html:not(.vf-zoom), html:not(.vf-zoom) * { touch-action: pan-x pan-y; } }
@@ -418,6 +473,22 @@ const TOUTES = [
     avant: "    const maj = () => {\n      raf = 0;\n", apres: "    const maj = () => {\n      raf = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
   { id: "loupe", quoi: "Loupe : cartes en pause", fichiers: VF, n: 1,
     avant: "    const maj = () => {\n      rafS = 0;\n", apres: "    const maj = () => {\n      rafS = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
+  // « Filet » (16/11, retour de Loan après « loupe » : « ça plante encore […] aussi en dehors des cartes quand je zoome pendant que ça
+  // scroll »). Cause, lue dans WebKit (WKContentViewInteraction.mm, _shouldIgnoreTouchEvent → isInterruptingMomentumScrollingWithEvent) :
+  // des doigts posés pendant l'élan d'un défilement ne sont pas transmis à la page ; touch-action ne s'applique pas (aucune règle
+  // enregistrée pour ces doigts) et la loupe ne les voit pas : Safari fait son propre zoom et redessine toute la page en grand. Aux
+  // cartes, la page arrive presque toujours sur sa lancée (freinage et rebond de l'arrêt sur les cartes). Ce zoom ne peut pas être
+  // empêché ; la page doit y survivre : elle passe à plat (sans calques séparés) dès que le défilement s'arrête net en pleine lancée,
+  // c'est-à-dire au moment où les doigts touchent l'écran, bien avant la fin du pincement (niveau léger, image identique) ; si Safari
+  // a zoomé (visualViewport.scale > 1,01), niveau complet (halos, poussière, grain retirés ; cartes sans 3D) tant que dure le zoom.
+  // Reprend « zoomplat » (09 et 11/11), sans son déclenchement à deux doigts (ces doigts-là, transmis, vont à la loupe).
+  { id: "filet", quoi: "Filet : page à plat si Safari zoome lui-même (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>", apres: FILET_CSS + "</style>\n</helmet>" },
+  { id: "filet", quoi: "Filet : page à plat si Safari zoome lui-même (script)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: FILET_JS + '<script src="./support.js"></script>' },
+  { id: "filet", quoi: "Filet : zones recouvertes sur l'écran de mise en page quand Safari a zoomé", fichiers: VF, n: 1,
+    avant: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = window.innerHeight,",
+    apres: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = Math.max(window.innerHeight, R.clientHeight) /* Correction Safari (scripts/safari.mjs) : page agrandie */," },
   { id: "loupe", quoi: "Loupe : zones recouvertes en pause", fichiers: VF, n: 1,
     avant: "const verifier = () => { raf = 0; const v = vf(); if (!v) return;", apres: "const verifier = () => { raf = 0; const v = vf(); if (!v || window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */" },
 ];
@@ -438,7 +509,8 @@ const choix = process.env.SAFARI;
 // « pincement » (zoom bloqué) écarté : Loan veut garder le zoom.
 // « zoomplat » écarté le 14/11 (arrêts persistants sur les cartes, défilement saccadé pendant le zoom) : remplacé par « loupe »
 // (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « 14/11 ».
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe"];
+// « filet » (16/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).

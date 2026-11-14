@@ -136,7 +136,11 @@
   /* --- Fil d'Ariane : relevé en mémoire / 200 ms, écrit dans localStorage / 1 s (survit à un arrêt brutal) --- */
   const sid = Math.random().toString(36).slice(2, 8), debut = Date.now();
   let etatPage = "en-cours";
-  const releves = []; // [t (s), y, phase, P×100, à l'écran, caméras étude (w = will-change), vitesse px/s, calques du projecteur]
+  const releves = []; // [t (s), y, phase, P×100, à l'écran, caméras étude (w = will-change), vitesse px/s, calques du projecteur, zoom]
+  /* Zoom (16/11) : z = zoom de Safari (×), L = loupe du site (×), f / F = page à plat (filet léger / complet), O = carte ouverte. */
+  const zoom = () => { const v = window.visualViewport, vf = document.querySelector(".vf"), m = vf && /scale\(([\d.]+)\)/.exec(vf.style.transform || "");
+    return (v && v.scale > 1.005 ? "z" + v.scale.toFixed(2) : "") + (h.classList.contains("vf-loupe") ? "L" + (m ? (+m[1]).toFixed(2) : "1") : "") +
+      (h.classList.contains("vf-zoom-plat") ? (h.classList.contains("vf-zoom-natif") ? "F" : "f") : "") + (document.querySelector(".vfk-c[data-grand]") ? "O" : ""); };
   const etatDisque = () => ({ sid, page: NOM, passe, debut, dernier: Date.now(), etat: etatPage, etape, ph: phase, j: releves.slice(-15), st: bilan(), ro, err: erreurs.slice(-5), res: ressources.slice(0, 10), finEcran, info: info() });
   const enregistrer = () => ecrire(CLE, etatDisque());
   const prec = lire(CLE);
@@ -155,6 +159,11 @@
   document.addEventListener("visibilitychange", () => { etatPage = document.hidden ? "cachee" : "en-cours"; enregistrer(); });
 
   let tick = 0, couvert = false, yPrec = 0, tReleve = 0, enEcran = !!$("#ld-chargement");
+  /* 16/11 : tout changement de zoom est écrit aussitôt (un arrêt survient juste après que Safari a zoomé). */
+  let zPrec = "";
+  const surZoom = () => { const z = zoom(); if (z === zPrec) return; zPrec = z; try { relever(); enregistrer(); } catch (e) {} };
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", surZoom);
+  new MutationObserver(surZoom).observe(h, { attributes: true, attributeFilter: ["class"] });
   const relever = () => {
     try {
       const p = projecteur(), now = performance.now();
@@ -171,7 +180,7 @@
       }
       const y = Math.round(scrollY), v = tReleve ? Math.round((y - yPrec) / ((now - tReleve) / 1000)) : 0; yPrec = y; tReleve = now; vMax = Math.max(vMax, Math.abs(v));
       const ec = surEcran(p), cam = $(".vfa-scene > .vfa-cam");
-      releves.push([Math.round((now - T0) / 100) / 10, y, PH[phase] || "--", p ? Math.round(p.P * 100) : -1, ec, cam && cam.style.willChange === "transform" ? "w" : "", v, ec.includes("H") ? calques() : ""]);
+      releves.push([Math.round((now - T0) / 100) / 10, y, PH[phase] || "--", p ? Math.round(p.P * 100) : -1, ec, cam && cam.style.willChange === "transform" ? "w" : "", v, ec.includes("H") ? calques() : "", zoom() || "-"]);
       if (releves.length > 40) releves.splice(0, releves.length - 40);
       if (++tick % 5 === 0) { enregistrer(); if (PANNEAU) dessinerPanneau(p); }
     } catch (e) {}
