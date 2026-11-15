@@ -19,6 +19,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - `PASSATION-CLAUDE-CODE.md` : cahier des charges d'origine (liste blanche, paiement, vérifications § 8, plus tard § 9).
 - `MISE-EN-LIGNE.md` : fonctionnement actuel (hébergement, redirections, Worker API, e-mails Stripe), commandes, état et retour arrière.
 - `scripts/traduction-fr.mjs` : version française de Video Feedback (`?lang=fr`), textes anglais → français validés par Loan.
+- `CLAUDE-DESIGN.md` : fiche à transmettre à Claude Design pour une nouvelle partie du site, écarts entre le design system et le site (15/11). Claude Design autonome (claude.ai/design) ferme le 14/12/2026.
 - `PERFORMANCE.md` : optimisations de performance (mesures avant/après, ce qui reste possible) et comment re-mesurer (`scripts/mesurer.mjs`).
 
 ## Republier
