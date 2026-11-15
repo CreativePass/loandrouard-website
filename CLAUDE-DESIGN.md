@@ -120,6 +120,9 @@ Autres corrections du site jamais reportées dans Claude Design : liste « Repor
 
 ## 4. Après l'export (travail de Claude Code)
 
+Ne prendre de l'export que les nouvelles pages et leurs fichiers : les pages déjà publiées restent celles du dépôt
+(`PAGES_FIGEES` dans `scripts/construire.mjs` arrête la construction sinon).
+
 Ajouter Home puis Press à la liste des fichiers publiés (`scripts/construire.mjs`, avec leurs fichiers listés au
 `PASSATION-CLAUDE-CODE.md` § 9), activer leurs liens dans l'en-tête et le menu (et retirer le ruban « Coming soon »),
 faire la version française, vérifier sur mobile, publier sur l'adresse de test, puis sur loandrouard.com avec l'accord de Loan.

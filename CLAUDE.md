@@ -6,6 +6,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - **Demander l'accord de Loan avant toute action sur Stripe, Cloudflare ou les DNS**, y compris chaque mise en ligne (`npm run publier`, `publier:api`, `publier:redirection`). Les lectures sont libres. Exception : l'adresse de test (`npm run publier:essai`), accord permanent de Loan du 30/10 (« pour l'adresse test pas besoin de me demander »).
 - Ne jamais demander la clé secrète Stripe dans la conversation.
 - Les pages `*.dc.html` viennent de l'outil de design : ne rien réécrire, reformater ni convertir. Seules les corrections listées dans `scripts/construire.mjs` (contenu), `scripts/optimisations.mjs` (performance) et `scripts/traduction-fr.mjs` (version française) sont appliquées, sur la copie `public/`.
+- **Pages déjà publiées figées** (demande de Loan du 15/11) : Video Feedback, CGV, Privacy, Legal et Sponsors restent la version de l'export du 01/10 ; leur version dans Claude Design est en retard sur le site. Un nouvel export ne les remplace jamais (seules les nouvelles pages, Home puis Press, sont ajoutées). Contrôle : `PAGES_FIGEES` dans `scripts/construire.mjs` arrête la construction si l'une d'elles change.
 - Pas d'analytics, cookies, traceurs, bannière ni CSP sans demande de Loan. Exception : Cloudflare Web Analytics (sans cookie), gardé par Loan le 29/10/2026 et décrit dans la page Privacy.
 - **Terminer chaque réponse par un résumé** : réponses aux questions posées, puis liste de ce que Loan doit faire.
 
@@ -23,7 +24,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - `PERFORMANCE.md` : optimisations de performance (mesures avant/après, ce qui reste possible) et comment re-mesurer (`scripts/mesurer.mjs`).
 
 ## Republier
-1. Remplacer les fichiers de l'export à la racine.
+1. Ajouter à la racine les nouvelles pages de l'export et leurs fichiers, sans remplacer les pages figées (règle ci-dessus).
 2. `npm install` (une fois), `npm run construire` (contrôles), puis, avec l'accord de Loan, `npm run publier`.
 3. Vérifier : `npm run verifier -- https://loandrouard.com` et comparer les fichiers servis à `public/`.
 
