@@ -17,6 +17,142 @@ const SAF = "/* Correction Safari (scripts/safari.mjs) : ";
 const TEX = "assets/lumiere/";
 const img = (cls, nom, extra = "") => `<img class="${cls}" src="${TEX}${nom}.png" alt="" aria-hidden="true" decoding="async"${extra}>`;
 
+// Filet de sécurité quand Safari zoome lui-même (correction « filet », 14/11 ; voir le commentaire de la correction plus bas).
+const FILET_CSS = `${SAF}filet : page à plat (sans calques séparés) quand Safari zoome lui-même ou peut le faire (élan interrompu). */
+/* Niveau léger (image identique) : will-change retiré, faces arrière visibles dans le projecteur et l'étude (rien n'y tourne en 3D). */
+html.vf-zoom-plat .vf *:not(.vfp-affiche), html.vf-zoom-plat .vf *::before, html.vf-zoom-plat .vf *::after { will-change: auto !important; }
+html.vf-zoom-plat .vfp *, html.vf-zoom-plat .vfa * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; }
+/* Niveau complet, seulement si Safari a vraiment zoomé : poussière, sable d'or et grain cachés ; halos décoratifs retirés (un filtre
+   donne toujours un calque dans Safari) ; cartes de la planche sans 3D (la bonne face reste affichée). */
+html.vf-zoom-natif .vf canvas, html.vf-zoom-natif .vf-nuit u, html.vf-zoom-natif .vfp-grain, html.vf-zoom-natif .vfa-papier u, html.vf-zoom-natif .vfa-noir u { visibility: hidden !important; }
+html.vf-zoom-natif .vfa-svg--or, html.vf-zoom-natif .vfa-taiji, html.vf-zoom-natif .vfa-taiji img, html.vf-zoom-natif .vfk-eclat { filter: none !important; }
+html.vf-zoom-natif .vfk * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; }
+html.vf-zoom-natif .vfk-flip, html.vf-zoom-natif .vfk-dos { transform: none !important; -webkit-transform-style: flat !important; transform-style: flat !important; }
+`;
+const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même (14/11). Des doigts posés pendant l'élan d'un défilement ne sont pas
+   transmis à la page (WebKit : isInterruptingMomentumScrollingWithEvent) : ni touch-action ni la loupe ne les voient, et Safari zoome en
+   redessinant toute la page. La page passe donc à plat dès que le défilement s'arrête net en pleine lancée (niveau léger, image
+   identique), et complètement si Safari a zoomé. */
+(() => {
+  const R = document.documentElement, tactile = window.matchMedia ? window.matchMedia("(any-pointer: coarse)") : { matches: false }, vv = window.visualViewport;
+  /* translate3d(x, y, z) → translate(x, y) : même position, sans calque séparé (valeurs avec calc() comprises). */
+  const deux = (t) => { let i = t.indexOf("translate3d("); while (i >= 0) { let j = i + 12, p = 1; const a = []; let d = j;
+      for (; j < t.length && p; j++) { const c = t[j]; if (c === "(") p++; else if (c === ")") { if (!--p) break; } else if (c === "," && p === 1) { a.push(t.slice(d, j)); d = j + 1; } }
+      if (p) return t; a.push(t.slice(d, j)); if (a.length !== 3) return t;
+      t = t.slice(0, i) + "translate(" + a[0].trim() + ", " + a[1].trim() + ")" + t.slice(j + 1); i = t.indexOf("translate3d(", i + 10); }
+    return t; };
+  const plat = (el) => { const t = el.style && el.style.transform; if (t && t.indexOf("translate3d(") >= 0) { const n = deux(t); if (n !== t) el.style.transform = n; } };
+  let obs = null, interrompu = false, tInt = 0, doigts = 0;
+  const natif = () => (!!vv && vv.scale > 1.01) || R.classList.contains("vf-zoom");
+  const suivre = () => { const n = natif() && tactile.matches, z = n || (interrompu && tactile.matches);
+    if (R.classList.contains("vf-zoom-natif") !== n) R.classList.toggle("vf-zoom-natif", n);
+    if (z && !obs) { R.classList.add("vf-zoom-plat"); document.querySelectorAll('.vf [style*="translate3d"]').forEach(plat);
+      /* Apparitions du projecteur terminées (elles finissent sur l'état normal) : arrêtées, sinon gardées en calques. */
+      (document.getAnimations ? document.getAnimations() : []).forEach((a) => { if (/^vfp-(frappe|chauffe|apparait)$/.test(a.animationName || "") && a.playState === "finished") try { a.cancel(); } catch (e) {} });
+      obs = new MutationObserver((l) => { for (const r of l) plat(r.target); }); /* chaque image du script : remis à plat avant d'être dessiné */
+      obs.observe(document.body, { attributes: true, attributeFilter: ["style"], subtree: true }); }
+    else if (!z && obs) { obs.disconnect(); obs = null; R.classList.remove("vf-zoom-plat"); window.dispatchEvent(new Event("scroll")); } };
+  new MutationObserver(suivre).observe(R, { attributes: true, attributeFilter: ["class"] }); suivre();
+  if (vv) vv.addEventListener("resize", suivre);
+  /* Élan interrompu : défilement arrêté net (deux images immobiles) après une vitesse > 0,15 px/ms, sans doigt transmis à la page.
+     Page à plat (léger) pendant 2,5 s, prolongé tant que la page bouge encore (pincement qui la déplace) ; un nouveau toucher
+     transmis (défilement ou loupe) la rend aussitôt normale. Une fin d'élan naturelle (vitesse déjà faible) ne déclenche rien. */
+  const fin = () => { interrompu = false; suivre(); };
+  const armer = () => { clearTimeout(tInt); tInt = setTimeout(fin, 2500); };
+  let y0 = 0, t0 = 0, v = 0, immobile = 0, mouv = 0, boucle = 0;
+  const pas = (now) => { const y = window.scrollY, dy = y - y0, dt = Math.max(1, now - t0); y0 = y; t0 = now;
+    if (dy !== 0) { v = 0.5 * v + 0.5 * dy / dt; immobile = 0; mouv++; boucle = requestAnimationFrame(pas); return; }
+    if (++immobile < 2) { boucle = requestAnimationFrame(pas); return; }
+    /* au moins 4 images de défilement continu : un saut de position instantané (lien, script) n'est pas un élan */
+    boucle = 0; if (mouv >= 4 && Math.abs(v) > 0.15 && !doigts && tactile.matches) { interrompu = true; suivre(); armer(); } v = 0; mouv = 0; };
+  window.addEventListener("scroll", () => { if (!boucle) { y0 = window.scrollY; t0 = performance.now(); immobile = 0; mouv = 0; boucle = requestAnimationFrame(pas); } if (interrompu) armer(); }, { passive: true });
+  const toucher = (e) => { doigts = e.touches ? e.touches.length : 0; if (e.type === "touchstart" && interrompu) { clearTimeout(tInt); fin(); } };
+  ["touchstart", "touchend", "touchcancel"].forEach((t) => document.addEventListener(t, toucher, { passive: true, capture: true }));
+})();
+</script>
+`;
+
+// Loupe de la page d'accueil sur écran tactile (correction « loupe », 14/11 ; voir le commentaire de la correction plus bas).
+const LOUPE_CSS = `${SAF}loupe au pincement (écran tactile) : le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner. */
+@media (any-pointer: coarse) { html:not(.vf-zoom), html:not(.vf-zoom) * { touch-action: pan-x pan-y; } }
+html.vf-loupe { overflow: hidden !important; }
+html.vf-loupe body { overflow: clip !important; } /* la page agrandie déborde de l'écran : débordement coupé, sinon le navigateur agrandit la zone de mise en page (vu dans Chrome) ou dézoome */
+html.vf-loupe, html.vf-loupe * { touch-action: none !important; }
+html.vf-loupe .vf { transform-origin: 0 0; will-change: transform; }
+html.vf-loupe .vf-nuit, html.vf-loupe .vfk-c[data-grand], html.vf-loupe .vf-modale { translate: var(--loupe-x, 0px) var(--loupe-y, 0px) !important;
+  right: auto !important; bottom: auto !important; box-sizing: border-box !important; width: var(--loupe-l, 100vw) !important; height: var(--loupe-h, 100vh) !important; } /* .vf devient leur repère : taille de l'écran gardée */
+`;
+const LOUPE_JS = `<script>${SAF}loupe au pincement sur écran tactile (14/11, retour de Loan : « que je puisse zoomer comme si je zoomais sur l'écran »). */
+(() => {
+  const R = document.documentElement, tactile = window.matchMedia ? window.matchMedia("(any-pointer: coarse)") : { matches: false }, vv = window.visualViewport;
+  const SMAX = 4, SEUIL = 1.06;
+  let s = 1, tx = 0, ty = 0, actif = false, raf = 0, geste = null, anim = 0, ox = 0, oy = 0;
+  const vf = () => document.querySelector(".vf");
+  const largeur = () => R.clientWidth, hauteur = () => window.innerHeight;
+  const borner = () => { tx = Math.min(0, Math.max(largeur() * (1 - s), tx)); ty = Math.min(0, Math.max(hauteur() * (1 - s), ty)); };
+  /* Un point vu en (x, y) sans loupe est affiché en (s·x + tx, s·y + ty). .vf (origine 0 0) est déplacé d'autant, compte tenu de sa
+     place dans l'écran ; ses éléments fixes (fond « nuit », carte ouverte, fenêtre de paiement), dont .vf devient le repère, sont
+     remis à leur place d'écran (--loupe-x, --loupe-y). Une transformation n'est jamais redessinée par Safari : les calques déjà
+     dessinés sont simplement agrandis, comme une loupe sur l'écran. Mémoire graphique inchangée, mouvement fluide. */
+  const appliquer = () => { raf = 0; const v = vf(); if (!v || !actif) return;
+    const px = ox - window.scrollX, py = oy - window.scrollY;
+    v.style.transform = "translate(" + (tx + (s - 1) * px).toFixed(2) + "px," + (ty + (s - 1) * py).toFixed(2) + "px) scale(" + s.toFixed(4) + ")";
+    R.style.setProperty("--loupe-x", (-px).toFixed(2) + "px"); R.style.setProperty("--loupe-y", (-py).toFixed(2) + "px");
+    R.style.setProperty("--loupe-l", largeur() + "px"); R.style.setProperty("--loupe-h", hauteur() + "px"); };
+  const planifier = () => { if (!raf) raf = requestAnimationFrame(appliquer); };
+  const activer = () => { if (actif) return true; const v = vf(); if (!v) return false;
+    const b = v.getBoundingClientRect(); ox = b.left + window.scrollX; oy = b.top + window.scrollY;
+    actif = true; window.__ldLoupeTactile = true; window.__ldZoom = true; R.classList.add("vf-loupe"); appliquer(); return true; };
+  const desactiver = () => { cancelAnimationFrame(anim); anim = 0; cancelAnimationFrame(raf); raf = 0; actif = false; geste = null; s = 1; tx = ty = 0;
+    const v = vf(); if (v) v.style.transform = ""; ["--loupe-x", "--loupe-y", "--loupe-l", "--loupe-h"].forEach((k) => R.style.removeProperty(k)); R.classList.remove("vf-loupe");
+    window.__ldLoupeTactile = false; window.__ldZoom = false; requestAnimationFrame(() => window.dispatchEvent(new Event("scroll"))); };
+  /* Retour à la taille normale en douceur (0,2 s). */
+  const revenir = () => { cancelAnimationFrame(anim); const s0 = s, x0 = tx, y0 = ty, t0 = performance.now();
+    const pas = (now) => { const k = Math.min(1, (now - t0) / 200), e = 1 - Math.pow(1 - k, 3); s = s0 + (1 - s0) * e; tx = x0 * (1 - e); ty = y0 * (1 - e); appliquer();
+      if (k < 1) anim = requestAnimationFrame(pas); else desactiver(); };
+    anim = requestAnimationFrame(pas); };
+  /* Élan après un glissé d'un doigt, freiné, arrêté au bord. */
+  const lancer = (vx, vy) => { cancelAnimationFrame(anim); let t0 = performance.now();
+    const pas = (now) => { const dt = Math.min(40, now - t0); t0 = now; tx += vx * dt; ty += vy * dt; const f = Math.pow(0.94, dt / 16); vx *= f; vy *= f;
+      const x = tx, y = ty; borner(); if (x !== tx) vx = 0;
+      if (y !== ty) { const c = document.querySelector(".vfk-c[data-grand]"), av = c ? c.scrollTop : 0; if (c) c.scrollTop -= (y - ty) / s; if (!c || c.scrollTop === av) vy = 0; } /* élan transmis à la carte ouverte */
+      appliquer();
+      anim = Math.abs(vx) + Math.abs(vy) > 0.02 ? requestAnimationFrame(pas) : 0; };
+    anim = requestAnimationFrame(pas); };
+  const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  const glisse = (t) => ({ type: "glisse", x: t.clientX, y: t.clientY, x0: tx, y0: ty, vx: 0, vy: 0, tp: performance.now(), px: t.clientX, py: t.clientY });
+  const debut = (e) => { const t = e.touches; if (!tactile.matches || (vv && vv.scale > 1.01)) return;
+    if (t.length === 2) { if (!activer()) return; cancelAnimationFrame(anim); anim = 0;
+      geste = { type: "pince", d0: Math.max(10, dist(t[0], t[1])), mx: (t[0].clientX + t[1].clientX) / 2, my: (t[0].clientY + t[1].clientY) / 2, s0: s, x0: tx, y0: ty, sy: window.scrollY }; }
+    else if (t.length === 1 && actif) { cancelAnimationFrame(anim); anim = 0; geste = glisse(t[0]); }
+    else geste = null; };
+  const bouge = (e) => { const t = e.touches; if (!geste || !actif) return;
+    if (geste.type === "pince" && t.length >= 2) { const mx = (t[0].clientX + t[1].clientX) / 2, my = (t[0].clientY + t[1].clientY) / 2;
+      s = Math.min(SMAX, Math.max(1, geste.s0 * dist(t[0], t[1]) / geste.d0));
+      /* Point de la page sous les doigts au début du geste (corrigé d'un éventuel défilement du tout début), qui suit les doigts. */
+      const qx = (geste.mx - geste.x0) / geste.s0, qy = (geste.my - geste.y0) / geste.s0 - (window.scrollY - geste.sy);
+      tx = mx - s * qx; ty = my - s * qy; borner(); planifier(); }
+    else if (geste.type === "glisse" && t.length === 1) { const now = performance.now(), dt = Math.max(1, now - geste.tp);
+      geste.vx = 0.6 * geste.vx + 0.4 * (t[0].clientX - geste.px) / dt; geste.vy = 0.6 * geste.vy + 0.4 * (t[0].clientY - geste.py) / dt;
+      geste.px = t[0].clientX; geste.py = t[0].clientY; geste.tp = now;
+      tx = geste.x0 + t[0].clientX - geste.x; const brut = geste.y0 + t[0].clientY - geste.y; ty = brut; borner(); planifier();
+      /* Au bord de la vue agrandie, la carte ouverte (qui défile seule) continue de défiler dessous : on la lit en entier sans dézoomer. */
+      const deb = brut - ty, c = document.querySelector(".vfk-c[data-grand]"); if (c && deb !== geste.deb) c.scrollTop -= (deb - (geste.deb || 0)) / s; geste.deb = deb; } };
+  const finir = (e) => { const t = e.touches; if (!geste || !actif) return;
+    if (geste.type === "pince") { if (t.length >= 2) return; if (s < SEUIL) { geste = null; revenir(); return; } geste = t.length === 1 ? glisse(t[0]) : null; return; }
+    if (geste.type === "glisse" && !t.length) { const g = geste; geste = null; if (performance.now() - g.tp < 80) lancer(g.vx, g.vy); } };
+  /* Écouteurs passifs : le défilement normal (un doigt, sans loupe) n'attend jamais le script. */
+  document.addEventListener("touchstart", debut, { passive: true, capture: true });
+  document.addEventListener("touchmove", bouge, { passive: true, capture: true });
+  document.addEventListener("touchend", finir, { passive: true, capture: true });
+  document.addEventListener("touchcancel", finir, { passive: true, capture: true });
+  window.addEventListener("scroll", () => { if (actif) planifier(); }, { passive: true });
+  window.addEventListener("resize", () => { if (actif && !geste) desactiver(); });
+  window.addEventListener("orientationchange", () => { if (actif) desactiver(); });
+})();
+</script>
+`;
+
 const TOUTES = [
   // En-tête : --hauteur-header vaut 68 px dans le design system, mais l'en-tête mesure 134 px sur iPhone (3 lignes) et
   // ~96 px dans Safari sur Mac. Son margin-bottom négatif (−68 px) laissait alors une bande vide au-dessus du
@@ -198,6 +334,163 @@ const TOUTES = [
     apres: '      clearTimeout(tNet); tNet = setTimeout(() => { cam.style.willChange = cam2.style.willChange = "auto"; kPose = +kEx; cam.style.setProperty("--k", kEx); cam2.style.setProperty("--k", kEx); }, 220);\n' },
   { id: "camera", quoi: "Étude : mémoire de l'épaisseur posée", fichiers: VF, n: 1,
     avant: "    let tNet = 0;\n", apres: '    let tNet = 0, kPose = 0, kEx = "1";\n' },
+
+  // « Zoom à deux doigts » (retour de Loan du 09/11 : « sur mobile, dès que je zoome avec mes deux doigts le site crash
+  // instantanément »). Cause, lue dans le code de WebKit (GraphicsLayerCA.cpp) : au zoom, Safari redessine chaque calque à
+  // l'échelle du zoom ; un calque de moins de 1 280 px CSS × zoom garde UNE image entière, dont la mémoire grandit comme le
+  // carré du zoom (×4 à ×2, ×9 à ×3, jusqu'à ≈ 60 Mo par calque ; un calque réduit par la caméra de l'étude, jusqu'à 156 Mo).
+  // La page d'accueil a ≈ 100 calques dans Safari (215 Mo au repos mesurés sur l'iPhone de Loan le 08/10 ; arrêts vers 490 Mo) :
+  // au relâcher du zoom, tous sont redessinés en même temps et iOS arrête la page. CGV, Privacy, Legal et Sponsors (3 à 10
+  // calques) ne sont pas concernées et gardent le zoom.
+  // CANDIDAT ÉCARTÉ le 09/11 (Loan, sur l'adresse de test : « je ne peux même plus zoomer ») — pas de pincement sur cette page,
+  // sur écran tactile (touch-action: pan-x pan-y, que Safari iOS respecte : WKTouchActionGestureRecognizer.mm). Remplacé par
+  // « zoomplat » ci-dessous, qui garde le zoom.
+  { id: "pincement", quoi: "Pas de zoom à deux doigts sur la page d'accueil (écrans tactiles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "pas de zoom à deux doigts sur écran tactile (au zoom, Safari redessinait tous les calques et arrêtait la page). */\n" +
+      "@media (any-pointer: coarse) { html:not(.vf-zoom), html:not(.vf-zoom) * { touch-action: pan-x pan-y; } }\n" +
+      "</style>\n</helmet>" },
+
+  // Calques invisibles qui gardaient leur mémoire graphique (relevé Safari du 08/10 sur l'iPhone de Loan, « en réserve ») :
+  // - mur de la vitrine (26,9 Mo) : transparent hors de la vitrine (opacité 0), mais gardé dessiné. Il est libéré comme les
+  //   autres calques éteints du projecteur (code d'origine : brume, rayons, exposition, éclat, blanc, rémanence) ;
+  // - cartes de la vitrine (13,4 Mo) : transparentes et inertes (ni clic ni clavier) tant que la vitrine est fermée. Cachées
+  //   1,1 s après la fermeture (leur fondu dure 1 s au plus), visibles dès l'ouverture (leur fondu commence 0,4 s après).
+  // Rien ne change à l'écran : ces éléments étaient déjà transparents.
+  { id: "eteints", quoi: "Projecteur : mur de la vitrine libéré quand il est éteint", fichiers: VF, n: 1,
+    avant: "[brume, rayons, expo, eclat, blanc, reman].forEach((e) => {",
+    apres: "[brume, rayons, expo, eclat, blanc, reman, mur].forEach((e) => { " + SAF + "mur de la vitrine compris. */" },
+  { id: "eteints", quoi: "Vitrine fermée : cartes non dessinées", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "vitrine fermée : cartes (transparentes, inertes) non dessinées, après leur fondu de fermeture. */\n" +
+      ".vfp-cartes { visibility: hidden; transition: visibility 0s linear 1.1s; }\n" +
+      ".vfp-scene[data-vitrine] .vfp-cartes { visibility: visible; transition: visibility 0s; }\n" +
+      "</style>\n</helmet>" },
+
+  // Lueur du papier de l'étude (cercle de 95vmax qui dérive en 44 s) : calque de 810 × 810 px sur iPhone, soit ≈ 23 Mo dans
+  // Safari, pour un simple dégradé radial. Même principe que « compact » (validé sur l'iPhone le 08/10) : dessinée dans un
+  // cadre 5 fois plus petit (19vmax), au même centre, puis agrandie ×5 par transform (×5,75 en fin de dérive au lieu de ×1,15).
+  // Même géométrie à chaque instant ; « réduire les animations » : scale(5) fixe, comme l'original immobile. ≈ 1 Mo.
+  { id: "lueur", quoi: "Étude : lueur du papier en texture compacte", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "lueur du papier de l'étude dessinée 5 fois plus petite puis agrandie (même centre, même taille à l'écran). */\n" +
+      ".vfa-papier i { left: 13vmax; top: 3vmax; width: 19vmax; height: 19vmax; transform: scale(5); }\n" +
+      "@keyframes vfa-jour { from { transform: translate3d(0,0,0) scale(5); } to { transform: translate3d(38vw, 22vh, 0) scale(5.75); } }\n" +
+      "</style>\n</helmet>" },
+
+  // CANDIDAT ÉCARTÉ le 14/11 (arrêts persistants sur les cartes, défilement saccadé pendant le zoom) : remplacé par « loupe ».
+  // « Zoom à plat » (retour de Loan du 09/11, après « pincement » : « je ne peux même plus zoomer ») : le zoom à deux doigts
+  // reste possible ; c'est la page qui change de manière de se dessiner tant qu'elle est agrandie, sur écran tactile.
+  // Hors zoom, rien ne change. Pendant le zoom (html.vf-zoom, échelle > 1,05, posée par COUVERT_JS de scripts/construire.mjs,
+  // qui fige déjà les lueurs d'ambiance en 2D), les calques séparés sont supprimés : les éléments déplacés par le script
+  // (translate3d → translate, même position), will-change retiré, backface-visibility rendue « visible » dans le projecteur et
+  // l'étude (rien n'y tourne en 3D), apparitions du projecteur terminées arrêtées (elles finissent sur l'état normal), toiles de
+  // poussière et de sable d'or cachées (une toile fait passer en calques séparés tout ce qui est dessiné par-dessus). Tout se dessine alors dans quelques grandes zones
+  // (scènes épinglées, en-tête), découpées en tuiles par Safari : leur mémoire suit la partie visible de l'écran et ne
+  // grandit plus avec le zoom. Image identique ; le défilement pendant le zoom redessine davantage (plus lent, sans arrêt).
+  // 11/11 (retour de Loan : « ça crash encore, particulièrement sur les cartes et pendant la séparation yin yang ») : dans Safari,
+  // tout élément qui porte un filtre CSS a son calque (RenderLayerCompositor::requiresCompositingForFilters, FilterTrigger permis
+  // par défaut), et les cartes qui se retournent sont en vraie 3D. Pendant le zoom : halos décoratifs retirés (lueur dorée des
+  // corrections de l'étude, ombres du taiji et des titres, lueur de bordure des cartes), retournement des cartes sans 3D.
+  // Gardés : « See pricing » (flou dans son calque, correction « affiche »), le négatif de l'étude (invert, indispensable), les
+  // filtres des photos de Loan et du cadre doré de la carte choisie.
+  // Au dézoom (échelle < 1,01), tout redevient comme avant au défilement suivant.
+  // 11/11 : le passage à plat commence dès que deux doigts touchent l'écran (avant le zoom lui-même : la version du 09/11
+  // attendait l'événement de zoom, peut-être trop tard pour Safari) ; grain généré (feTurbulence) masqué pendant le zoom.
+  { id: "zoomplat", quoi: "Zoom à deux doigts : page dessinée à plat tant qu'elle est agrandie (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>",
+    apres: SAF + "page agrandie au pincement, écran tactile : plus de calques séparés (mémoire graphique bornée). */\n" +
+      "html.vf-zoom-plat .vf *:not(.vfp-affiche), html.vf-zoom-plat .vf *::before, html.vf-zoom-plat .vf *::after { will-change: auto !important; }\n" +
+      "html.vf-zoom-plat .vf canvas { visibility: hidden !important; }\n" +
+      "/* 11/11 : grain généré (SVG feTurbulence, opacité 5 à 7 %) masqué pendant le zoom : Safari le recalcule à la taille du zoom. */\n" +
+      "html.vf-zoom-plat .vf-nuit u, html.vf-zoom-plat .vfp-grain, html.vf-zoom-plat .vfa-papier u, html.vf-zoom-plat .vfa-noir u { visibility: hidden !important; }\n" +
+      "html.vf-zoom-plat .vfp *, html.vf-zoom-plat .vfa *, html.vf-zoom-plat .vfk * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; } /* plus rien n'y tourne en 3D */\n" +
+      "/* 11/11 : un filtre CSS donne toujours un calque séparé dans Safari (RenderLayerCompositor : FilterTrigger). Halos décoratifs retirés pendant le zoom :\n" +
+      "   lueur dorée des corrections de l'étude, ombres du taiji et des titres yin / yang (aussi posées par le script), lueur de bordure des cartes. */\n" +
+      "html.vf-zoom-plat .vfa-svg--or, html.vf-zoom-plat .vfa-taiji, html.vf-zoom-plat .vfa-taiji img, html.vf-zoom-plat .vfk-eclat { filter: none !important; }\n" +
+      "/* Cartes de la planche : retournement sans 3D pendant le zoom (la bonne face reste affichée : le script cache l'autre à 90°). */\n" +
+      "html.vf-zoom-plat .vfk-flip, html.vf-zoom-plat .vfk-dos { transform: none !important; -webkit-transform-style: flat !important; transform-style: flat !important; }\n" +
+      "</style>\n</helmet>" },
+  { id: "zoomplat", quoi: "Zoom à deux doigts : page dessinée à plat tant qu'elle est agrandie (script)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>',
+    apres: "<script>" + SAF + "page agrandie au pincement sur écran tactile : dessinée à plat (voir les styles « vf-zoom-plat »). */\n" +
+      "(() => {\n" +
+      "  const R = document.documentElement, tactile = window.matchMedia ? window.matchMedia(\"(any-pointer: coarse)\") : { matches: false };\n" +
+      "  /* translate3d(x, y, z) → translate(x, y) : même position, sans calque séparé (valeurs avec calc() comprises). */\n" +
+      "  const deux = (t) => { let i = t.indexOf(\"translate3d(\"); while (i >= 0) { let j = i + 12, p = 1; const a = [], d0 = j; let d = d0;\n" +
+      "      for (; j < t.length && p; j++) { const c = t[j]; if (c === \"(\") p++; else if (c === \")\") { if (!--p) break; } else if (c === \",\" && p === 1) { a.push(t.slice(d, j)); d = j + 1; } }\n" +
+      "      if (p) return t; a.push(t.slice(d, j)); if (a.length !== 3) return t;\n" +
+      "      t = t.slice(0, i) + \"translate(\" + a[0].trim() + \", \" + a[1].trim() + \")\" + t.slice(j + 1); i = t.indexOf(\"translate3d(\", i + 10); }\n" +
+      "    return t; };\n" +
+      "  const plat = (el) => { const t = el.style && el.style.transform; if (t && t.indexOf(\"translate3d(\") >= 0) { const n = deux(t); if (n !== t) el.style.transform = n; } };\n" +
+      "  let obs = null, doigts = false;\n" +
+      "  const vv = window.visualViewport;\n" +
+      "  const suivre = () => { const z = (doigts || R.classList.contains(\"vf-zoom\") || (!!vv && vv.scale > 1.01)) && tactile.matches;\n" +
+      "    if (z && !obs) { R.classList.add(\"vf-zoom-plat\"); document.querySelectorAll('.vf [style*=\"translate3d\"]').forEach(plat);\n" +
+      "      /* Apparitions du projecteur terminées (elles finissent sur l'état normal : opacité 1, aucune transformation) : arrêtées, sinon\n" +
+      "         gardées actives (et en calques) par le navigateur. */\n" +
+      "      (document.getAnimations ? document.getAnimations() : []).forEach((a) => { if (/^vfp-(frappe|chauffe|apparait)$/.test(a.animationName || \"\") && a.playState === \"finished\") try { a.cancel(); } catch (e) {} });\n" +
+      "      obs = new MutationObserver((l) => { for (const r of l) plat(r.target); }); /* chaque image du script : remis à plat avant d'être dessiné */\n" +
+      "      obs.observe(document.body, { attributes: true, attributeFilter: [\"style\"], subtree: true }); }\n" +
+      "    else if (!z && obs) { obs.disconnect(); obs = null; R.classList.remove(\"vf-zoom-plat\"); window.dispatchEvent(new Event(\"scroll\")); } };\n" +
+      "  new MutationObserver(suivre).observe(R, { attributes: true, attributeFilter: [\"class\"] }); suivre(); /* page ouverte déjà agrandie */\n" +
+      "  /* 11/11 : à plat dès que deux doigts touchent l'écran (début possible d'un zoom), donc AVANT que Safari ne redessine au nouveau\n" +
+      "     zoom ; au lâcher, retour à la normale si l'échelle est restée à 1. Écouteurs passifs : le défilement n'attend jamais. */\n" +
+      "  const poser = (e) => { if (e.touches && e.touches.length >= 2 && !doigts) { doigts = true; suivre(); } };\n" +
+      "  const lacher = (e) => { if (doigts && (!e.touches || !e.touches.length)) { doigts = false; setTimeout(suivre, 450); } };\n" +
+      "  document.addEventListener(\"touchstart\", poser, { passive: true, capture: true });\n" +
+      "  document.addEventListener(\"touchend\", lacher, { passive: true, capture: true }); document.addEventListener(\"touchcancel\", lacher, { passive: true, capture: true });\n" +
+      "  if (vv) vv.addEventListener(\"resize\", suivre);\n" +
+      "})();\n" +
+      "</script>\n" + '<script src="./support.js"></script>' },
+  // Zones recouvertes (COUVERT_JS, 02 et 03/11) : sur iPhone, une page agrandie a une hauteur visible (innerHeight) plus petite
+  // que l'écran de mise en page auquel se rapportent les positions des zones. La vérification couvre désormais tout cet écran
+  // (le plus grand des deux) : une zone n'est jamais cachée alors qu'une partie agrandie la montre. Sans zoom, rien ne change.
+  { id: "zoomplat", quoi: "Zones recouvertes : hauteur de l'écran de mise en page quand la page est agrandie", fichiers: VF, n: 1,
+    avant: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = window.innerHeight,",
+    apres: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = Math.max(window.innerHeight, R.clientHeight) /* Correction Safari (scripts/safari.mjs) : page agrandie */," },
+
+  // « Loupe » (14/11, retour de Loan après « zoomplat » : « ça crashe toujours sur les cartes […] quand je zoome et que je scrolle,
+  // ce n'est pas fluide du tout. Le but, c'est juste que je puisse zoomer comme si je me rapprochais, comme si je zoomais sur
+  // l'écran »). Le zoom de Safari redessine TOUJOURS chaque calque à la nouvelle échelle (GraphicsLayerCA::updateContentsScale :
+  // échelle de l'écran × zoom ; aucune exception par calque, RenderLayerBacking ne fournit pas customContentsScale) : c'est voulu
+  // pour un texte net, et c'est ce qui sature la mémoire sur cette page. Une transformation CSS, elle, n'est jamais redessinée
+  // (updateRootRelativeScale désactivé) : les calques déjà dessinés sont agrandis tels quels, comme une loupe sur l'écran.
+  // Sur la page d'accueil, écran tactile : le pincement de Safari est désactivé (touch-action) et remplacé par cette loupe.
+  // - Pincer : agrandit l'écran autour des doigts, jusqu'à ×4 ; relâcher sous ×1,06 : retour à la normale en douceur.
+  // - Agrandi : un doigt déplace la vue dans l'écran agrandi (avec élan) ; la page ne défile pas et ses animations attendent ;
+  //   un toucher reste un toucher (liens, cartes). Pour aller ailleurs dans la page : revenir à ×1, défiler, rezoomer.
+  // - Mémoire graphique inchangée par rapport à la page sans zoom, mouvement fluide ; le texte agrandi est moins net que le zoom
+  //   de Safari (c'est l'image de l'écran qui est agrandie).
+  // CGV, Privacy, Legal et Sponsors (légères) gardent le zoom de Safari. Ordinateur inchangé.
+  { id: "loupe", quoi: "Loupe au pincement sur la page d'accueil (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>", apres: LOUPE_CSS + "</style>\n</helmet>" },
+  { id: "loupe", quoi: "Loupe au pincement sur la page d'accueil (script)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: LOUPE_JS + '<script src="./support.js"></script>' },
+  // Pendant la loupe, les scènes animées au défilement (projecteur, étude, cartes) et la vérification des zones recouvertes
+  // attendent : elles lisent la position des éléments à l'écran, que la loupe agrandit. Elles reprennent au retour à ×1.
+  { id: "loupe", quoi: "Loupe : projecteur et étude en pause", fichiers: VF, n: 2,
+    avant: "    const maj = () => {\n      raf = 0;\n", apres: "    const maj = () => {\n      raf = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
+  { id: "loupe", quoi: "Loupe : cartes en pause", fichiers: VF, n: 1,
+    avant: "    const maj = () => {\n      rafS = 0;\n", apres: "    const maj = () => {\n      rafS = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
+  // « Filet » (14/11, retour de Loan après « loupe » : « ça plante encore […] aussi en dehors des cartes quand je zoome pendant que ça
+  // scroll »). Cause, lue dans WebKit (WKContentViewInteraction.mm, _shouldIgnoreTouchEvent → isInterruptingMomentumScrollingWithEvent) :
+  // des doigts posés pendant l'élan d'un défilement ne sont pas transmis à la page ; touch-action ne s'applique pas (aucune règle
+  // enregistrée pour ces doigts) et la loupe ne les voit pas : Safari fait son propre zoom et redessine toute la page en grand. Aux
+  // cartes, la page arrive presque toujours sur sa lancée (freinage et rebond de l'arrêt sur les cartes). Ce zoom ne peut pas être
+  // empêché ; la page doit y survivre : elle passe à plat (sans calques séparés) dès que le défilement s'arrête net en pleine lancée,
+  // c'est-à-dire au moment où les doigts touchent l'écran, bien avant la fin du pincement (niveau léger, image identique) ; si Safari
+  // a zoomé (visualViewport.scale > 1,01), niveau complet (halos, poussière, grain retirés ; cartes sans 3D) tant que dure le zoom.
+  // Reprend « zoomplat » (09 et 11/11), sans son déclenchement à deux doigts (ces doigts-là, transmis, vont à la loupe).
+  { id: "filet", quoi: "Filet : page à plat si Safari zoome lui-même (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>", apres: FILET_CSS + "</style>\n</helmet>" },
+  { id: "filet", quoi: "Filet : page à plat si Safari zoome lui-même (script)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: FILET_JS + '<script src="./support.js"></script>' },
+  { id: "filet", quoi: "Filet : zones recouvertes sur l'écran de mise en page quand Safari a zoomé", fichiers: VF, n: 1,
+    avant: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = window.innerHeight,",
+    apres: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = Math.max(window.innerHeight, R.clientHeight) /* Correction Safari (scripts/safari.mjs) : page agrandie */," },
+  { id: "loupe", quoi: "Loupe : zones recouvertes en pause", fichiers: VF, n: 1,
+    avant: "const verifier = () => { raf = 0; const v = vf(); if (!v) return;", apres: "const verifier = () => { raf = 0; const v = vf(); if (!v || window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */" },
 ];
 
 // Fichiers ajoutés par une correction (copiés seulement si une page construite l'utilise).
@@ -211,7 +504,13 @@ const choix = process.env.SAFARI;
 // « compact », 3 sur 3 sans ; mémoire graphique 490 → 215 Mo ; ligne rose disparue avec « affiche »).
 // « lvh » et « camera » (retour de Loan du 08/10 : bande noire en bas, yin-yang lent) : proposés pour la page publiée ; sans effet
 // visible sur ordinateur (lvh = svh ; caméra identique à 60 images/s, traits exacts au repos). À confirmer sur l'iPhone.
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera"];
+// « zoomplat », « eteints » et « lueur » (retour de Loan du 09/11 : arrêt de la page au zoom à deux doigts sur mobile) : voir
+// PERFORMANCE.md, « Retour de Loan du 09/11 ». Image identique (Chromium) ; à confirmer sur l'iPhone (adresse de test).
+// « pincement » (zoom bloqué) écarté : Loan veut garder le zoom.
+// « zoomplat » écarté le 14/11 (arrêts persistants sur les cartes, défilement saccadé pendant le zoom) : remplacé par « loupe »
+// (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « Retour de Loan du 14/11 ».
+// « filet » (14/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).
