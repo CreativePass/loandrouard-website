@@ -11,9 +11,12 @@ Ce fichier n'est pas publié sur le site.
 >   (https://claude.ai/artifact/8QgoyJDEuzufG7uBZUJnop, 498 fichiers sous `project/`). Claude Code peut le lire avec l'outil
 >   Artifact (`list` avec `scope: "files"`, puis `read` avec `paths`). Ses pages publiées sont identiques au dépôt
 >   (`Video Feedback.dc.html` : même empreinte SHA-256) ; `a-publier/` = l'export du 01/10.
-> - Design system complet (composants, cartes, guide d'origine) : **pas encore transféré**. L'artefact « Design System »
->   du 29/10 dans Claude est vide. La version autonome de Claude Design (claude.ai/design) passe en lecture seule le
->   **14 décembre 2026** ; le dépôt n'a que la partie exportée pour le site (`_ds/`).
+> - Design system complet : **transféré dans Claude** le 15/11, artefact « Loan Drouard Design System »
+>   (https://claude.ai/artifact/TskwuKkjaGgjM7ito84qQC), puis **mis à jour le 15/11 depuis Video Feedback** par Claude Code :
+>   `project/README.md` (sections « Les univers du site » et « Video Feedback — l'univers technique », corrections du § 3,
+>   les 4 règles alignées sur le site), jetons `--or-clair`, `--vf-*`, `--carte-*`, `header-flottant.js` du site, prix et noms
+>   des formules. Les deux artefacts « Design System » vides (29/10 et 15/11) sont à ignorer. La version autonome de Claude
+>   Design (claude.ai/design) passe en lecture seule le **14 décembre 2026** ; le dépôt n'a que la partie exportée (`_ds/`).
 >
 > **Le dépôt GitHub du site est public** : n'y déposer ni le projet complet ni rien qui n'est pas encore publié
 > (pages Home et Press, photos presse HD, vidéo, notes provisoires).
@@ -34,7 +37,13 @@ Ce fichier n'est pas publié sur le site.
   loandrouard.fr, qui mène aujourd'hui à la version française de Video Feedback, sera à revoir à ce moment-là.
 - Adresse de contact à afficher : `contact@loandrouard.com`.
 
-### 0 bis. Relevé dans le projet (15/11)
+### 0 bis. Les univers du site (consigne de Loan du 15/11)
+- Home combine un peu de Video Feedback, de The Journey et de Press. Trois styles différents, mais polices et couleurs
+  principales identiques partout (cohérence).
+- Video Feedback : technique, architecte, « dessin », maquette — **unique à Video Feedback**.
+- The Journey : beaucoup plus imagé, cinématique, romancé. Press / Contact : à définir avec Loan.
+
+### 0 ter. Relevé dans le projet (15/11)
 - `Home.dc.html` affiche encore les anciens noms et prix des formules (« Single Feedback · 49 € », « Quarterly Program · 499 € »).
 - `Press.dc.html` affiche `contact@loandrouard.fr` (3 fois) : seule `contact@loandrouard.com` fonctionne (redirection OVH).
 
@@ -88,6 +97,10 @@ Prévoir les textes **en anglais et en français**.
 « aucune photographie fournie ».
 
 ## 3. Mises à jour à faire dans le design system
+
+**Fait le 15/11** dans « Loan Drouard Design System » (voir « Où est quoi ») ; les 4 points **[Loan]** ont été alignés
+sur Video Feedback (or clair ajouté, exception de l'or pour la zone des cartes, ruban « Coming soon » seule exception
+à l'or sous du texte, première personne). Loan peut encore en changer.
 
 Écarts relevés entre le design system (readme, jetons, cartes) et le site en ligne. Les points marqués **[Loan]**
 demandent d'abord une décision de Loan ; en attendant, faire comme sur le site en ligne.
