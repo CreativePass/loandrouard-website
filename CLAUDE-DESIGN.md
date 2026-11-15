@@ -4,11 +4,16 @@ Fiche préparée par Claude Code le 15/11/2026, d'après le dépôt (site en lig
 À coller au début de la conversation Claude Design (ou à joindre en fichier), **avec le design system**.
 Ce fichier n'est pas publié sur le site.
 
-> **Date limite** : la version autonome de Claude Design (claude.ai/design) ferme le **14 décembre 2026**. Claude Design fonctionne
-> désormais dans Claude. Avant cette date, récupérer tout le projet (pages et design system complet) :
-> le dépôt n'en contient que la partie exportée pour le site (`_ds/` : styles, polices, sceaux, textures, `_ds_bundle.js`),
-> pas les fichiers sources des composants, les cartes, les modèles de page, le kit UI ni le guide d'origine
-> (`uploads/design-system-loan-clean.html`, `guidelines/Design System Guide.pdf`).
+> **Où est quoi (15/11)** :
+> - Version à donner à Claude Design : le document Claude « Fiche pour Claude Design — Home et Press »
+>   (https://claude.ai/artifact/CFwEfbWDs7TbNn8vcpsUKP), même contenu que ce fichier, plus les deux points du § 0 bis.
+> - Projet Claude Design du site : **transféré dans Claude** le 15/11, artefact « Loan DROUARD | Website »
+>   (https://claude.ai/artifact/8QgoyJDEuzufG7uBZUJnop, 498 fichiers sous `project/`). Claude Code peut le lire avec l'outil
+>   Artifact (`list` avec `scope: "files"`, puis `read` avec `paths`). Ses pages publiées sont identiques au dépôt
+>   (`Video Feedback.dc.html` : même empreinte SHA-256) ; `a-publier/` = l'export du 01/10.
+> - Design system complet (composants, cartes, guide d'origine) : **pas encore transféré**. L'artefact « Design System »
+>   du 29/10 dans Claude est vide. La version autonome de Claude Design (claude.ai/design) passe en lecture seule le
+>   **14 décembre 2026** ; le dépôt n'a que la partie exportée pour le site (`_ds/`).
 >
 > **Le dépôt GitHub du site est public** : n'y déposer ni le projet complet ni rien qui n'est pas encore publié
 > (pages Home et Press, photos presse HD, vidéo, notes provisoires).
@@ -28,6 +33,10 @@ Ce fichier n'est pas publié sur le site.
 - Une fois publiée, Home deviendra la page d'accueil (`/`) à la place de Video Feedback, qui gardera sa propre adresse.
   loandrouard.fr, qui mène aujourd'hui à la version française de Video Feedback, sera à revoir à ce moment-là.
 - Adresse de contact à afficher : `contact@loandrouard.com`.
+
+### 0 bis. Relevé dans le projet (15/11)
+- `Home.dc.html` affiche encore les anciens noms et prix des formules (« Single Feedback · 49 € », « Quarterly Program · 499 € »).
+- `Press.dc.html` affiche `contact@loandrouard.fr` (3 fois) : seule `contact@loandrouard.com` fonctionne (redirection OVH).
 
 ## 1. Comment le site est fabriqué : contraintes à respecter
 
