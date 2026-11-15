@@ -4,7 +4,7 @@ Suivi de PASSATION-CLAUDE-CODE.md. Ce fichier n'est pas publié.
 
 ## Republier après un nouvel export
 
-1. Remplacer les fichiers de l'export à la racine du dépôt (pages `*.dc.html`, scripts, `_ds/`, `assets/`, `cloudflare/api-worker.js`).
+1. Ajouter à la racine du dépôt les nouvelles pages de l'export (`*.dc.html`) et les fichiers qu'elles utilisent. **Ne jamais remplacer** Video Feedback, CGV, Privacy, Legal ni Sponsors (demande de Loan du 15/11) : leur version dans Claude Design est celle du 01/10, et tout ce qui a changé depuis sur le site vient des corrections de construction. `PAGES_FIGEES` (`scripts/construire.mjs`) arrête la construction si l'une d'elles n'a plus l'empreinte attendue ; ne la changer que sur demande de Loan. `cloudflare/api-worker.js` du dépôt est plus récent que celui de l'export (7,7 Ko dans le projet Claude Design au 15/11, contre 15 Ko ici : prix, offre de lancement) : ne jamais le remplacer. Scripts, `_ds/` et `assets/` : ne les remplacer qu'après comparaison avec ceux du dépôt.
 2. `npm install` (la première fois seulement)
 3. `npm run publier` : construit `public/` puis le met en ligne. Il faut la variable `CLOUDFLARE_API_TOKEN`, ou bien `npx wrangler login` sur votre ordinateur.
 4. `npm run verifier -- https://loandrouard.com` : compare le site en ligne à l'export, pixel par pixel. Résultats dans `verification/`.

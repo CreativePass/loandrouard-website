@@ -22,6 +22,18 @@ const PAGES = [
   "Legal.dc.html",
   "Sponsors.dc.html",
 ];
+// Pages déjà publiées, figées à l'export du 01/10 (demande de Loan du 15/11) : tout ce qui a changé sur le site depuis
+// est fait par les corrections ci-dessous. Leur version dans Claude Design est restée celle du 01/10 : un nouvel export
+// ne doit JAMAIS remplacer ces fichiers (seules les nouvelles pages, Home puis Press, seront ajoutées). Si l'un d'eux
+// n'a plus l'empreinte attendue, la construction s'arrête et rien n'est mis en ligne. Ne changer une empreinte que sur
+// demande de Loan, après avoir vérifié que la nouvelle version contient tout ce que le site en ligne affiche.
+const PAGES_FIGEES = {
+  "Video Feedback.dc.html": "c900ae994dcbce76c30cc313e8a4041b67a858d3440666192f74e58a0549b1dc",
+  "CGV.dc.html": "db5b303550742bd879f092e0536401a772208541c25def3312e3ffe49170ef0d",
+  "Privacy.dc.html": "442ffb361c84b70df40f7cd1945a888444da81d71784f43804f68b06e14c0fde",
+  "Legal.dc.html": "0b0e8c84c6389a955c20d5d3afe3eba137938e179cb6ece03857e7c89343fcab",
+  "Sponsors.dc.html": "96ea748eb9eac5750f06f9a5ae6a715dc5bfad51120fe4f04e2f9977c55b4291",
+};
 const SCRIPTS = ["support.js", "chargement.js", "header-flottant.js", "poussiere-or.js", "blueprint.js"];
 const DOSSIERS = ["_ds", "assets"];
 // Icône du site (silhouette envoyée par Loan le 20/10, recadrée en carré) : lue d'office par les navigateurs à la racine.
@@ -2216,6 +2228,15 @@ for (const f of [...PAGES, ...SCRIPTS, ...ICONES, ...DOSSIERS]) {
   const src = path.join(RACINE, f);
   if (!fs.existsSync(src)) erreurs.push(`Fichier manquant dans l'export : ${f}`);
   else copier(src, path.join(PUBLIC, f));
+}
+
+// Pages figées (PAGES_FIGEES) : une version venue d'un nouvel export annulerait les modifications faites depuis le 01/10.
+for (const [f, attendue] of Object.entries(PAGES_FIGEES)) {
+  const src = path.join(RACINE, f);
+  if (fs.existsSync(src) && crypto.createHash("sha256").update(fs.readFileSync(src)).digest("hex") !== attendue)
+    erreurs.push(`${f} a été remplacé : ce n'est plus la version du 01/10 sur laquelle repose le site en ligne. ` +
+      `Un export de Claude Design ne doit pas remplacer les pages déjà publiées (les modifications faites depuis seraient perdues) : ` +
+      `remettre la version de main (git checkout main -- "${f}") — voir PAGES_FIGEES dans scripts/construire.mjs`);
 }
 
 const indexExport = path.join(RACINE, "index.html");
