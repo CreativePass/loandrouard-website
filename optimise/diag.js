@@ -137,7 +137,7 @@
   const sid = Math.random().toString(36).slice(2, 8), debut = Date.now();
   let etatPage = "en-cours";
   const releves = []; // [t (s), y, phase, P×100, à l'écran, caméras étude (w = will-change), vitesse px/s, calques du projecteur, zoom]
-  /* Zoom (16/11) : z = zoom de Safari (×), L = loupe du site (×), f / F = page à plat (filet léger / complet), O = carte ouverte. */
+  /* Zoom (14/11) : z = zoom de Safari (×), L = loupe du site (×), f / F = page à plat (filet léger / complet), O = carte ouverte. */
   const zoom = () => { const v = window.visualViewport, vf = document.querySelector(".vf"), m = vf && /scale\(([\d.]+)\)/.exec(vf.style.transform || "");
     return (v && v.scale > 1.005 ? "z" + v.scale.toFixed(2) : "") + (h.classList.contains("vf-loupe") ? "L" + (m ? (+m[1]).toFixed(2) : "1") : "") +
       (h.classList.contains("vf-zoom-plat") ? (h.classList.contains("vf-zoom-natif") ? "F" : "f") : "") + (document.querySelector(".vfk-c[data-grand]") ? "O" : ""); };
@@ -159,7 +159,7 @@
   document.addEventListener("visibilitychange", () => { etatPage = document.hidden ? "cachee" : "en-cours"; enregistrer(); });
 
   let tick = 0, couvert = false, yPrec = 0, tReleve = 0, enEcran = !!$("#ld-chargement");
-  /* 16/11 : tout changement de zoom est écrit aussitôt (un arrêt survient juste après que Safari a zoomé). */
+  /* 14/11 : tout changement de zoom est écrit aussitôt (un arrêt survient juste après que Safari a zoomé). */
   let zPrec = "";
   const surZoom = () => { const z = zoom(); if (z === zPrec) return; zPrec = z; try { relever(); enregistrer(); } catch (e) {} };
   if (window.visualViewport) window.visualViewport.addEventListener("resize", surZoom);

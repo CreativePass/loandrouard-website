@@ -5,7 +5,7 @@
 //   1. Loupe (14/11), vrais événements tactiles : zoom de Safari bloqué sur l'accueil et remplacé par la loupe ; image agrandie
 //      fidèle (fond fixe, en-tête, point sous les doigts, cible d'un toucher) ; glissé d'un doigt ; scènes en pause ; retour à ×1 ;
 //      un doigt sans loupe défile ; ordinateur et pages légales inchangés.
-//   2. Filet (16/11) : zoom de Safari quand les doigts ne sont pas transmis (simulé) → page à plat complet ; élan arrêté net → à plat
+//   2. Filet (14/11) : zoom de Safari quand les doigts ne sont pas transmis (simulé) → page à plat complet ; élan arrêté net → à plat
 //      léger aussitôt, puis normal ; fin d'élan naturelle et saut de position : rien.
 //   3. Vitrine : cartes et mur visibles dès l'ouverture, libérés après la fermeture (fondu terminé).
 //   4. Captures AVANT / APRÈS identiques sans zoom (animations figées au même instant), le long de toute la page ; témoin
@@ -149,7 +149,7 @@ for (const chemin of ["/CGV.dc.html", "/Privacy.dc.html", "/Legal.dc.html", "/Sp
   const o = await ouvrir("apres", chemin); const sc = await pincer(o); ok(sc > 1.5 && !o.erreurs.length, `${chemin} : zoom de Safari gardé (×${sc.toFixed(2)}), aucune erreur JS`); await o.ctx.close();
 }
 }
-// ——— 2. Filet (16/11) : quand Safari zoome lui-même (doigts posés pendant l'élan, non transmis à la page) ———
+// ——— 2. Filet (14/11) : quand Safari zoome lui-même (doigts posés pendant l'élan, non transmis à la page) ———
 const etatFilet = (page) => page.evaluate(() => { const R = document.documentElement, v = document.querySelector(".vf");
   return { plat: R.classList.contains("vf-zoom-plat"), natif: R.classList.contains("vf-zoom-natif"), loupe: R.classList.contains("vf-loupe"), z: +visualViewport.scale.toFixed(2),
     t3: [...v.querySelectorAll("*")].filter((e) => e.style && /translate3d\(/.test(e.style.transform)).length, toiles: [...v.querySelectorAll("canvas")].filter((c) => getComputedStyle(c).visibility !== "hidden").length }; });

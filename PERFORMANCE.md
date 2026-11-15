@@ -947,7 +947,7 @@ Retour sur la version `4b58c5f6` : « ça crashe toujours sur les cartes. Parfoi
 
 **Reste à confirmer sur l'iPhone de Loan** : plus d'arrêt, loupe fluide, texte assez lisible agrandi ; aisance du geste (pincer, glisser, revenir).
 
-### Retour de Loan du 16/11 : arrêts « quand je zoome pendant que ça défile » — filet de sécurité
+### Second retour de Loan du 14/11 : arrêts « quand je zoome pendant que ça défile » — filet de sécurité
 
 Retour sur la version `84f2e39a` (loupe) : « ça plante encore, on dirait que ça n'a pas marché ; ça plante aussi en dehors des cartes quand je zoome pendant que ça défile ». La page servie contenait bien la loupe (HTML revalidé à chaque ouverture : `max-age=0, must-revalidate`).
 

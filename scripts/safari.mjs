@@ -17,7 +17,7 @@ const SAF = "/* Correction Safari (scripts/safari.mjs) : ";
 const TEX = "assets/lumiere/";
 const img = (cls, nom, extra = "") => `<img class="${cls}" src="${TEX}${nom}.png" alt="" aria-hidden="true" decoding="async"${extra}>`;
 
-// Filet de sécurité quand Safari zoome lui-même (correction « filet », 16/11 ; voir le commentaire de la correction plus bas).
+// Filet de sécurité quand Safari zoome lui-même (correction « filet », 14/11 ; voir le commentaire de la correction plus bas).
 const FILET_CSS = `${SAF}filet : page à plat (sans calques séparés) quand Safari zoome lui-même ou peut le faire (élan interrompu). */
 /* Niveau léger (image identique) : will-change retiré, faces arrière visibles dans le projecteur et l'étude (rien n'y tourne en 3D). */
 html.vf-zoom-plat .vf *:not(.vfp-affiche), html.vf-zoom-plat .vf *::before, html.vf-zoom-plat .vf *::after { will-change: auto !important; }
@@ -29,7 +29,7 @@ html.vf-zoom-natif .vfa-svg--or, html.vf-zoom-natif .vfa-taiji, html.vf-zoom-nat
 html.vf-zoom-natif .vfk * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; }
 html.vf-zoom-natif .vfk-flip, html.vf-zoom-natif .vfk-dos { transform: none !important; -webkit-transform-style: flat !important; transform-style: flat !important; }
 `;
-const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même (16/11). Des doigts posés pendant l'élan d'un défilement ne sont pas
+const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même (14/11). Des doigts posés pendant l'élan d'un défilement ne sont pas
    transmis à la page (WebKit : isInterruptingMomentumScrollingWithEvent) : ni touch-action ni la loupe ne les voient, et Safari zoome en
    redessinant toute la page. La page passe donc à plat dès que le défilement s'arrête net en pleine lancée (niveau léger, image
    identique), et complètement si Safari a zoomé. */
@@ -473,7 +473,7 @@ const TOUTES = [
     avant: "    const maj = () => {\n      raf = 0;\n", apres: "    const maj = () => {\n      raf = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
   { id: "loupe", quoi: "Loupe : cartes en pause", fichiers: VF, n: 1,
     avant: "    const maj = () => {\n      rafS = 0;\n", apres: "    const maj = () => {\n      rafS = 0; if (window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */\n" },
-  // « Filet » (16/11, retour de Loan après « loupe » : « ça plante encore […] aussi en dehors des cartes quand je zoome pendant que ça
+  // « Filet » (14/11, retour de Loan après « loupe » : « ça plante encore […] aussi en dehors des cartes quand je zoome pendant que ça
   // scroll »). Cause, lue dans WebKit (WKContentViewInteraction.mm, _shouldIgnoreTouchEvent → isInterruptingMomentumScrollingWithEvent) :
   // des doigts posés pendant l'élan d'un défilement ne sont pas transmis à la page ; touch-action ne s'applique pas (aucune règle
   // enregistrée pour ces doigts) et la loupe ne les voit pas : Safari fait son propre zoom et redessine toute la page en grand. Aux
@@ -508,8 +508,8 @@ const choix = process.env.SAFARI;
 // PERFORMANCE.md, « Retour de Loan du 09/11 ». Image identique (Chromium) ; à confirmer sur l'iPhone (adresse de test).
 // « pincement » (zoom bloqué) écarté : Loan veut garder le zoom.
 // « zoomplat » écarté le 14/11 (arrêts persistants sur les cartes, défilement saccadé pendant le zoom) : remplacé par « loupe »
-// (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « 14/11 ».
-// « filet » (16/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
+// (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « Retour de Loan du 14/11 ».
+// « filet » (14/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
 export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
