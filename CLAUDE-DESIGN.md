@@ -9,23 +9,34 @@ Ce fichier n'est pas publié sur le site.
 > le dépôt n'en contient que la partie exportée pour le site (`_ds/` : styles, polices, sceaux, textures, `_ds_bundle.js`),
 > pas les fichiers sources des composants, les cartes, les modèles de page, le kit UI ni le guide d'origine
 > (`uploads/design-system-loan-clean.html`, `guidelines/Design System Guide.pdf`).
+>
+> **Le dépôt GitHub du site est public** : n'y déposer ni le projet complet ni rien qui n'est pas encore publié
+> (pages Home et Press, photos presse HD, vidéo, notes provisoires).
 
 ---
 
-## 0. La nouvelle partie (à compléter par Loan)
+## 0. La nouvelle partie : Home, puis Press / Contact (choix de Loan du 15/11)
 
-- Page concernée : … (Home, The Journey, Press / Contact, ou autre)
-- Ce qu'elle doit raconter / vendre : …
-- Contenus disponibles (textes, photos, vidéos) : …
+- **Home d'abord, Press / Contact ensuite.**
+- Ces deux pages existent déjà dans le projet Claude Design (`Home.dc.html`, `Press.dc.html`). Elles ont été dessinées avant
+  la mise en ligne du 01/10 et n'ont jamais été publiées : les reprendre et les mettre à jour avec le § 2, sans repartir de zéro.
+- Ce que l'on sait d'elles (`PASSATION-CLAUDE-CODE.md` § 9) :
+  - Home : vidéo d'ouverture (`uploads/hero-full-10mb-….mp4`, 10 Mo, trop lourde pour un téléphone : prévoir une version
+    allégée et une image fixe de remplacement) et QR code de contact ;
+  - Press : photos HD à télécharger (`assets/photos/press-hd/`, `zip-photos.js`) et notes provisoires à régler (`notesProvisoires`).
+- The Journey : aucun fichier connu. Dire si c'est une page à part ou une partie de Home.
+- Une fois publiée, Home deviendra la page d'accueil (`/`) à la place de Video Feedback, qui gardera sa propre adresse.
+  loandrouard.fr, qui mène aujourd'hui à la version française de Video Feedback, sera à revoir à ce moment-là.
+- Adresse de contact à afficher : `contact@loandrouard.com`.
 
 ## 1. Comment le site est fabriqué : contraintes à respecter
 
 - Le site en ligne est **l'export de Claude Design**, recopié tel quel (pages `*.dc.html`, dossiers `_ds/` et `assets/`, scripts).
   Claude Code applique ensuite une liste de corrections sur la copie (contenu, mobile, version française, performance).
   Ces corrections cherchent des **passages exacts** du fichier exporté.
-- Donc : faire la nouvelle partie dans un **nouveau fichier de page**. **Ne pas modifier** dans Claude Design les pages
-  existantes (Video Feedback, CGV, Privacy, Legal, Sponsors) : leur version dans Claude Design est en retard sur le site
-  en ligne, et toute modification casse les corrections.
+- Donc : **ne pas modifier** dans Claude Design les pages déjà publiées (Video Feedback, CGV, Privacy, Legal, Sponsors) :
+  leur version dans Claude Design est en retard sur le site en ligne, et toute modification casse les corrections.
+  Home et Press, jamais publiées, peuvent être modifiées librement. Une page vraiment nouvelle : un nouveau fichier.
 - Ne pas renommer le dossier `_ds/loan-drouard-design-system-06a79c98-aed9-4ca8-8b81-69bb72fcc98a`.
 - Aucun cookie, outil de statistiques, traceur, bannière, ni nouveau service extérieur (vidéo YouTube ou Vimeo intégrée,
   police en ligne, script tiers…) sans accord de Loan. Seule exception déjà en place : Cloudflare Web Analytics (sans cookie).
@@ -70,7 +81,7 @@ Prévoir les textes **en anglais et en français**.
 ## 3. Mises à jour à faire dans le design system
 
 Écarts relevés entre le design system (readme, jetons, cartes) et le site en ligne. Les points marqués **[Loan]**
-demandent d'abord une décision de Loan.
+demandent d'abord une décision de Loan ; en attendant, faire comme sur le site en ligne.
 
 1. **Prix et noms des formules** : le readme annonce « 49 € · 129 € · 499 € » comme prix ; ce sont les prix de promotion.
    Mettre les noms et prix du § 2 (readme, composant `Formule`, modèle « Page formules »).
@@ -100,6 +111,6 @@ Autres corrections du site jamais reportées dans Claude Design : liste « Repor
 
 ## 4. Après l'export (travail de Claude Code)
 
-Ajouter la nouvelle page à la liste des fichiers publiés (`scripts/construire.mjs`), activer son lien dans l'en-tête et le menu
-(et retirer le ruban « Coming soon »), faire la version française, vérifier sur mobile, publier sur l'adresse de test,
-puis sur loandrouard.com avec l'accord de Loan.
+Ajouter Home puis Press à la liste des fichiers publiés (`scripts/construire.mjs`, avec leurs fichiers listés au
+`PASSATION-CLAUDE-CODE.md` § 9), activer leurs liens dans l'en-tête et le menu (et retirer le ruban « Coming soon »),
+faire la version française, vérifier sur mobile, publier sur l'adresse de test, puis sur loandrouard.com avec l'accord de Loan.
