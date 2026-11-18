@@ -981,6 +981,8 @@ Retour sur loandrouard.com (version `9b62111e`, loupe et filet en ligne depuis l
 
 **Vérifié dans Chromium** (`node scripts/verif-pincement.mjs`, sections 1 à 3, section 2 mise à jour) : élan arrêté net, élan lent arrêté net, saut de position : jamais à plat ; remontée rapide depuis le bas (23 909 px, 23 coups de doigt) : 0 image à plat ; élan arrêté puis zoom de Safari simulé ×2,5 : à plat complet ; loupe et vitrine : inchangées ; aucune erreur JS. Adresse de test (version Cloudflare `4b094bb6`) : 138 fichiers servis identiques à `public/` ; mêmes contrôles au format iPhone (anglais et français), aucune erreur JS (iPhone et ordinateur).
 
+**Essai de Loan sur son iPhone** (adresse de test `4b094bb6`, 18/11) : « ça marche ». **En ligne sur loandrouard.com le 18/11** (version `6f2d5c40`, retour arrière : `9b62111e`).
+
 **Non démontré** : que le filet soit la seule cause (pas d'iPhone ici). Le diagnostic de l'adresse de test note `f` (à plat léger) et `F` (à plat complet) : un arrêt avec la nouvelle version, sans `f`, désignerait la mémoire de la jonction projecteur / étude, à alléger ensuite.
 
 ## Vérifications
