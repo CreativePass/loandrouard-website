@@ -5,8 +5,9 @@
 //   1. Loupe (14/11), vrais événements tactiles : zoom de Safari bloqué sur l'accueil et remplacé par la loupe ; image agrandie
 //      fidèle (fond fixe, en-tête, point sous les doigts, cible d'un toucher) ; glissé d'un doigt ; scènes en pause ; retour à ×1 ;
 //      un doigt sans loupe défile ; ordinateur et pages légales inchangés.
-//   2. Filet (14/11) : zoom de Safari quand les doigts ne sont pas transmis (simulé) → page à plat complet ; élan arrêté net → à plat
-//      léger aussitôt, puis normal ; fin d'élan naturelle et saut de position : rien.
+//   2. Filet (14/11, réduit le 18/11) : zoom de Safari quand les doigts ne sont pas transmis (simulé) → page à plat complet ; élan
+//      arrêté net (coup de doigt qui relance une remontée), remontée rapide en coups de doigt enchaînés, fin d'élan naturelle et saut de
+//      position : rien (page jamais à plat sans zoom).
 //   3. Vitrine : cartes et mur visibles dès l'ouverture, libérés après la fermeture (fondu terminé).
 //   4. Captures AVANT / APRÈS identiques sans zoom (animations figées au même instant), le long de toute la page ; témoin
 //      AVANT / AVANT. Loupe ×2,5 : même image que l'écran d'origine agrandi.
@@ -158,7 +159,7 @@ const elan = (o, v0, arret) => o.page.evaluate(([v0, arret]) => new Promise((ok)
   const pas = (now) => { const dt = now - t; t = now; n++; if (arret && n >= arret) return ok(Math.round(scrollY)); scrollBy(0, v * dt); v *= Math.pow(0.95, dt / 16); if (v < 0.02) return ok(Math.round(scrollY)); requestAnimationFrame(pas); };
   requestAnimationFrame(pas); }), [v0, arret]);
 if (section(2)) {
-console.log("\n2. Filet : zoom de Safari quand les doigts ne sont pas transmis (simulé), élan interrompu");
+console.log("\n2. Filet : zoom de Safari quand les doigts ne sont pas transmis (simulé) ; élan interrompu et remontée rapide sans effet");
 { const o = await ouvrir("apres"); await allerEl(o.page, ".vfk", 1); await o.page.waitForTimeout(2500); const e0 = await etatFilet(o.page);
   await zoomer(o, 2.5); const e1 = await etatFilet(o.page);
   ok(!e0.plat && e1.z > 2 && e1.plat && e1.natif && !e1.t3 && !e1.toiles && !e1.loupe, `Zoom de Safari ×${e1.z} sur les cartes : à plat complet ${e1.plat && e1.natif ? "oui" : "NON"}, translate3d ${e1.t3}, toiles visibles ${e1.toiles}, loupe ${e1.loupe ? "OUI" : "non"}`);
@@ -167,17 +168,31 @@ console.log("\n2. Filet : zoom de Safari quand les doigts ne sont pas transmis (
   ok(e2.z <= 1.01 && !e2.plat && !e2.natif && e2.t3 > 0, `Dézoom (×${e2.z}) : état normal`); ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close(); }
 { const o = await ouvrir("apres"); const y0 = await o.page.evaluate(() => scrollY), y1 = await elan(o, 2.5, 0); await o.page.waitForTimeout(200); const e = await etatFilet(o.page);
   ok(y1 - y0 > 300 && !e.plat, `Élan qui ralentit jusqu'à l'arrêt (${Math.round(y1 - y0)} px) : à plat ${e.plat ? "OUI" : "non"}`); await o.ctx.close(); }
-{ const o = await ouvrir("apres"); await elan(o, 2.5, 12); await o.page.waitForTimeout(150); const e1 = await etatFilet(o.page); await o.page.waitForTimeout(2900); const e2 = await etatFilet(o.page);
-  ok(e1.plat && !e1.natif && !e1.t3 && e1.toiles > 0, `Élan arrêté net en pleine lancée : à plat léger 0,15 s après (translate3d ${e1.t3}, toiles gardées ${e1.toiles})`);
-  ok(!e2.plat, `2,9 s plus tard, sans zoom : état normal`);
-  await elan(o, 2.5, 12); await o.page.waitForTimeout(150); const e3 = await etatFilet(o.page);
-  await o.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 196, y: 600, id: 1 }] }); await o.page.waitForTimeout(100); const e4 = await etatFilet(o.page); await o.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  ok(e3.plat && !e4.plat, `Nouveau toucher transmis après un élan arrêté : état normal aussitôt`);
-  await elan(o, 2.5, 12); await o.page.waitForTimeout(150); const e5 = await etatFilet(o.page); await zoomer(o, 2.5); const e6 = await etatFilet(o.page);
-  ok(e5.plat && e6.plat && e6.natif && e6.z > 2, `Élan arrêté puis zoom de Safari : déjà à plat avant le zoom, puis à plat complet à ×${e6.z}`);
+{ const o = await ouvrir("apres"); await elan(o, 2.5, 12); await o.page.waitForTimeout(150); const e1 = await etatFilet(o.page);
+  ok(!e1.plat && e1.t3 > 0, `Élan arrêté net en pleine lancée (18/11) : à plat ${e1.plat ? "OUI" : "non"}, translate3d gardés ${e1.t3}`);
+  await zoomer(o, 2.5); const e2 = await etatFilet(o.page);
+  ok(e2.plat && e2.natif && e2.z > 2 && !e2.t3, `Élan arrêté puis zoom de Safari : à plat complet à ×${e2.z} (translate3d ${e2.t3})`);
   ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close(); }
 { const o = await ouvrir("apres"); await elan(o, 0.35, 10); await o.page.waitForTimeout(150); const e = await etatFilet(o.page);
-  ok(e.plat, `Élan lent (0,35 px/ms) arrêté net : à plat léger ${e.plat ? "oui" : "NON"}`); await o.ctx.close(); }
+  ok(!e.plat, `Élan lent (0,35 px/ms) arrêté net : à plat ${e.plat ? "OUI" : "non"}`); await o.ctx.close(); }
+/* Remontée rapide comme sur iPhone (retour de Loan du 18/11) : bas de page, puis coups de doigt enchaînés jusqu'en haut ; seul le
+   premier toucher est transmis, chaque coup suivant rattrape l'élan (défilement arrêté 3 images). */
+{ const o = await ouvrir("apres");
+  for (let k = 0; k < 4; k++) { await o.page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; scrollTo(0, document.documentElement.scrollHeight); }); await o.page.waitForTimeout(5000); }
+  const r = await o.page.evaluate(() => new Promise((fin) => { const R = document.documentElement; let plat = 0, img = 0, coups = 1;
+    const T1 = () => new Touch({ identifier: 1, target: document.body, clientX: 200, clientY: 400 });
+    document.dispatchEvent(new TouchEvent("touchstart", { touches: [T1()], changedTouches: [T1()], bubbles: true }));
+    document.dispatchEvent(new TouchEvent("touchend", { touches: [], changedTouches: [T1()], bubbles: true }));
+    let v = 4, n = 0, pause = 0, t = performance.now(); const y0 = scrollY;
+    const pas = (now) => { const dt = Math.min(50, now - t); t = now; img++; if (R.classList.contains("vf-zoom-plat")) plat++;
+      if (pause > 0) { if (!--pause) v = 4; return requestAnimationFrame(pas); }
+      scrollBy(0, -v * dt); v *= Math.pow(0.95, dt / 16); n++;
+      if (scrollY <= 0) return setTimeout(() => fin({ y0: Math.round(y0), img, plat: plat + (R.classList.contains("vf-zoom-plat") ? 1 : 0), coups }), 3000);
+      if (n % 28 === 0) { pause = 3; coups++; }
+      requestAnimationFrame(pas); };
+    requestAnimationFrame(pas); }));
+  ok(r.y0 > 15000 && !r.plat, `Remontée rapide depuis le bas (${r.y0} px, ${r.coups} coups de doigt, ${r.img} images) : images à plat ${r.plat}`);
+  ok(!o.erreurs.length, "Aucune erreur JS" + (o.erreurs.length ? " : " + o.erreurs.join(" / ") : "")); await o.ctx.close(); }
 { const o = await ouvrir("apres"); await o.page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; scrollTo(0, 6000); }); await o.page.waitForTimeout(400); const e = await etatFilet(o.page);
   ok(!e.plat, `Saut de position instantané (lien, script) : à plat ${e.plat ? "OUI" : "non"}`); await o.ctx.close(); }
 }

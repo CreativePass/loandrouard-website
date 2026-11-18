@@ -17,8 +17,8 @@ const SAF = "/* Correction Safari (scripts/safari.mjs) : ";
 const TEX = "assets/lumiere/";
 const img = (cls, nom, extra = "") => `<img class="${cls}" src="${TEX}${nom}.png" alt="" aria-hidden="true" decoding="async"${extra}>`;
 
-// Filet de sécurité quand Safari zoome lui-même (correction « filet », 14/11 ; voir le commentaire de la correction plus bas).
-const FILET_CSS = `${SAF}filet : page à plat (sans calques séparés) quand Safari zoome lui-même ou peut le faire (élan interrompu). */
+// Filet de sécurité quand Safari zoome lui-même (correction « filet », 14/11, réduite le 18/11 ; voir le commentaire de la correction plus bas).
+const FILET_CSS = `${SAF}filet : page à plat (sans calques séparés) quand Safari a zoomé lui-même. */
 /* Niveau léger (image identique) : will-change retiré, faces arrière visibles dans le projecteur et l'étude (rien n'y tourne en 3D). */
 html.vf-zoom-plat .vf *:not(.vfp-affiche), html.vf-zoom-plat .vf *::before, html.vf-zoom-plat .vf *::after { will-change: auto !important; }
 html.vf-zoom-plat .vfp *, html.vf-zoom-plat .vfa * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; }
@@ -29,10 +29,13 @@ html.vf-zoom-natif .vfa-svg--or, html.vf-zoom-natif .vfa-taiji, html.vf-zoom-nat
 html.vf-zoom-natif .vfk * { -webkit-backface-visibility: visible !important; backface-visibility: visible !important; }
 html.vf-zoom-natif .vfk-flip, html.vf-zoom-natif .vfk-dos { transform: none !important; -webkit-transform-style: flat !important; transform-style: flat !important; }
 `;
-const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même (14/11). Des doigts posés pendant l'élan d'un défilement ne sont pas
-   transmis à la page (WebKit : isInterruptingMomentumScrollingWithEvent) : ni touch-action ni la loupe ne les voient, et Safari zoome en
-   redessinant toute la page. La page passe donc à plat dès que le défilement s'arrête net en pleine lancée (niveau léger, image
-   identique), et complètement si Safari a zoomé. */
+const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même (14/11, réduit le 18/11). Des doigts posés pendant l'élan d'un
+   défilement ne sont pas transmis à la page (WebKit : isInterruptingMomentumScrollingWithEvent) : ni touch-action ni la loupe ne les
+   voient, et Safari zoome en redessinant toute la page. La page passe à plat complet dès que Safari a zoomé (visualViewport.scale > 1,01,
+   connu pendant le pincement, avant que Safari ne redessine au relâcher des doigts), jusqu'au dézoom.
+   18/11 (retour de Loan : « quand je descends tout en bas et que je remonte, le site crashe ») : la page ne passe plus à plat quand un
+   élan s'arrête net. Chaque coup de doigt qui relance un défilement rapide rattrape l'élan sans être transmis non plus : la page passait
+   à plat pendant toute une remontée (projecteur et étude redessinés à chaque image), puis revenait d'un coup en haut de page. */
 (() => {
   const R = document.documentElement, tactile = window.matchMedia ? window.matchMedia("(any-pointer: coarse)") : { matches: false }, vv = window.visualViewport;
   /* translate3d(x, y, z) → translate(x, y) : même position, sans calque séparé (valeurs avec calc() comprises). */
@@ -42,10 +45,10 @@ const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même
       t = t.slice(0, i) + "translate(" + a[0].trim() + ", " + a[1].trim() + ")" + t.slice(j + 1); i = t.indexOf("translate3d(", i + 10); }
     return t; };
   const plat = (el) => { const t = el.style && el.style.transform; if (t && t.indexOf("translate3d(") >= 0) { const n = deux(t); if (n !== t) el.style.transform = n; } };
-  let obs = null, interrompu = false, tInt = 0, doigts = 0;
+  let obs = null;
   const natif = () => (!!vv && vv.scale > 1.01) || R.classList.contains("vf-zoom");
-  const suivre = () => { const n = natif() && tactile.matches, z = n || (interrompu && tactile.matches);
-    if (R.classList.contains("vf-zoom-natif") !== n) R.classList.toggle("vf-zoom-natif", n);
+  const suivre = () => { const z = natif() && tactile.matches;
+    if (R.classList.contains("vf-zoom-natif") !== z) R.classList.toggle("vf-zoom-natif", z);
     if (z && !obs) { R.classList.add("vf-zoom-plat"); document.querySelectorAll('.vf [style*="translate3d"]').forEach(plat);
       /* Apparitions du projecteur terminées (elles finissent sur l'état normal) : arrêtées, sinon gardées en calques. */
       (document.getAnimations ? document.getAnimations() : []).forEach((a) => { if (/^vfp-(frappe|chauffe|apparait)$/.test(a.animationName || "") && a.playState === "finished") try { a.cancel(); } catch (e) {} });
@@ -54,20 +57,6 @@ const FILET_JS = `<script>${SAF}filet de sécurité quand Safari zoome lui-même
     else if (!z && obs) { obs.disconnect(); obs = null; R.classList.remove("vf-zoom-plat"); window.dispatchEvent(new Event("scroll")); } };
   new MutationObserver(suivre).observe(R, { attributes: true, attributeFilter: ["class"] }); suivre();
   if (vv) vv.addEventListener("resize", suivre);
-  /* Élan interrompu : défilement arrêté net (deux images immobiles) après une vitesse > 0,15 px/ms, sans doigt transmis à la page.
-     Page à plat (léger) pendant 2,5 s, prolongé tant que la page bouge encore (pincement qui la déplace) ; un nouveau toucher
-     transmis (défilement ou loupe) la rend aussitôt normale. Une fin d'élan naturelle (vitesse déjà faible) ne déclenche rien. */
-  const fin = () => { interrompu = false; suivre(); };
-  const armer = () => { clearTimeout(tInt); tInt = setTimeout(fin, 2500); };
-  let y0 = 0, t0 = 0, v = 0, immobile = 0, mouv = 0, boucle = 0;
-  const pas = (now) => { const y = window.scrollY, dy = y - y0, dt = Math.max(1, now - t0); y0 = y; t0 = now;
-    if (dy !== 0) { v = 0.5 * v + 0.5 * dy / dt; immobile = 0; mouv++; boucle = requestAnimationFrame(pas); return; }
-    if (++immobile < 2) { boucle = requestAnimationFrame(pas); return; }
-    /* au moins 4 images de défilement continu : un saut de position instantané (lien, script) n'est pas un élan */
-    boucle = 0; if (mouv >= 4 && Math.abs(v) > 0.15 && !doigts && tactile.matches) { interrompu = true; suivre(); armer(); } v = 0; mouv = 0; };
-  window.addEventListener("scroll", () => { if (!boucle) { y0 = window.scrollY; t0 = performance.now(); immobile = 0; mouv = 0; boucle = requestAnimationFrame(pas); } if (interrompu) armer(); }, { passive: true });
-  const toucher = (e) => { doigts = e.touches ? e.touches.length : 0; if (e.type === "touchstart" && interrompu) { clearTimeout(tInt); fin(); } };
-  ["touchstart", "touchend", "touchcancel"].forEach((t) => document.addEventListener(t, toucher, { passive: true, capture: true }));
 })();
 </script>
 `;
@@ -482,6 +471,13 @@ const TOUTES = [
   // c'est-à-dire au moment où les doigts touchent l'écran, bien avant la fin du pincement (niveau léger, image identique) ; si Safari
   // a zoomé (visualViewport.scale > 1,01), niveau complet (halos, poussière, grain retirés ; cartes sans 3D) tant que dure le zoom.
   // Reprend « zoomplat » (09 et 11/11), sans son déclenchement à deux doigts (ces doigts-là, transmis, vont à la loupe).
+  // Réduit le 18/11 (retour de Loan : « sur mobile, quand je descends tout en bas du site et que je remonte, le site crashe souvent ;
+  // quand je remonte plus vite, ça crashe plus tôt ») : plus de passage à plat quand l'élan s'arrête net. Pour remonter vite, on enchaîne
+  // les coups de doigt, et chacun rattrape l'élan du précédent : ces doigts-là ne sont pas transmis non plus, l'élan « s'arrête net »
+  // et la page passait à plat dès le 2e coup de doigt, pour toute la remontée (simulé : 17,8 s sur 19,3 s), puis revenait d'un coup
+  // en haut de page, au projecteur (le plus lourd). À plat, projecteur et étude sont redessinés à chaque image (Chromium : trame
+  // +40 à +50 %, styles +35 %), un mode jamais essayé sur l'iPhone en défilement. Seul reste le niveau complet quand Safari a
+  // vraiment zoomé (visualViewport.scale, connu pendant le pincement, avant que Safari ne redessine au relâcher des doigts).
   { id: "filet", quoi: "Filet : page à plat si Safari zoome lui-même (styles)", fichiers: VF, n: 1,
     avant: "</style>\n</helmet>", apres: FILET_CSS + "</style>\n</helmet>" },
   { id: "filet", quoi: "Filet : page à plat si Safari zoome lui-même (script)", fichiers: VF, n: 1,
@@ -510,6 +506,7 @@ const choix = process.env.SAFARI;
 // « zoomplat » écarté le 14/11 (arrêts persistants sur les cartes, défilement saccadé pendant le zoom) : remplacé par « loupe »
 // (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « Retour de Loan du 14/11 ».
 // « filet » (14/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
+// Réduit le 18/11 au seul zoom réel de Safari (arrêts en remontant la page : voir le commentaire de la correction).
 export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
