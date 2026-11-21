@@ -18,3 +18,4 @@ Tous dans `scripts/`, lancés après `npm run construire`. Chromium seulement (p
 - Pas de carte graphique : images espacées de 17 à 170 ms, durées mesurées à ± une image.
 - Les captures « avant / après » doivent tenir compte des animations : comparer à un témoin (deux captures sans rien changer).
 - Mémoire : estimation selon le modèle de WebKit, pas une mesure de Safari. La mesure réelle se fait dans l'inspecteur web du Mac, iPhone branché (onglet Calques).
+- Écoute du diagnostic (`wrangler tail`) : 2 h au plus par lancement, et la connexion se coupe à chaque nouvelle publication de l'adresse de test. Si Loan essaie plus tard : le relevé reste dans l'iPhone (10 derniers arrêts), à lire avec `resultats.html` → « Copier tout » → coller dans la conversation.
