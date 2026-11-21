@@ -142,6 +142,140 @@ const LOUPE_JS = `<script>${SAF}loupe au pincement sur écran tactile (14/11, re
 </script>
 `;
 
+// Sous la planche II, sur mobile (correction « sousplanche », 21/11 ; voir le commentaire de la correction plus bas).
+const SOUSPLANCHE_CSS = `${SAF}sousplanche : sous la planche II (mobile), caméras de l'étude et fond « nuit » non dessinés quand le papier opaque recouvre la figure. */
+html.vf-cache-cams .vfa-cam, html.vf-cache-cams .vfa-cam *, html.vf-cache-cams .vf-nuit, html.vf-cache-cams .vf-nuit * { visibility: hidden !important; }
+`;
+const SOUSPLANCHE_AIDES = `  /* ${SAF.slice(3)}sousplanche (21/11) : une zone entièrement hors de l'écran, marge comprise, n'est pas dessinée ; sous la
+     planche II (mobile), les caméras de l'étude et le fond « nuit » ne le sont pas non plus quand le papier opaque recouvre la figure. */
+  const horsVue = (f, M) => { if (!f) return false; const H = Math.max(window.innerHeight, R.clientHeight), y = window.scrollY, ymax = R.scrollHeight - H;
+    const d0 = -Math.min(M, y), d1 = Math.min(M, Math.max(0, ymax - y));
+    for (let i = 0; i <= 16; i++) { const d = d0 + (d1 - d0) * i / 16, iv = f(d, 0); if (iv[1] > -1 && iv[0] < H + 1) return false; }
+    return true; };
+  /* Lignes de la feuille de l'étude (1200 × 800) où la figure détourée (etude-detoure-v3.webp) a des pixels : 0 à 688 (mesuré le 21/11). */
+  const FIG = [0, 690];
+  const sousPlanche = (scA, vfa, zs, M) => { const noir = scA && scA.querySelector(".vfa-noir"), cam = noir && noir.querySelector(":scope > .vfa-cam"), z = zs.filter(Boolean);
+    if (!cam || !vfa || !z.length || !plein(noir, scA)) return false; /* étude noire opaque : la caméra de l'étude blanche est dessous */
+    const fz = zone(scA, vfa, 0), r = cam.getBoundingClientRect(); if (!fz || r.height <= 0) return false;
+    let a = FIG[0], b = FIG[1];
+    const ng = cam.querySelector(".vfa-negatif"); if (ng && +getComputedStyle(ng).opacity > 0) { a = 0; b = 800; }
+    const so = cam.querySelector(".vfa-svg--or"); if (so && so.getBBox) try { const bb = so.getBBox(); if (bb.height > 0) { a = Math.min(a, bb.y); b = Math.max(b, bb.y + bb.height); } } catch (e) {}
+    let t0 = r.top + a * r.height / 800 - 16, t1 = r.top + b * r.height / 800 + 16;
+    const tr = getComputedStyle(cam).transform; /* caméra tournée : toute sa surface compte */
+    if (tr && tr !== "none") try { const x = new DOMMatrix(tr); if (Math.abs(x.b) > 1e-3 || Math.abs(x.c) > 1e-3) { t0 = r.top; t1 = r.bottom; } } catch (e) { t0 = r.top; t1 = r.bottom; }
+    const H = Math.max(window.innerHeight, R.clientHeight), y = window.scrollY, ymax = R.scrollHeight - H, d0 = -Math.min(M, y), d1 = Math.min(M, Math.max(0, ymax - y)), base = fz(0, 0)[1];
+    for (let i = 0; i <= 16; i++) { const d = d0 + (d1 - d0) * i / 16, s = fz(d, 0)[1] - base, h0 = Math.max(0, t0 + s), h1 = Math.min(H, t1 + s); if (h1 <= h0) continue;
+      const iv = z.map((f) => f(d, 0)).sort((p, q) => p[0] - q[0]); let bas = h0;
+      for (const [p, q] of iv) { if (q <= bas) continue; if (p > bas + 0.5) break; bas = q; }
+      if (bas < h1 - 0.5) return false; }
+    return true; };
+`;
+const SOUSPLANCHE_FIN = `    const hors = { "vf-cache-proj": scP && vfp ? zone(scP, vfp, 0) : null }; ${SAF}sousplanche (21/11) : projecteur hors de l'écran (au-dessus) jamais dessiné ; l'étude garde la règle d'origine (jonction projecteur / étude inchangée). */
+    for (const c in zones) { const deja = R.classList.contains(c), v = (deja ? couvert(zones[c], M / 2, -24) : couvert(zones[c], M, 10)) || horsVue(hors[c], deja ? M / 2 : M);
+      if (v !== deja) R.classList.toggle(c, v); }
+    const dejaS = R.classList.contains("vf-cache-cams"), sous = mob && sousPlanche(scA, vfa, [zK, zF], dejaS ? M / 2 : M);
+    if (sous !== dejaS) R.classList.toggle("vf-cache-cams", sous); };`;
+
+// Défilement doux identique dans tous les navigateurs (correction « glisse », 21/11 ; voir le commentaire de la correction plus bas).
+const GLISSE_JS = `<script>${SAF}défilement doux identique dans tous les navigateurs (21/11, retour de Loan : sur Safari, les liens du sommaire
+   arrivent d'un coup, sans glisser). Safari anime scrollTo({ behavior: "smooth" }) en un temps très court quelle que soit la distance :
+   sur cette page très haute, cela ressemble à un saut. Chrome (mesuré le 21/11) anime en √(distance) images à 60 i/s, 1,5 s au plus,
+   départ doux puis long freinage : courbe cubic-bezier(.42, 0, 0, 1) (écart moyen 0,4 % avec la mesure). Tous les défilements doux de
+   la page (sommaire, liens internes, frise de l'étude, retour au paiement,
+   « See full details » en remontant, retour en haut à l'ouverture) suivent maintenant cette courbe, calculée par la page, dans tous les
+   navigateurs. Un geste du visiteur (molette, doigt, touche de défilement) l'arrête là où elle est ; mouvement réduit : arrivée directe. */
+(() => {
+  const R = document.documentElement, natif = window.scrollTo.bind(window), calme = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
+  const courbe = (x) => { let lo = 0, hi = 1, t = x; /* cubic-bezier(.42, 0, 0, 1) */
+    for (let i = 0; i < 30; i++) { t = (lo + hi) / 2; const u = 1 - t, xt = 3 * u * u * t * 0.42 + t * t * t; if (xt < x) lo = t; else hi = t; }
+    const u = 1 - t; return 3 * u * t * t + t * t * t; };
+  let anim = null;
+  const arreter = () => { if (anim) { cancelAnimationFrame(anim.raf); anim = null; } };
+  const glisser = (top) => { arreter();
+    const y0 = window.scrollY, y1 = Math.max(0, Math.min(+top || 0, R.scrollHeight - window.innerHeight)), d = y1 - y0;
+    if (Math.abs(d) < 1 || calme.matches) { natif({ top: y1, behavior: "instant" }); return; }
+    const T = Math.min(Math.sqrt(Math.abs(d)), 90) / 60 * 1000, t0 = performance.now(), dpr = window.devicePixelRatio || 1, a = { raf: 0 };
+    const pas = (now) => { if (anim !== a) return; const p = Math.min(1, (now - t0) / T);
+      natif({ top: Math.round((y0 + d * courbe(p)) * dpr) / dpr, behavior: "instant" });
+      if (p < 1) a.raf = requestAnimationFrame(pas); else anim = null; };
+    anim = a; a.raf = requestAnimationFrame(pas); };
+  const doux = (o) => { const b = o && o.behavior; return b === "smooth" || (b !== "instant" && getComputedStyle(R).scrollBehavior === "smooth"); };
+  window.scrollTo = function (a, b) {
+    if (a && typeof a === "object") { if (doux(a)) { glisser(a.top != null ? a.top : window.scrollY); return; } arreter(); return natif(a); }
+    if (arguments.length >= 2 && doux(null)) { glisser(b); return; }
+    arreter(); return natif.apply(window, arguments); };
+  /* Comme Chrome : la molette, le doigt ou une touche de défilement arrêtent le glissé (un clic non) ; rien pendant l'écran de chargement. */
+  const TOUCHES = /^( |PageUp|PageDown|ArrowUp|ArrowDown|Home|End)$/;
+  ["wheel", "touchstart", "keydown"].forEach((g) => window.addEventListener(g, (e) => {
+    if (anim && !document.getElementById("ld-chargement") && (g !== "keydown" || TOUCHES.test(e.key))) arreter(); }, { capture: true, passive: true }));
+  /* Liens vers une partie de la page (« move by move »…) : même glissé ; les liens déjà gérés par la page (sommaire) ne sont pas touchés. */
+  document.addEventListener("click", (e) => { if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !e.target.closest) return;
+    const l = e.target.closest('a[href^="#"]'), id = l && decodeURIComponent(l.getAttribute("href").slice(1)), el = id && document.getElementById(id);
+    if (!el || !doux(null)) return;
+    e.preventDefault();
+    glisser(el.getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(el).scrollMarginTop) || 0) - (parseFloat(getComputedStyle(R).scrollPaddingTop) || 0));
+    if (location.hash !== "#" + id) try { history.pushState(null, "", "#" + id); } catch (er) {} });
+})();
+</script>
+`;
+
+// Inclinaison des cartes au survol calculée image par image (correction « inclinaison », 21/11 ; voir le commentaire plus bas).
+const INCLINAISON_JS = `<script>${SAF}inclinaison des cartes au survol calculée par la page, image par image (21/11, retour de Loan : sur Safari
+   (Mac), « ça tilte pas beaucoup et quand ça tilte un peu, ça bug, ça jitter »). Avant : chaque mouvement de la souris relançait une
+   transition CSS de 0,18 s, mesurée sur la carte déjà inclinée ; Safari reprend une transition relancée à partir d'une valeur en retard
+   sur l'écran (animations accélérées) : la carte tremblait et n'atteignait pas son angle. Maintenant : mêmes angles (9° d'un bord à
+   l'autre), même soulèvement (5 px), même reflet, mêmes durées (≈ 0,18 s pour suivre la souris, 0,6 s pour revenir à plat), dans tous
+   les navigateurs. */
+(() => {
+  const SUIT = "border-color .35s ease, box-shadow .35s ease, background-color .35s ease", RETOUR = "transform .6s cubic-bezier(.16,.6,.2,1), " + SUIT;
+  const cartes = new Map(); let raf = 0, tPrec = 0;
+  const ecrire = (c, s) => { c.style.transform = "perspective(1500px) rotateY(" + s.ry.toFixed(2) + "deg) rotateX(" + s.rx.toFixed(2) + "deg) translateY(" + (-s.l).toFixed(2) + "px)"; };
+  const pas = (now) => { raf = 0; const dt = tPrec ? Math.min(0.1, Math.max(0.001, (now - tPrec) / 1000)) : 1 / 60; tPrec = now; let encore = false;
+    cartes.forEach((s, c) => { const k = 1 - Math.exp(-dt / (s.dedans ? 0.06 : 0.14)), v = s.dedans ? s.v : { rx: 0, ry: 0, l: 0 };
+      s.rx += (v.rx - s.rx) * k; s.ry += (v.ry - s.ry) * k; s.l += (v.l - s.l) * k;
+      const fini = Math.abs(v.rx - s.rx) < 0.01 && Math.abs(v.ry - s.ry) < 0.01 && Math.abs(v.l - s.l) < 0.02;
+      if (fini) { s.rx = v.rx; s.ry = v.ry; s.l = v.l; }
+      if (fini && !s.dedans) { c.style.transform = ""; cartes.delete(c); requestAnimationFrame(() => { if (!cartes.has(c)) c.style.transition = RETOUR; }); }
+      else { ecrire(c, s); if (!fini) encore = true; } });
+    if (encore) raf = requestAnimationFrame(pas); else tPrec = 0; };
+  const lancer = () => { if (!raf) raf = requestAnimationFrame(pas); };
+  window.__ldIncline = {
+    suivre(c, x, y) { const r = c.getBoundingClientRect(); if (!r.width || !r.height) return;
+      let s = cartes.get(c); if (!s) { s = { rx: 0, ry: 0, l: 0, v: null, dedans: true }; cartes.set(c, s); }
+      s.dedans = true; c.style.transition = SUIT; /* la page tient la transformation : pas de transition CSS dessus */
+      const w = c.offsetWidth || r.width, h = c.offsetHeight || r.height, ky = r.height / h;
+      const px = Math.max(-0.5, Math.min(0.5, (x - r.left - r.width / 2) / r.width)), py = Math.max(-0.5, Math.min(0.5, (y - r.top - r.height / 2 - s.l * ky) / r.height));
+      s.v = { rx: -py * 9, ry: px * 9, l: 5 };
+      c.style.setProperty("--mx", ((x - r.left) / r.width * w).toFixed(0) + "px");
+      c.style.setProperty("--my", ((y - r.top) / r.height * h).toFixed(0) + "px");
+      lancer(); },
+    lacher(c) { const s = cartes.get(c); if (s) { s.dedans = false; lancer(); } else { c.style.transition = RETOUR; c.style.transform = ""; } } };
+})();
+</script>
+`;
+
+// Images de la page qui n'arrivent pas (correction « images », 21/11 ; voir le commentaire de la correction plus bas).
+const IMAGES_HTML = `<link rel="preload" as="image" href="assets/photos/etude-croquis-v5.webp">
+<link rel="preload" as="image" href="assets/photos/etude-detoure-v3.webp">
+<script>${SAF}images de la page redemandées si elles échouent (21/11, retour de Loan : sur Safari, le dessin de l'étude manque
+   parfois au premier chargement — « ? » de Safari et texte de remplacement à la place — et s'affiche au rechargement). Le moteur de la
+   page remplace les images de la page pendant qu'elles se téléchargent (page lue par le navigateur, puis recréée par React) ; les
+   deux images de l'étude, les plus lourdes, arrivent en dernier. Elles sont maintenant demandées dès l'en-tête (préchargement : rien de
+   plus à télécharger, le navigateur les demandait déjà) et gardées par la page ; une image en échec est redemandée (2 fois au plus). */
+(() => {
+  const essais = new WeakMap();
+  const relancer = (im) => { const s = im.getAttribute("src"), n = essais.get(im) || 0; if (!s || n >= 2 || /^(data|blob):|\\.svg(\\?|$)/i.test(s)) return;
+    essais.set(im, n + 1);
+    setTimeout(() => { if (!im.isConnected || (im.complete && im.naturalWidth > 0)) return;
+      try { const u = new URL(s, location.href); u.searchParams.set("r", String(n + 1)); im.src = u.href; } catch (e) {} }, 400 * (n + 1)); };
+  addEventListener("error", (e) => { const t = e.target; if (t && t.tagName === "IMG") relancer(t); }, true);
+  /* Image en échec sans événement (recréée par la page alors qu'elle avait déjà échoué) : vérifiée après le chargement. */
+  const balayer = () => { for (const im of document.images) if (im.loading !== "lazy" && im.complete && im.naturalWidth === 0) relancer(im); };
+  addEventListener("load", () => { setTimeout(balayer, 500); setTimeout(balayer, 4000); });
+})();
+</script>
+`;
+
 const TOUTES = [
   // En-tête : --hauteur-header vaut 68 px dans le design system, mais l'en-tête mesure 134 px sur iPhone (3 lignes) et
   // ~96 px dans Safari sur Mac. Son margin-bottom négatif (−68 px) laissait alors une bande vide au-dessus du
@@ -487,6 +621,48 @@ const TOUTES = [
     apres: "const couvert = (zones, M, ajust) => { const z = zones.filter(Boolean), H = Math.max(window.innerHeight, R.clientHeight) /* Correction Safari (scripts/safari.mjs) : page agrandie */," },
   { id: "loupe", quoi: "Loupe : zones recouvertes en pause", fichiers: VF, n: 1,
     avant: "const verifier = () => { raf = 0; const v = vf(); if (!v) return;", apres: "const verifier = () => { raf = 0; const v = vf(); if (!v || window.__ldLoupeTactile) return; " + SAF + "en pause pendant la loupe. */" },
+
+  // « Sousplanche » (21/11, retour de Loan : « quand on scroll, tout va bien jusqu'à ce que de nouveau, au moment d'arriver sur les
+  // cartes, le site crash sur mobile » ; « on en revient à un vieux bug »). Mesuré (Chromium, format iPhone, règles de WebKit) : en
+  // arrivant sur les cartes, l'étude devient transparente (opacité 1 → 0,1, elle s'efface sous la planche) ; la vérification des zones
+  // recouvertes (COUVERT_JS, 02-03/11) ne compte plus sur elle, et le haut de la planche est en fondu sur mobile : le projecteur (la
+  // partie la plus lourde de la page, pourtant à 17 000 px au-dessus) et le fond « nuit » sont redessinés d'un coup, au moment même où
+  // les cartes arrivent et se retournent en 3D. À l'arrêt, sous le papier opaque des cartes, restent aussi les deux caméras de l'étude,
+  // son négatif et ses corrections dorées (≈ 4 × 33 Mo selon le modèle de WebKit) : invisibles.
+  // Corrections : (1) le projecteur, entièrement hors de l'écran (marge comprise), n'est plus dessiné (pendant toute la planche ; l'étude garde
+  // la règle d'origine, pour ne rien changer à la jonction projecteur / étude) ;
+  // (2) sur mobile, caméras de l'étude et fond « nuit » non dessinés quand le papier opaque de la planche (ou le pied de page) recouvre
+  // la figure de l'étude, marge comprise (la figure est sous le papier ; le reste de l'étude est le noir uni de l'étude noire).
+  // Contrôle : 0 pixel de différence, de l'arrêt jusqu'à 320 px plus haut (scripts/verif-sousplanche.mjs). Entre le 15 et le 18/11,
+  // le filet mettait la page à plat à chaque coup de doigt pendant les descentes rapides, ce qui allégeait aussi ce moment : retiré le
+  // 18/11 (il causait les arrêts en remontant), d'où le retour de l'arrêt sur les cartes.
+  { id: "sousplanche", quoi: "Sous la planche II : styles", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>", apres: SOUSPLANCHE_CSS + "</style>\n</helmet>" },
+  { id: "sousplanche", quoi: "Zones recouvertes : hors de l'écran, caméras de l'étude sous la planche (aides)", fichiers: VF, n: 1,
+    avant: "  let raf = 0;\n  const verifier = () => {", apres: SOUSPLANCHE_AIDES + "  let raf = 0;\n  const verifier = () => {" },
+  { id: "sousplanche", quoi: "Zones recouvertes : hors de l'écran, caméras de l'étude sous la planche", fichiers: VF, n: 1,
+    avant: "    for (const c in zones) { const deja = R.classList.contains(c), v = deja ? couvert(zones[c], M / 2, -24) : couvert(zones[c], M, 10);\n      if (v !== deja) R.classList.toggle(c, v); } };",
+    apres: SOUSPLANCHE_FIN },
+
+  // « Glisse » (21/11, retour de Loan : « sur Safari Mac, quand on clique sur n'importe quel lien du sommaire ça scroll instantanément
+  // à la section cliquée, no smooth at all, ça ne fonctionne pas comme sur Chromium […] Le site doit être uniforme peu importe le
+  // navigateur »). Défilements doux calculés par la page avec la courbe de Chrome (voir GLISSE_JS).
+  { id: "glisse", quoi: "Défilement doux identique dans tous les navigateurs", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: GLISSE_JS + '<script src="./support.js"></script>' },
+
+  // « Inclinaison » (21/11, retour de Loan sur Safari Mac : l'inclinaison des cartes de paiement est faible et tremble).
+  { id: "inclinaison", quoi: "Inclinaison des cartes : script", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: INCLINAISON_JS + '<script src="./support.js"></script>' },
+  { id: "inclinaison", quoi: "Inclinaison des cartes : suivre la souris", fichiers: VF, n: 1,
+    avant: "      incliner: (e) => {\n        const c = e.currentTarget;\n",
+    apres: "      incliner: (e) => {\n        if (window.__ldIncline) { window.__ldIncline.suivre(e.currentTarget, e.clientX, e.clientY); return; } " + SAF + "inclinaison calculée image par image. */\n        const c = e.currentTarget;\n" },
+  { id: "inclinaison", quoi: "Inclinaison des cartes : revenir à plat", fichiers: VF, n: 1,
+    avant: "      relacher: (e) => {\n        const c = e.currentTarget;\n",
+    apres: "      relacher: (e) => {\n        if (window.__ldIncline) { window.__ldIncline.lacher(e.currentTarget); return; } " + SAF + "inclinaison calculée image par image. */\n        const c = e.currentTarget;\n" },
+
+  // « Images » (21/11, retour de Loan sur Safari Mac : le dessin de l'étude ne s'affiche parfois pas au premier chargement).
+  { id: "images", quoi: "Images de l'étude préchargées, image en échec redemandée", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: IMAGES_HTML + '<script src="./support.js"></script>' },
 ];
 
 // Fichiers ajoutés par une correction (copiés seulement si une page construite l'utilise).
@@ -507,7 +683,8 @@ const choix = process.env.SAFARI;
 // (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « Retour de Loan du 14/11 ».
 // « filet » (14/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
 // Réduit le 18/11 au seul zoom réel de Safari (arrêts en remontant la page : voir le commentaire de la correction).
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet"];
+// « sousplanche », « glisse », « inclinaison », « images » (retour de Loan du 21/11) : voir les commentaires des corrections et journal/.
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).

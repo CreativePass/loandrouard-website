@@ -9,6 +9,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - **Pages déjà publiées figées** (demande de Loan du 15/11) : Video Feedback, CGV, Privacy, Legal et Sponsors restent la version de l'export du 01/10 ; leur version dans Claude Design est en retard sur le site. Un nouvel export ne les remplace jamais (seules les nouvelles pages, Home puis Press, sont ajoutées). Contrôle : `PAGES_FIGEES` dans `scripts/construire.mjs` arrête la construction si l'une d'elles change.
 - Pas d'analytics, cookies, traceurs, bannière ni CSP sans demande de Loan. Exception : Cloudflare Web Analytics (sans cookie), gardé par Loan le 29/10/2026 et décrit dans la page Privacy.
 - **Terminer chaque réponse par un résumé** : réponses aux questions posées, puis liste de ce que Loan doit faire.
+- **Journal (demande de Loan du 21/11)** : avant de chercher la cause d'un problème, lire le fichier de sa catégorie dans `journal/` (voir `journal/LISEZ-MOI.md`) pour ne pas refaire une piste déjà essayée ; après chaque changement, y ajouter une entrée courte (problème, pistes essayées ✅ / ❌ / ⏳, fichiers). Concis : les détails vont dans `PERFORMANCE.md` ou `MISE-EN-LIGNE.md`.
 
 ## Prix et promotions (décision de Loan du 29/10/2026)
 - Prix normaux : Analyse Technique / Technical Analysis 99 €, Pack Évolution / Progression Pack 249 €, Suivi Performance / The Way of Performance 990 € tous les 3 mois (noms du 30/10 ; avant : Single feedback, 3× feedback pack, Quarterly program).
@@ -17,6 +18,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - Offre de lancement en cours depuis le 29/10/2026, sans date de fin ni date affichée : Loan dira quand l'arrêter.
 
 ## Où trouver quoi
+- `journal/` : journal des changements par catégorie (plantages mobile, zoom, défilement, cartes, Safari, chargement, contenu, outils), à lire en premier.
 - `PASSATION-CLAUDE-CODE.md` : cahier des charges d'origine (liste blanche, paiement, vérifications § 8, plus tard § 9).
 - `MISE-EN-LIGNE.md` : fonctionnement actuel (hébergement, redirections, Worker API, e-mails Stripe), commandes, état et retour arrière.
 - `scripts/traduction-fr.mjs` : version française de Video Feedback (`?lang=fr`), textes anglais → français validés par Loan.
