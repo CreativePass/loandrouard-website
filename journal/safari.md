@@ -17,6 +17,13 @@ Le site doit être identique dans tous les navigateurs (Loan, 21/11). Safari ne 
 
 ## Historique
 
+### 21/11 (3e retour) — « l'écran de chargement sert justement à ça » (⏳ à confirmer)
+- Pourquoi l'écran laissait passer l'image ratée : il attend les images **du premier écran** seulement (pas l'étude ni le yin-yang, plus bas : choix de départ, sinon l'attente serait bien plus longue), et une image en échec y comptait comme « arrivée » (une image cassée est « terminée » pour le navigateur ; réglage du 03/10 pour ne plus rester bloqué à 96 %).
+- Fait : une image en train d'être redemandée ne compte plus comme arrivée ; après 4 échecs, elle reste cachée et l'écran s'en va (jamais bloqué). `chargement.js` version `7r`.
+- Contrôle : Safari simulé (l'image reste en échec tant qu'on ne la redemande pas) : avant, écran retiré à 3,5 s avec le halo en échec ; après, écran retiré avec le halo arrivé ; sans échec, toujours ≈ 3,9 s.
+- Limite : une image qui échoue peut rester affichée en échec pendant une image (≈ 16 ms) avant d'être cachée.
+- Adresse de test : version `5d767e46`.
+
 ### 21/11 (2e retour) — halo de Loan (cadre gris + « ? ») et yin-yang absents puis apparus (⏳ à confirmer)
 - Cause : mon premier correctif. Le préchargement des 2 images de l'étude les faisait passer devant ; d'autres images (halo du projecteur, yin-yang) se retrouvaient à leur tour en cours de téléchargement quand le moteur de la page recrée la page → échec, puis réparées par le nouvel essai au bout de 0,4 s + téléchargement (« au bout d'un certain temps »).
 - Fait : préchargement retiré (ordre d'origine) ; chaque image encore en téléchargement au démarrage du moteur est tenue par un objet Image jusqu'à son arrivée (aucun téléchargement en plus) ; une image en échec est cachée (ni « ? » ni cadre) et redemandée aussitôt, 4 fois au plus.

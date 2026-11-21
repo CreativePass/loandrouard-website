@@ -11,6 +11,10 @@
 | 28/10 | Scripts d'extension du navigateur ignorés (écran à 96 % sur ordinateur) | ✅ |
 | 21/11 | Images de l'étude préchargées + image en échec redemandée après 0,4 s | ❌ le préchargement déplace l'échec vers d'autres images (halo, yin-yang), réparées tard |
 | 21/11 | Images tenues pendant leur téléchargement (objets Image), échec caché et redemandé aussitôt | ⏳ voir `safari.md` |
+| 21/11 | Écran de chargement : une image redemandée n'est pas « arrivée » (avant : une image en échec comptait comme arrivée) | ⏳ voir `safari.md` |
+
+## Ce que l'écran de chargement attend
+Rendu de la page, polices, feuilles, scripts, et les images / vidéos **du premier écran** (jusqu'à 1,1 hauteur d'écran), sauf les images différées. Une ressource en échec ne le bloque pas (limite de 20 s) ; depuis le 21/11, une image en train d'être redemandée, si.
 
 ## Images encore lourdes (à réexporter si possible)
 Voir `PERFORMANCE.md`, section « Images » (enduit noir, étude, projecteur, revers des cartes).

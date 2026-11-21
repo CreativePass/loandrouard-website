@@ -85,7 +85,8 @@ for (const [nom, motif, aller] of [["étude", /etude-croquis-v5\.webp/, null], [
   if (aller) { await page.evaluate(`(${aller})()`); }
   const vus = await page.evaluate(async (src) => { const vus = new Set(), t0 = performance.now(); /* état visible de l'image pendant 3 s */
     await new Promise((fin) => { const pas = () => { for (const i of document.images) if (i.getAttribute("src") && new RegExp(src).test(i.getAttribute("src"))) {
-        const casse = i.complete && i.naturalWidth === 0, cache = getComputedStyle(i).visibility === "hidden";
+        let op = 1; for (let a = i; a && a !== document.documentElement; a = a.parentElement) op *= +getComputedStyle(a).opacity; /* transparente (yin-yang avant la bascule) : rien à l'écran */
+        const casse = i.complete && i.naturalWidth === 0, cache = getComputedStyle(i).visibility === "hidden" || op < 0.01;
         vus.add(casse ? (cache ? "en échec, cachée" : "EN ÉCHEC VISIBLE") : i.complete ? "affichée" : "en cours"); }
       if (performance.now() - t0 < 3000) requestAnimationFrame(pas); else fin(); }; pas(); });
     return [...vus]; }, motif.source);
