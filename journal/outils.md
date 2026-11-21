@@ -11,6 +11,7 @@ Tous dans `scripts/`, lancés après `npm run construire`. Chromium seulement (p
 | `verif-pincement.mjs` | Loupe, filet, vitrine, captures avant / après sur toute la page |
 | `verif-retraits.mjs`, `verif-serie.mjs`, `banc.mjs` | Diagnostic de l'adresse de test (séries, retraits `?sans=`) |
 | `verif-chargement.mjs` | Écran de chargement (extensions) |
+| Diagnostic de l'adresse de test (`optimise/diag.js`) | Après un arrêt, la page rouverte envoie le dernier état (position, partie à l'écran, zoom, parties cachées p/e/n/c) : `npx wrangler tail --config wrangler.essai.jsonc` pendant l'essai, ou `resultats.html` sur l'iPhone |
 | `mesurer.mjs` | Performance avant / après (long) |
 
 ## Limites connues

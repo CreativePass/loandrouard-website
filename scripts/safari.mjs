@@ -680,6 +680,25 @@ const TOUTES = [
     avant: "      relacher: (e) => {\n        const c = e.currentTarget;\n",
     apres: "      relacher: (e) => {\n        if (window.__ldIncline) { window.__ldIncline.lacher(e.currentTarget); return; } " + SAF + "inclinaison calculée image par image. */\n        const c = e.currentTarget;\n" },
 
+  // « Titre » (21/11, retour de Loan sur Safari Mac : « en commençant à scroller, avant même que le chargement soit fini, le titre
+  // Video Feedback devient super gros »). Les mots du titre ne sont réduits (ecarter) qu'après une lecture unique de la silhouette de
+  // Loan dans la photo principale (img.lit, canvas 44 × 66), au chargement de la photo. Si la photo n'est pas lisible à cet instant
+  // (échec puis nouvel essai, image remplacée par le moteur de la page, ou dessinée vide car pas encore décodée), la silhouette reste
+  // vide ou absente et le titre garde sa taille d'origine pour toute la visite (reproduit dans Chromium avec un échec à la Safari :
+  // titre de 403 px au lieu de 185). La silhouette est maintenant relue jusqu'à être lisible (au moins 150 cases opaques sur 2 904 ;
+  // la photo en a 488), à chaque chargement d'une photo principale et toutes les 250 ms pendant 20 s au plus.
+  { id: "titre", quoi: "Projecteur : silhouette relue jusqu'à ce que la photo soit lisible (titre réduit)", fichiers: VF, n: 1,
+    avant: '    { const im = fig.querySelector("img.lit"), lire = () => { try { const c = document.createElement("canvas"); c.width = 44; c.height = 66; const g = c.getContext("2d"); g.drawImage(im, 0, 0, 44, 66); const d = g.getImageData(0, 0, 44, 66).data; A = []; for (let j = 0; j < 66; j++) for (let i = 0; i < 44; i++) if (d[(j * 44 + i) * 4 + 3] > 40) A.push(i, j); ecarter(); } catch (e) {} };\n      if (im.complete && im.naturalWidth) setTimeout(lire); else im.addEventListener("load", lire, { once: true }); }',
+    apres: '    { ' + SAF + 'silhouette relue jusqu\'à ce que la photo soit vraiment lisible (21/11 : sinon le titre restait en grand). */\n' +
+      '      let essais = 0;\n' +
+      '      const lire = () => { const im = sec.querySelector("img.lit") || fig.querySelector("img.lit"); if (!im || !im.complete || !im.naturalWidth) return false;\n' +
+      '        try { const c = document.createElement("canvas"); c.width = 44; c.height = 66; const g = c.getContext("2d"); g.drawImage(im, 0, 0, 44, 66); const d = g.getImageData(0, 0, 44, 66).data; const B = []; for (let j = 0; j < 66; j++) for (let i = 0; i < 44; i++) if (d[(j * 44 + i) * 4 + 3] > 40) B.push(i, j);\n' +
+      '          if (B.length < 300) return false; A = B; ecarter(); return true; } catch (e) { return false; } };\n' +
+      '      const essayer = () => { if (A || lire()) { document.removeEventListener("load", surCharge, true); return; } if (++essais < 80) setTimeout(essayer, 250); };\n' +
+      '      const surCharge = (e) => { const t = e.target; if (t && t.matches && t.matches("img.lit")) setTimeout(essayer); };\n' +
+      '      document.addEventListener("load", surCharge, true); /* les chargements d\'images ne remontent pas : écoutés à la descente */\n' +
+      '      setTimeout(essayer); }' },
+
   // « Images » (21/11, deux retours de Loan sur Safari Mac : images absentes au premier chargement ; voir IMAGES_HTML).
   { id: "images", quoi: "Images tenues pendant leur téléchargement, image en échec cachée et redemandée", fichiers: VF, n: 1,
     avant: '<script src="./support.js"></script>', apres: IMAGES_HTML + '<script src="./support.js"></script>' },
@@ -711,8 +730,8 @@ const choix = process.env.SAFARI;
 // (le zoom de Safari est remplacé par une loupe qui agrandit l'écran sans le redessiner). Voir PERFORMANCE.md, « Retour de Loan du 14/11 ».
 // « filet » (14/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
 // Réduit le 18/11 au seul zoom réel de Safari (arrêts en remontant la page : voir le commentaire de la correction).
-// « sousplanche », « glisse », « inclinaison », « images » (retour de Loan du 21/11) : voir les commentaires des corrections et journal/.
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images"];
+// « sousplanche », « glisse », « inclinaison », « images », « titre » (retours de Loan du 21/11) : voir les commentaires des corrections et journal/.
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images", "titre"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).

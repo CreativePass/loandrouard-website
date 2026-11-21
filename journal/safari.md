@@ -14,8 +14,16 @@ Le site doit être identique dans tous les navigateurs (Loan, 21/11). Safari ne 
 | Transitions CSS relancées en continu : tremblement | `inclinaison` : animation calculée par la page | 21/11 ⏳ |
 | Image remplacée pendant son téléchargement : « ? » au 1er chargement | ❌ préchargement de l'étude (déplaçait le problème) → ✅⏳ images tenues pendant leur téléchargement + nouvel essai caché | 21/11 |
 | Zoom : tout est redessiné à l'échelle du zoom | `loupe` | 14/11 ✅ |
+| Photo pas encore lisible au moment où le titre se règle : titre énorme | `titre` : silhouette relue jusqu'à être lisible | 21/11 ⏳ |
 
 ## Historique
+
+### 21/11 (4e retour) — titre « Video Feedback » énorme si on défile pendant le chargement (⏳ à confirmer)
+- Cause : le titre n'est réduit (pour ne pas toucher Loan) qu'après **une seule lecture** de la silhouette dans la photo principale, au chargement de la photo. Si la photo n'est pas lisible à cet instant (échec puis nouvel essai, élément remplacé, ou dessinée vide car pas encore décodée), le titre reste en grand toute la visite.
+- Reproduit (Chromium) : échec « à la Safari » de la photo ou 3 premières lectures vides → titre de 403 px au lieu de 185, même avec la photo affichée.
+- Fait : silhouette relue jusqu'à être lisible (≥ 150 cases opaques sur 2 904 ; la photo en a 488), à chaque chargement d'une photo principale et toutes les 250 ms pendant 20 s.
+- Fichiers : `scripts/safari.mjs` (`titre`).
+- Adresse de test : version `7ce64022`.
 
 ### 21/11 (3e retour) — « l'écran de chargement sert justement à ça » (⏳ à confirmer)
 - Pourquoi l'écran laissait passer l'image ratée : il attend les images **du premier écran** seulement (pas l'étude ni le yin-yang, plus bas : choix de départ, sinon l'attente serait bien plus longue), et une image en échec y comptait comme « arrivée » (une image cassée est « terminée » pour le navigateur ; réglage du 03/10 pour ne plus rester bloqué à 96 %).

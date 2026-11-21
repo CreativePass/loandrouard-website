@@ -24,6 +24,10 @@ Symptôme : « A problem repeatedly occurred », ou page blanche puis rechargeme
 
 ## Historique
 
+### 21/11 (soir) — « quand je scrolle super vite, la page crash » (en enquête)
+- Retour de Loan sur l'iPhone après `sousplanche` (adresse de test) : arrêt en défilement très rapide, endroit inconnu.
+- Pas de correction à l'aveugle : relevé du diagnostic demandé (dernier état avant l'arrêt, avec les parties cachées p/e/n/c), écouté en direct (`wrangler tail`) pendant l'essai de Loan.
+
 ### 21/11 — arrêt en arrivant sur les cartes (⏳ à confirmer sur l'iPhone)
 - Problème : « tout va bien jusqu'à l'arrivée sur les cartes, puis le site crash » (descente, iPhone).
 - Trouvé (Chromium, format iPhone) : en arrivant, l'étude s'efface (opacité 1 → 0,1) ; la règle « ce qui est recouvert n'est pas dessiné » ne comptait plus sur elle → le **projecteur** (le plus lourd, à 17 000 px au-dessus) et le fond « nuit » étaient **redessinés d'un coup**, pendant le retournement 3D des cartes. À l'arrêt, sous le papier opaque, restaient aussi les 2 caméras de l'étude, son négatif et ses corrections dorées (≈ 4 × 33 Mo).

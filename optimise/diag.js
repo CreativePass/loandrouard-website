@@ -137,10 +137,13 @@
   const sid = Math.random().toString(36).slice(2, 8), debut = Date.now();
   let etatPage = "en-cours";
   const releves = []; // [t (s), y, phase, P×100, à l'écran, caméras étude (w = will-change), vitesse px/s, calques du projecteur, zoom]
-  /* Zoom (14/11) : z = zoom de Safari (×), L = loupe du site (×), f / F = page à plat (filet léger / complet), O = carte ouverte. */
+  /* Zoom (14/11) : z = zoom de Safari (×), L = loupe du site (×), f / F = page à plat (filet léger / complet), O = carte ouverte ;
+     21/11 : p, e, n, c = projecteur, étude, fond « nuit », caméras de l'étude non dessinés (écrit aussitôt à chaque changement). */
   const zoom = () => { const v = window.visualViewport, vf = document.querySelector(".vf"), m = vf && /scale\(([\d.]+)\)/.exec(vf.style.transform || "");
     return (v && v.scale > 1.005 ? "z" + v.scale.toFixed(2) : "") + (h.classList.contains("vf-loupe") ? "L" + (m ? (+m[1]).toFixed(2) : "1") : "") +
-      (h.classList.contains("vf-zoom-plat") ? (h.classList.contains("vf-zoom-natif") ? "F" : "f") : "") + (document.querySelector(".vfk-c[data-grand]") ? "O" : ""); };
+      (h.classList.contains("vf-zoom-plat") ? (h.classList.contains("vf-zoom-natif") ? "F" : "f") : "") + (document.querySelector(".vfk-c[data-grand]") ? "O" : "") +
+      /* 21/11 : parties non dessinées (recouvertes ou hors de l'écran) : p projecteur, e étude, n fond « nuit », c caméras de l'étude sous la planche. */
+      (h.classList.contains("vf-cache-proj") ? "p" : "") + (h.classList.contains("vf-cache-etude") ? "e" : "") + (h.classList.contains("vf-cache-nuit") ? "n" : "") + (h.classList.contains("vf-cache-cams") ? "c" : ""); };
   const etatDisque = () => ({ sid, page: NOM, passe, debut, dernier: Date.now(), etat: etatPage, etape, ph: phase, j: releves.slice(-15), st: bilan(), ro, err: erreurs.slice(-5), res: ressources.slice(0, 10), finEcran, info: info() });
   const enregistrer = () => ecrire(CLE, etatDisque());
   const prec = lire(CLE);
