@@ -1,5 +1,5 @@
 // Contrôles des corrections du 21/11 (scripts/safari.mjs) : « glisse » (défilement doux), « inclinaison » (cartes au survol),
-// « images » (image redemandée si elle échoue). Chromium seulement : la courbe attendue est celle de Chrome, que la page reproduit.
+// « images » (images tenues pendant leur téléchargement, redemandées sans « ? » si elles échouent). Chromium seulement : la courbe attendue est celle de Chrome, que la page reproduit.
 // Usage : npm run construire && node scripts/verif-navigation.mjs [dossier construit, défaut public]
 import fs from "node:fs"; import http from "node:http"; import path from "node:path";
 import { chromium } from "playwright-core";
@@ -75,21 +75,29 @@ console.log("Inclinaison des cartes (ordinateur 1440 × 900)");
   verdict(!erreurs.length, `aucune erreur JS ${erreurs.join(" | ")}`);
   await ctx.close(); }
 
-// 3) Image de l'étude : premier téléchargement en échec → redemandée et affichée ; pas de téléchargement en double sinon.
-console.log("Image de l'étude");
-{ demandes.length = 0;
+// 3) Images : premier téléchargement en échec (étude, halo de Loan au projecteur, yin-yang différé) → cachée pendant le nouvel
+//    essai (jamais de « ? »), puis affichée ; sans échec : chaque image téléchargée une seule fois (les gardiens n'ajoutent rien).
+console.log("Images (premier téléchargement en échec)");
+for (const [nom, motif, aller] of [["étude", /etude-croquis-v5\.webp/, null], ["halo du projecteur", /vf-spot-bloom\.webp/, null],
+  ["yin-yang (différé)", /yin-yang-noir\.png/, "() => { const a = document.getElementById('analysis'); document.documentElement.style.scrollBehavior = 'auto'; scrollTo(0, a.getBoundingClientRect().top + scrollY + 1.5 * innerHeight); }"]]) {
   const { ctx, page, erreurs } = await ouvrir({ viewport: { width: 1440, height: 900 } }, async (page) => {
-    let n = 0; await page.route(/etude-croquis-v5\.webp/, (r) => (n++ === 0 ? r.abort("failed") : r.continue())); });
-  await page.waitForTimeout(3000);
-  const etat = await page.evaluate(() => [...document.querySelectorAll('img[src*="etude-croquis"]')].map((i) => [i.getAttribute("src"), i.complete, i.naturalWidth]));
-  verdict(etat.length && etat.every(([, c, w]) => c && w > 0), `après un premier échec : ${JSON.stringify(etat)}`);
-  verdict(!erreurs.length, `aucune erreur JS ${erreurs.join(" | ")}`);
+    let n = 0; await page.route(motif, (r) => (n++ === 0 ? r.abort("failed") : r.continue())); });
+  if (aller) { await page.evaluate(`(${aller})()`); }
+  const vus = await page.evaluate(async (src) => { const vus = new Set(), t0 = performance.now(); /* état visible de l'image pendant 3 s */
+    await new Promise((fin) => { const pas = () => { for (const i of document.images) if (i.getAttribute("src") && new RegExp(src).test(i.getAttribute("src"))) {
+        const casse = i.complete && i.naturalWidth === 0, cache = getComputedStyle(i).visibility === "hidden";
+        vus.add(casse ? (cache ? "en échec, cachée" : "EN ÉCHEC VISIBLE") : i.complete ? "affichée" : "en cours"); }
+      if (performance.now() - t0 < 3000) requestAnimationFrame(pas); else fin(); }; pas(); });
+    return [...vus]; }, motif.source);
+  const etat = await page.evaluate((src) => [...document.images].filter((i) => new RegExp(src).test(i.getAttribute("src") || "")).map((i) => [i.getAttribute("src"), i.complete && i.naturalWidth > 0, getComputedStyle(i).visibility, i.hasAttribute("data-ld-reessai")]), motif.source);
+  verdict(etat.length && etat.every(([, ok, v, r]) => ok && !r) && !vus.includes("EN ÉCHEC VISIBLE"), `${nom} : ${JSON.stringify(etat)} ; états vus : ${vus.join(", ")}`);
+  verdict(!erreurs.length, `${nom} : aucune erreur JS ${erreurs.join(" | ")}`);
   await ctx.close(); }
 { demandes.length = 0;
   const { ctx, page, erreurs } = await ouvrir({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
   await page.waitForTimeout(2500);
-  const n = demandes.filter((u) => /etude-croquis-v5|etude-detoure-v3/.test(u)).length;
-  verdict(n === 2, `sans échec : ${n} téléchargements des deux images de l'étude (attendu 2)`);
+  const img = demandes.filter((u) => /\.(webp|png|jpg|svg)(\?|$)/.test(u)), double = img.filter((u, i) => img.indexOf(u) !== i);
+  verdict(!double.length, `sans échec : ${img.length} images téléchargées, aucune en double ${double.join(" ")}`);
   verdict(!erreurs.length, `aucune erreur JS ${erreurs.join(" | ")}`);
   await ctx.close(); }
 

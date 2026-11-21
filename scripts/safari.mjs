@@ -255,23 +255,41 @@ const INCLINAISON_JS = `<script>${SAF}inclinaison des cartes au survol calculée
 `;
 
 // Images de la page qui n'arrivent pas (correction « images », 21/11 ; voir le commentaire de la correction plus bas).
-const IMAGES_HTML = `<link rel="preload" as="image" href="assets/photos/etude-croquis-v5.webp">
-<link rel="preload" as="image" href="assets/photos/etude-detoure-v3.webp">
-<script>${SAF}images de la page redemandées si elles échouent (21/11, retour de Loan : sur Safari, le dessin de l'étude manque
-   parfois au premier chargement — « ? » de Safari et texte de remplacement à la place — et s'affiche au rechargement). Le moteur de la
-   page remplace les images de la page pendant qu'elles se téléchargent (page lue par le navigateur, puis recréée par React) ; les
-   deux images de l'étude, les plus lourdes, arrivent en dernier. Elles sont maintenant demandées dès l'en-tête (préchargement : rien de
-   plus à télécharger, le navigateur les demandait déjà) et gardées par la page ; une image en échec est redemandée (2 fois au plus). */
+const IMAGES_HTML = `<style>${SAF}images : image en échec cachée le temps d'être redemandée (ni « ? » ni cadre gris de Safari). */
+img[data-ld-reessai] { visibility: hidden !important; }
+</style>
+<script>${SAF}images de la page protégées pendant leur téléchargement et redemandées si elles échouent (21/11, deux retours de Loan
+   sur Safari : le dessin de l'étude, puis le halo de Loan au projecteur — « ? » et cadre gris de Safari — et le yin-yang, absents au
+   premier chargement, présents au rechargement ou un moment après). Le moteur de la page (support.js) remplace toute la page lue par
+   le navigateur par sa version React (et la recrée une seconde fois après avoir relu la page) pendant que les images se téléchargent ;
+   sur Safari, une image dont l'élément disparaît en cours de route peut finir en échec. Le premier correctif (préchargement des deux
+   images de l'étude) avait seulement déplacé le problème : en passant devant, elles retardaient les autres, qui se retrouvaient à leur
+   tour en cours de route. Maintenant :
+   1) chaque image encore en téléchargement au moment où le moteur démarre est aussi tenue par un objet Image de la page, jusqu'à son
+      arrivée (même adresse : rien de plus à télécharger ; ordre d'origine des téléchargements, sans préchargement) ;
+   2) une image en échec est cachée (ni « ? » ni cadre) et redemandée aussitôt à une adresse neuve (4 fois au plus), puis affichée. */
 (() => {
+  const SAUF = /^(data|blob):|\\.svg(\\?|$)/i, abs = (s) => { try { return new URL(s, location.href).href; } catch (e) { return ""; } };
+  const gardes = new Map();
+  const garder = (u) => { if (!u || SAUF.test(u) || gardes.has(u)) return; const g = new Image(); g.decoding = "async";
+    g.onload = () => setTimeout(() => gardes.delete(u), 15000); g.onerror = () => gardes.delete(u); gardes.set(u, g); g.src = u; };
+  /* Avant le démarrage du moteur de la page (son écouteur est posé après celui-ci, ou il attend React). Images différées : non touchées. */
+  document.addEventListener("DOMContentLoaded", () => { for (const im of document.images) { const s = im.getAttribute("src");
+    if (s && im.loading !== "lazy" && !(im.complete && im.naturalWidth > 0)) garder(abs(s)); } });
   const essais = new WeakMap();
-  const relancer = (im) => { const s = im.getAttribute("src"), n = essais.get(im) || 0; if (!s || n >= 2 || /^(data|blob):|\\.svg(\\?|$)/i.test(s)) return;
-    essais.set(im, n + 1);
-    setTimeout(() => { if (!im.isConnected || (im.complete && im.naturalWidth > 0)) return;
-      try { const u = new URL(s, location.href); u.searchParams.set("r", String(n + 1)); im.src = u.href; } catch (e) {} }, 400 * (n + 1)); };
-  addEventListener("error", (e) => { const t = e.target; if (t && t.tagName === "IMG") relancer(t); }, true);
-  /* Image en échec sans événement (recréée par la page alors qu'elle avait déjà échoué) : vérifiée après le chargement. */
-  const balayer = () => { for (const im of document.images) if (im.loading !== "lazy" && im.complete && im.naturalWidth === 0) relancer(im); };
-  addEventListener("load", () => { setTimeout(balayer, 500); setTimeout(balayer, 4000); });
+  const reessayer = (im) => { const s0 = im.getAttribute("src"); if (!s0 || SAUF.test(s0) || !im.isConnected) return;
+    const n = (essais.get(im) || 0) + 1; if (n > 4) return; essais.set(im, n); im.setAttribute("data-ld-reessai", "");
+    let u; try { u = new URL(s0, location.href); u.searchParams.set("r", String(n)); } catch (e) { return; }
+    const g = new Image(); g.decoding = "async";
+    g.onload = () => { if (!im.isConnected) return; const fini = () => im.removeAttribute("data-ld-reessai");
+      if (im.getAttribute("src") !== s0) { fini(); return; }
+      im.addEventListener("load", fini, { once: true }); im.src = u.href; };
+    g.onerror = () => setTimeout(() => { essais.set(im, n); if (im.getAttribute("src") === s0) { im.removeAttribute("data-ld-reessai"); reessayer(im); } }, 500 * n);
+    g.src = u.href; };
+  addEventListener("error", (e) => { const t = e.target; if (t && t.tagName === "IMG") reessayer(t); }, true);
+  /* Image en échec sans événement (recréée par le moteur après son échec) : vérifiée plusieurs fois au début. */
+  const balayer = () => { for (const im of document.images) if (im.loading !== "lazy" && im.complete && im.naturalWidth === 0 && !im.hasAttribute("data-ld-reessai")) reessayer(im); };
+  addEventListener("load", () => { balayer(); setTimeout(balayer, 1000); setTimeout(balayer, 4000); });
 })();
 </script>
 `;
@@ -660,8 +678,8 @@ const TOUTES = [
     avant: "      relacher: (e) => {\n        const c = e.currentTarget;\n",
     apres: "      relacher: (e) => {\n        if (window.__ldIncline) { window.__ldIncline.lacher(e.currentTarget); return; } " + SAF + "inclinaison calculée image par image. */\n        const c = e.currentTarget;\n" },
 
-  // « Images » (21/11, retour de Loan sur Safari Mac : le dessin de l'étude ne s'affiche parfois pas au premier chargement).
-  { id: "images", quoi: "Images de l'étude préchargées, image en échec redemandée", fichiers: VF, n: 1,
+  // « Images » (21/11, deux retours de Loan sur Safari Mac : images absentes au premier chargement ; voir IMAGES_HTML).
+  { id: "images", quoi: "Images tenues pendant leur téléchargement, image en échec cachée et redemandée", fichiers: VF, n: 1,
     avant: '<script src="./support.js"></script>', apres: IMAGES_HTML + '<script src="./support.js"></script>' },
 ];
 

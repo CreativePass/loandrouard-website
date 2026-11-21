@@ -12,15 +12,21 @@ Le site doit être identique dans tous les navigateurs (Loan, 21/11). Safari ne 
 | Extensions de Safari / Cloudflare bloqué : chargement figé à 96 % | `chargement.js` n'attend plus ces scripts | 03/10, 28/10 ✅ |
 | Défilement doux trop rapide (ressemble à un saut) | `glisse` : courbe de Chrome calculée par la page | 21/11 ⏳ |
 | Transitions CSS relancées en continu : tremblement | `inclinaison` : animation calculée par la page | 21/11 ⏳ |
-| Image remplacée pendant son téléchargement : « ? » au 1er chargement | `images` : préchargement + nouvel essai | 21/11 ⏳ |
+| Image remplacée pendant son téléchargement : « ? » au 1er chargement | ❌ préchargement de l'étude (déplaçait le problème) → ✅⏳ images tenues pendant leur téléchargement + nouvel essai caché | 21/11 |
 | Zoom : tout est redessiné à l'échelle du zoom | `loupe` | 14/11 ✅ |
 
 ## Historique
 
+### 21/11 (2e retour) — halo de Loan (cadre gris + « ? ») et yin-yang absents puis apparus (⏳ à confirmer)
+- Cause : mon premier correctif. Le préchargement des 2 images de l'étude les faisait passer devant ; d'autres images (halo du projecteur, yin-yang) se retrouvaient à leur tour en cours de téléchargement quand le moteur de la page recrée la page → échec, puis réparées par le nouvel essai au bout de 0,4 s + téléchargement (« au bout d'un certain temps »).
+- Fait : préchargement retiré (ordre d'origine) ; chaque image encore en téléchargement au démarrage du moteur est tenue par un objet Image jusqu'à son arrivée (aucun téléchargement en plus) ; une image en échec est cachée (ni « ? » ni cadre) et redemandée aussitôt, 4 fois au plus.
+- Contrôle : `scripts/verif-navigation.mjs` (premier téléchargement raté exprès pour l'étude, le halo et le yin-yang : jamais visible en échec, affichée ensuite ; 31 images, aucune en double).
+- Adresse de test : version `9bfae735`.
+
 ### 21/11 — image de l'étude absente au premier chargement (⏳ à confirmer sur le Mac de Loan)
 - Symptôme : à la place du dessin du saut, le « ? » de Safari et le texte de remplacement (« …study of a jump, read frame by frame ») ; l'image s'affiche au rechargement.
 - Cause probable (non reproduite ici) : le moteur de la page (`support.js`) remplace toute la page par sa version React pendant que les images se téléchargent ; les deux images de l'étude (2400 × 1600, les plus lourdes) arrivent en dernier.
-- Fait : préchargement des deux images dans l'en-tête (aucun octet en plus, vérifié : 2 téléchargements) ; toute image en échec est redemandée (2 fois au plus).
+- Fait : préchargement des deux images dans l'en-tête ; toute image en échec redemandée (2 fois au plus). ❌ Remplacé le jour même (voir l'entrée au-dessus).
 - Contrôle : `scripts/verif-navigation.mjs` (premier téléchargement refusé exprès → image affichée).
 - Fichiers : `scripts/safari.mjs` (`images`).
 - Adresse de test : version `4bcac6bf` (21/11) ; pas encore sur loandrouard.com.
