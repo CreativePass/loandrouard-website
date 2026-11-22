@@ -296,6 +296,35 @@ img[data-ld-reessai] { visibility: hidden !important; }
 </script>
 `;
 
+// « Sous le noir » (22/11, relevé du diagnostic de l'iPhone de Loan : arrêt en remontant vite du pied de page à travers les cartes,
+// à l'instant où l'étude redevient dessinée, d'un coup, cartes encore à l'écran : ≈ 200 Mo estimés en une image). À la fin de
+// l'étude et pendant le passage aux cartes, une partie des grands calques de l'étude (≈ 33 Mo chacun) ne montre rien :
+//  - la caméra blanche, le papier et les textes sont entièrement sous le fond noir (opaque, z-index 6, découpe en diagonale qui
+//    couvre toute la scène quand d = 1) ;
+//  - la photo en couleur (opacité 0 après le passage au croquis) et le négatif (opacité 0 sous la planche).
+// Ils ne sont plus dessinés tant qu'ils sont invisibles (même image à l'écran, scripts/verif-sousnoir.mjs) : moins de mémoire, et
+// moins de choses à redessiner d'un coup quand l'étude réapparaît en remontant.
+//  - iPhone / iPad seulement : les corrections en or, une fois toutes effacées (opacité 0 ; le calque garde ses deux ombres
+//    portées). Pas ailleurs : Chrome, qui dessine ce calque avec le négatif, dessine alors le négatif autrement (hachures adoucies,
+//    ≈ 11 000 px d'écart) ; Safari donne un calque à part à tout élément filtré (le négatif est déjà seul sur le sien).
+const SOUSNOIR_CSS = SAF + "22/11 : sous le fond noir de l'étude, quand il couvre toute la scène, rien n'est dessiné (SOUSNOIR_JS). */\n" +
+  ".vfa-scene.vfa-sous-noir > :is(.vfa-papier, .vfa-grille, .vfa-cam, .vfa-marge, .vfa-texte, .vfa-pied), .vfa-scene.vfa-sous-noir > :is(.vfa-papier, .vfa-grille, .vfa-cam, .vfa-marge, .vfa-texte, .vfa-pied) * { visibility: hidden !important; }\n";
+const SOUSNOIR_JS = `      { ${SAF}22/11 : calques invisibles de l'étude non dessinés (SOUSNOIR_CSS). Fond noir : opaque, au-dessus de tout ce
+           qui est caché ici (z-index 6 ; papier, grille, caméra blanche, marge : auto ; textes : 4), découpe qui couvre toute la scène
+           quand d = 1. Photo et négatif : cachés à opacité 0. Corrections en or (iPhone / iPad) : cachées quand chacune est
+           effacée (toutes portent data-e). */
+        const voir = (e, v) => { if (e && e.style.visibility !== (v ? "" : "hidden")) e.style.visibility = v ? "" : "hidden"; };
+        voir(photo2, +photo2.style.opacity > 0);
+        if (negatif) voir(negatif, +negatif.style.opacity > 0);
+        if (noir.__ldPlein === undefined) { /* une fois : styles fixes */
+          noir.__ldPlein = getComputedStyle(noir).opacity === "1";
+          const or = sec.querySelector(".vfa-noir .vfa-svg--or"), ios = /iP(hone|ad|od)/.test(navigator.userAgent + " " + navigator.platform) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+          noir.__ldOr = ios && or && !or.querySelector(":scope > :not([data-e])") ? or : null; }
+        if (noir.__ldOr) { let vu = false; efface.forEach((el) => { if (!(+el.style.opacity <= 0)) vu = true; }); voir(noir.__ldOr, vu); }
+        scene.classList.toggle("vfa-sous-noir", d >= 1 && noir.__ldPlein);
+      }
+`;
+
 const TOUTES = [
   // En-tête : --hauteur-header vaut 68 px dans le design system, mais l'en-tête mesure 134 px sur iPhone (3 lignes) et
   // ~96 px dans Safari sur Mac. Son margin-bottom négatif (−68 px) laissait alors une bande vide au-dessus du
@@ -663,6 +692,11 @@ const TOUTES = [
   { id: "sousplanche", quoi: "Zones recouvertes : hors de l'écran, caméras de l'étude sous la planche", fichiers: VF, n: 1,
     avant: "    for (const c in zones) { const deja = R.classList.contains(c), v = deja ? couvert(zones[c], M / 2, -24) : couvert(zones[c], M, 10);\n      if (v !== deja) R.classList.toggle(c, v); } };",
     apres: SOUSPLANCHE_FIN },
+  { id: "sousnoir", quoi: "Étude : rien de dessiné sous le fond noir (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>", apres: SOUSNOIR_CSS + "</style>\n</helmet>" },
+  { id: "sousnoir", quoi: "Étude : calques invisibles non dessinés (photo, négatif, corrections en or sur iPhone, sous le fond noir)", fichiers: VF, n: 1,
+    avant: "        else el.style.opacity = (1 - ev).toFixed(3);\n      });\n      if (!anim) anim = requestAnimationFrame(suivre);\n",
+    apres: "        else el.style.opacity = (1 - ev).toFixed(3);\n      });\n" + SOUSNOIR_JS + "      if (!anim) anim = requestAnimationFrame(suivre);\n" },
 
   // « Glisse » (21/11, retour de Loan : « sur Safari Mac, quand on clique sur n'importe quel lien du sommaire ça scroll instantanément
   // à la section cliquée, no smooth at all, ça ne fonctionne pas comme sur Chromium […] Le site doit être uniforme peu importe le
@@ -731,7 +765,7 @@ const choix = process.env.SAFARI;
 // « filet » (14/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
 // Réduit le 18/11 au seul zoom réel de Safari (arrêts en remontant la page : voir le commentaire de la correction).
 // « sousplanche », « glisse », « inclinaison », « images », « titre » (retours de Loan du 21/11) : voir les commentaires des corrections et journal/.
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images", "titre"];
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images", "titre", "sousnoir"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).

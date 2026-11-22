@@ -7,6 +7,7 @@ Tous dans `scripts/`, lancés après `npm run construire`. Chromium seulement (p
 | `verifier.mjs` | Site en ligne : parcours, paiement (sans payer), fichiers servis |
 | `verif-calques-webkit.mjs` | Mémoire graphique estimée selon les règles de WebKit (calques, zoom) |
 | `verif-sousplanche.mjs` | Autour des cartes (mobile) : ce qui est caché est invisible (captures avec / sans), mémoire estimée — 21/11 |
+| `verif-sousnoir.mjs` | Fin de l'étude et passage aux cartes : ce qui n'est plus dessiné est invisible (captures avec / sans, 7 écrans, `IOS=1` pour l'iPhone), mémoire estimée — 22/11 |
 | `verif-navigation.mjs` | Défilement doux (courbe de Chrome), inclinaison des cartes, image redemandée — 21/11 |
 | `verif-pincement.mjs` | Loupe, filet, vitrine, captures avant / après sur toute la page |
 | `verif-retraits.mjs`, `verif-serie.mjs`, `banc.mjs` | Diagnostic de l'adresse de test (séries, retraits `?sans=`) |
@@ -19,3 +20,4 @@ Tous dans `scripts/`, lancés après `npm run construire`. Chromium seulement (p
 - Les captures « avant / après » doivent tenir compte des animations : comparer à un témoin (deux captures sans rien changer).
 - Mémoire : estimation selon le modèle de WebKit, pas une mesure de Safari. La mesure réelle se fait dans l'inspecteur web du Mac, iPhone branché (onglet Calques).
 - Écoute du diagnostic (`wrangler tail`) : 2 h au plus par lancement, et la connexion se coupe à chaque nouvelle publication de l'adresse de test. Si Loan essaie plus tard : le relevé reste dans l'iPhone (10 derniers arrêts), à lire avec `resultats.html` → « Copier tout » → coller dans la conversation.
+- Captures de l'étude : attendre ≈ 2,5 s après chaque défilement (la caméra se redessine nette 220 ms après son dernier mouvement ; avant, faux écarts). Chrome dessine le négatif différemment selon que les corrections en or sont dessinées ou non : comparer ce calque seul.
