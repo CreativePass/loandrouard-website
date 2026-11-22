@@ -325,6 +325,25 @@ const SOUSNOIR_JS = `      { ${SAF}22/11 : calques invisibles de l'étude non de
       }
 `;
 
+// iPhone / iPad (tous les navigateurs d'iOS ont le moteur de Safari) : classe vf-ios sur <html>, gardée si la page réécrit ses classes.
+const IOS_JS = `<script>${SAF}iPhone / iPad repérés (classe vf-ios, 22/11), pour les corrections propres à leur moteur. */
+(() => { const R = document.documentElement;
+  if (!(/iP(hone|ad|od)/.test(navigator.userAgent + " " + navigator.platform) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))) return;
+  const poser = () => { if (!R.classList.contains("vf-ios")) R.classList.add("vf-ios"); }; poser();
+  if (window.MutationObserver) new MutationObserver(poser).observe(R, { attributes: true, attributeFilter: ["class"] }); })();
+</script>
+`;
+// Fond « nuit » : lueurs compactes sur iPhone / iPad (correction « nuitcompacte », 22/11 ; voir le commentaire de la correction).
+const NUIT_LIGNES = [
+  ".vf-nuit i:nth-child(1) { top: -34vh; left: -18vw; width: 92vw; height: 92vh; background: radial-gradient(closest-side, rgba(246,245,241,.075), rgba(246,245,241,.022) 46%, transparent 72%); animation: vf-derive-a 46s ease-in-out infinite alternate; }",
+  ".vf-nuit i:nth-child(2) { top: 26vh; right: -26vw; width: 76vw; height: 76vh; background: radial-gradient(closest-side, rgba(169,129,74,.10), rgba(169,129,74,.03) 44%, transparent 70%); animation: vf-derive-b 62s ease-in-out infinite alternate; }",
+  ".vf-nuit i:nth-child(3) { bottom: -30vh; left: 12vw; width: 70vw; height: 60vh; background: radial-gradient(closest-side, rgba(246,245,241,.05), transparent 70%); animation: vf-derive-c 54s ease-in-out infinite alternate; }",
+];
+const NUIT_CSS = `${SAF}nuit compacte (22/11) : sur iPhone / iPad, chaque lueur du fond « nuit » est dessinée 3 fois plus petite, agrandie 3 fois autour de son centre. */
+html.vf-ios .vf-nuit i { background: none; }
+html.vf-ios .vf-nuit i::before { content: ""; position: absolute; left: 33.3333%; top: 33.3333%; width: 33.3334%; height: 33.3334%; border-radius: 50%; background: var(--vfn); transform: scale(3); will-change: transform; }
+`;
+
 const TOUTES = [
   // En-tête : --hauteur-header vaut 68 px dans le design system, mais l'en-tête mesure 134 px sur iPhone (3 lignes) et
   // ~96 px dans Safari sur Mac. Son margin-bottom négatif (−68 px) laissait alors une bande vide au-dessus du
@@ -698,6 +717,70 @@ const TOUTES = [
     avant: "        else el.style.opacity = (1 - ev).toFixed(3);\n      });\n      if (!anim) anim = requestAnimationFrame(suivre);\n",
     apres: "        else el.style.opacity = (1 - ev).toFixed(3);\n      });\n" + SOUSNOIR_JS + "      if (!anim) anim = requestAnimationFrame(suivre);\n" },
 
+  // « Finesse » (22/11, retour de Loan : plantages « aléatoires » sur iPhone, au défilement rapide, en remontant, et sur « See full
+  // details » juste après le chargement). Mesure sur toute la page (outil de mesure des calques qui dessinent vraiment, modèle de
+  // WebKit) : au repos, le projecteur pèse 47 à 85 Mo ; l'étude jusqu'à 114 Mo sur 19 écrans, dont 4 × 33 Mo pour la feuille
+  // (1200 × 800) et les trois calques qu'elle porte (caméra noire, négatif, corrections en or). Safari dessine un calque à sa taille
+  // CSS × 3 sur iPhone, quelle que soit la réduction de la caméra (un agrandissement par transform n'est jamais redessiné, mesuré le
+  // 08/10 avec « compact ») ; or la caméra montre la feuille réduite (×0,33 à ×0,5 sauf les 7 plans de détail, ×0,86 à ×1,06).
+  // C'est aussi ce qui se redessine pendant le mouvement : en 4 s de « See full details », la feuille est redessinée en entier
+  // ≈ 40 fois et la caméra noire ≈ 26 fois (Chromium) ; dans Safari, chaque redessin d'un grand calque demande une 2e (voire 3e)
+  // image, et les corrections en or (2 ombres portées, filtre dessiné par le processeur) des images intermédiaires de même taille.
+  // Les arrêts relevés depuis le 21/11 ont tous lieu quand ces calques apparaissent ou se redessinent (arrivée sur les cartes,
+  // remontée vers l'étude, descente « See full details »). Leur poids dépend de la vitesse et de ce que Safari n'a pas encore rendu :
+  // d'où le côté « aléatoire ».
+  // Correction (iPhone / iPad seulement) : la feuille est posée, par le mécanisme du 27/10 (B, --b, ombres et grain à l'échelle), au
+  // plus petit niveau qui reste au moins aussi fin que l'écran (B ≥ zoom de la caméra ; niveaux 0,36 à 1, espacés de 10 à 12 % : la
+  // feuille n'est jamais dessinée plus de ≈ 14 % plus fine que l'écran, rééchantillonnage imperceptible), puis réduite par la
+  // caméra de s / B ≤ 1 : jamais agrandie après coup, donc aussi nette qu'avant. Vers le haut aussitôt que la caméra vise un plan plus
+  // proche (avant d'y arriver) ; vers le bas en mouvement quand un niveau au moins 20 % plus petit suffit depuis 0,25 s, au niveau exact à
+  // l'arrêt. Pendant un défilement rapide (> 2,5 écrans/s), pas plus que 0,8 : la feuille ne se redessine pas en grand le temps d'un
+  // passage éclair (même principe que le design sur Chrome : « en mouvement, une texture déplacée ; à l'arrêt, redessinée nette »).
+  // Loupe : feuille à 1, comme avant.
+  // Au passage, nette() reprend l'échelle réelle de la caméra (avancée lente comprise, 02/11) au lieu de l'échelle sans l'avancée.
+  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran sur iPhone / iPad (déclarations)", fichiers: VF, n: 1,
+    avant: "    let B = 1, tB = 0, camS = 1, camX = 0, camY = 0;\n",
+    apres: "    let B = 1, tB = 0, camS = 1, camX = 0, camY = 0;\n" +
+      "    " + SAF + "finesse (22/11) : sur iPhone / iPad, feuille posée au plus petit niveau aussi fin que l'écran (B ≥ zoom de la caméra). */\n" +
+      "    const fIOS = /iP(hone|ad|od)/.test(navigator.userAgent + \" \" + navigator.platform) || (navigator.platform === \"MacIntel\" && navigator.maxTouchPoints > 1);\n" +
+      "    const fNiv = (x) => { for (const n of [0.36, 0.4, 0.45, 0.5, 0.56, 0.63, 0.71, 0.8, 0.9]) if (n >= x * 1.02) return n; return 1; }, fLoupe = () => document.documentElement.classList.contains(\"vf-loupe\");\n" +
+      "    let camSr = 1, fT = 0, fY = 0, fV = 0, fBas = 0;\n" +
+      "    const fTr = () => { cam.style.transform = cam2.style.transform = \"translate3d(\" + camX.toFixed(2) + \"px,\" + camY.toFixed(2) + \"px,0) scale(\" + (camSr / B).toFixed(4) + \")\"; };\n" +
+      "    if (fIOS) window.__ldFinesse = (loupe) => { if (loupe) { if (B < 1) { poserB(1); fTr(); } } else { clearTimeout(tB); tB = setTimeout(nette, 200); } }; /* appelé par la loupe */\n" },
+  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran sur iPhone / iPad (à l'arrêt)", fichiers: VF, n: 1,
+    avant: "    const nette = () => { const b = camS > 1.15 ? Math.min(camS, 5) : 1; if (Math.abs(b / B - 1) < 0.01) return; poserB(b);\n" +
+      "      cam.style.transform = cam2.style.transform = \"translate3d(\" + camX.toFixed(2) + \"px,\" + camY.toFixed(2) + \"px,0) scale(\" + (camS / B).toFixed(4) + \")\"; };\n",
+    apres: "    const nette = () => { const b = camS > 1.15 ? Math.min(camS, 5) : fIOS ? (fLoupe() ? 1 : fNiv(camSr)) : 1; if (Math.abs(b / B - 1) < 0.01) return; poserB(b); fTr(); }; " + SAF + "finesse (22/11). */\n" },
+  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran sur iPhone / iPad (en mouvement)", fichiers: VF, n: 1,
+    avant: "      if (B > 1 && s < B * 0.75) poserB(1);\n",
+    apres: "      if (B > 1 && s < B * 0.75) poserB(1);\n" +
+      "      " + SAF + "finesse (22/11) : vers le haut dès que la caméra vise un plan plus proche ; vers le bas en mouvement si le niveau utile est\n" +
+      "         au moins 20 % plus petit depuis 0,25 s (la caméra avance doucement en continu dans l'étude : sans cela, la feuille restait en grand\n" +
+      "         tout le long), au niveau exact à l'arrêt (nette) ; pas plus que 0,8 pendant un défilement rapide. */\n" +
+      "      if (fIOS && B <= 1) { const now = performance.now(), yy = window.scrollY;\n" +
+      "        fV = fT && now - fT < 250 ? 0.6 * fV + 0.4 * Math.abs(yy - fY) / Math.max(1, now - fT) : 0; fT = now; fY = yy;\n" +
+      "        let b = fLoupe() ? 1 : fNiv(Math.max(s, V.s0 * cible.z)); if (fV * 1000 > 2.5 * window.innerHeight) b = Math.min(b, 0.8);\n" +
+      "        if (b > B + 1e-4) { poserB(b); fBas = 0; } else if (b < B * 0.8 + 1e-4) { if (!fBas) fBas = now; else if (now - fBas > 250) { poserB(b); fBas = 0; } } else fBas = 0; }\n" +
+      "      camSr = s;\n" },
+  { id: "finesse", quoi: "Loupe : feuille de l'étude à sa finesse d'origine pendant la loupe", fichiers: VF, n: 1,
+    avant: 'R.classList.add("vf-loupe"); appliquer(); return true; };',
+    apres: 'R.classList.add("vf-loupe"); if (window.__ldFinesse) window.__ldFinesse(true); appliquer(); return true; };' },
+  { id: "finesse", quoi: "Loupe : feuille de l'étude reposée à sa finesse après la loupe", fichiers: VF, n: 1,
+    avant: 'R.classList.remove("vf-loupe");',
+    apres: 'R.classList.remove("vf-loupe"); if (window.__ldFinesse) window.__ldFinesse(false);' },
+
+  // « Nuit compacte » (22/11, même retour) : les trois lueurs du fond « nuit » (dégradés très doux, 5 à 10 % d'opacité, animés en
+  // boucle) ont chacune leur calque, dessiné à leur taille × 3 sur iPhone : 21 Mo, là où le fond est visible (entrée de l'étude,
+  // point le plus lourd de la page après « finesse », et arrivée sur les cartes). Sur iPhone / iPad (classe vf-ios), chaque lueur
+  // est dessinée dans un cadre 3 fois plus petit, agrandi 3 fois autour de son centre (principe de « compact » et « lueur ») : même
+  // dégradé, 9 fois moins de mémoire (≈ 2,4 Mo). L'animation d'origine reste sur la lueur (le cadre ne fait que la suivre).
+  { id: "nuitcompacte", quoi: "iPhone / iPad repérés (classe vf-ios)", fichiers: VF, n: 1,
+    avant: '<script src="./support.js"></script>', apres: IOS_JS + '<script src="./support.js"></script>' },
+  { id: "nuitcompacte", quoi: "Fond « nuit » : lueurs compactes sur iPhone / iPad (styles)", fichiers: VF, n: 1,
+    avant: "</style>\n</helmet>", apres: NUIT_CSS + "</style>\n</helmet>" },
+  ...NUIT_LIGNES.map((l, i) => ({ id: "nuitcompacte", quoi: `Fond « nuit » : dégradé de la lueur ${i + 1} dans une variable`, fichiers: VF, n: 1,
+    avant: l, apres: l.replace("; background: radial-gradient(", "; --vfn: radial-gradient(").replace("); animation: vf-derive-", "); background: var(--vfn); animation: vf-derive-") })),
+
   // « Glisse » (21/11, retour de Loan : « sur Safari Mac, quand on clique sur n'importe quel lien du sommaire ça scroll instantanément
   // à la section cliquée, no smooth at all, ça ne fonctionne pas comme sur Chromium […] Le site doit être uniforme peu importe le
   // navigateur »). Défilements doux calculés par la page avec la courbe de Chrome (voir GLISSE_JS).
@@ -765,7 +848,9 @@ const choix = process.env.SAFARI;
 // « filet » (14/11) : arrêts persistants avec la loupe quand on zoome pendant l'élan d'un défilement (doigts non transmis par Safari).
 // Réduit le 18/11 au seul zoom réel de Safari (arrêts en remontant la page : voir le commentaire de la correction).
 // « sousplanche », « glisse », « inclinaison », « images », « titre » (retours de Loan du 21/11) : voir les commentaires des corrections et journal/.
-export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images", "titre", "sousnoir"];
+// « finesse », « nuitcompacte » (22/11, plantages « aléatoires ») : feuille de l'étude à la finesse de l'écran et lueurs du fond
+// « nuit » compactes, sur iPhone / iPad (voir les corrections).
+export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images", "titre", "sousnoir", "finesse", "nuitcompacte"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));
 // Adresse de test : pages de comparaison (mêmes corrections de contenu et optimisations que la page publiée).

@@ -9,6 +9,8 @@ Tous dans `scripts/`, lancés après `npm run construire`. Chromium seulement (p
 | `verif-sousplanche.mjs` | Autour des cartes (mobile) : ce qui est caché est invisible (captures avec / sans), mémoire estimée — 21/11 |
 | `verif-sousnoir.mjs` | Fin de l'étude et passage aux cartes : ce qui n'est plus dessiné est invisible (captures avec / sans, 7 écrans, `IOS=1` pour l'iPhone), mémoire estimée — 22/11 |
 | `verif-navigation.mjs` | Défilement doux (courbe de Chrome), inclinaison des cartes, image redemandée — 21/11 |
+| `verif-memoire.mjs` | **Budget de mémoire** (130 Mo) sur toute la page au repos et pendant les gestes à risque (vitrine → See full details, descente éclair, remontée rapide) ; seuls les calques qui dessinent comptent. À lancer avant chaque mise en ligne — 22/11 |
+| `verif-finesse.mjs` | Feuille de l'étude à la finesse de l'écran (iPhone) : même image qu'avant (×3, `SAFARI=1` : rendu façon Safari), niveaux, défilement rapide, loupe ; ordinateur et Android inchangés — 22/11 |
 | `verif-pincement.mjs` | Loupe, filet, vitrine, captures avant / après sur toute la page |
 | `verif-retraits.mjs`, `verif-serie.mjs`, `banc.mjs` | Diagnostic de l'adresse de test (séries, retraits `?sans=`) |
 | `verif-chargement.mjs` | Écran de chargement (extensions) |

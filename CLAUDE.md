@@ -27,7 +27,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 
 ## Republier
 1. Ajouter à la racine les nouvelles pages de l'export et leurs fichiers, sans remplacer les pages figées (règle ci-dessus).
-2. `npm install` (une fois), `npm run construire` (contrôles), puis, avec l'accord de Loan, `npm run publier`.
+2. `npm install` (une fois), `npm run construire` (contrôles), `node scripts/verif-memoire.mjs` (budget de mémoire sur iPhone : toute la page et les gestes qui l'ont fait planter, 22/11), puis, avec l'accord de Loan, `npm run publier`.
 3. Vérifier : `npm run verifier -- https://loandrouard.com` et comparer les fichiers servis à `public/`.
 
 Adresse de test (jamais loandrouard.com) : `npm run publier:essai` (voir MISE-EN-LIGNE.md). **Accord permanent de Loan depuis le 01/11/2026 : publier sur l'adresse de test sans demander** (le dire dans la réponse). loandrouard.com (`npm run publier`) et les autres mises en ligne demandent toujours son accord.

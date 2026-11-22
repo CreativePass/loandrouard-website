@@ -1019,6 +1019,47 @@ Retour sur loandrouard.com (version `6f2d5c40`) : « quand on scroll, tout va bi
 - **Écarté** : cacher les corrections en or effacées partout. Invisible en soi, mais Chrome, qui les dessine avec le négatif, dessine alors le négatif autrement (hachures adoucies, ≈ 11 000 px d'écart). Safari met tout élément filtré sur son propre calque : sur iPhone, le négatif n'en dépend pas.
 - **Mesuré** (`scripts/verif-sousnoir.mjs`, 7 écrans, iPhone simulé en plus) : 0 pixel de différence (avec tout redessiné contre corrigé ; corrections en or contrôlées seules dans la caméra noire). Mémoire estimée, 393 × 695 : fin de l'étude 143 → 77 Mo ; passage aux cartes (endroit de l'arrêt) 194 → 127 Mo ; à la remontée, l'étude réapparaît avec ≈ 90 Mo au lieu de ≈ 155. Peut-être 33 Mo de plus dans Safari : la caméra noire n'a plus rien à dessiner elle-même quand la photo est cachée (non mesurable ici).
 
+### Retour de Loan du 22/11 (soir) : plantages « aléatoires » — mesure de toute la page, feuille de l'étude à la finesse de l'écran (`finesse`), nuit compacte (`nuitcompacte`), budget de mémoire
+
+Retour sur loandrouard.com (`40d79d21`, iPhone 14 Pro, Safari) : arrêts imprévisibles. « Je scrolle super vite en bas, je remonte, pas de souci ; je recharge, je scrolle un peu, ça crash » ; trois fois de suite, juste après le chargement, « See pricing » puis « See full details » sur une des trois cartes → arrêt, la quatrième fois non. Demande : « une méthode stable […] applicable à toute sorte de scénario », plus une correction par endroit.
+
+**Méthode** : au lieu de chercher l'endroit du dernier arrêt, mesure de **toute la page** (un endroit tous les demi-écrans, au repos) et des **gestes** (vitrine puis « See full details », descente éclair, remontée rapide), avec un modèle affiné : seuls les calques qui dessinent quelque chose comptent (un conteneur sans fond ni contenu propre n'a pas d'image dans Safari, mesuré le 08/10 : « les conteneurs `div.vfp-*.vfp-compact` occupent 0 o » ; un pseudo-élément composité compte à sa propre taille). Modèle de `verif-calques-webkit.mjs` (taille CSS × 3² × 4 octets, partie visible), Chromium au format iPhone 393 × 852.
+
+**Constats** :
+- Au repos, aucun endroit ne dépasse : projecteur 47 à 85 Mo, entrée de l'étude 150 Mo (le plus lourd), étude 47 à 115 Mo **sur 19 écrans**, cartes 28 à 66 Mo, pied de page 7 Mo.
+- Dans l'étude, l'essentiel est la **feuille** (1200 × 800) et les trois calques qu'elle porte (caméra noire, négatif, corrections en or) : 4 × 33 Mo. Safari dessine un calque à sa taille CSS × 3 quelle que soit sa réduction par un `transform` (démontré le 08/10 avec `compact`) ; or la caméra montre la feuille réduite : ×0,33 à ×0,5, sauf les 7 plans de détail (×0,86 à ×1,06). La feuille avait donc 4 à 9 fois plus de pixels que l'écran ne peut en montrer.
+- C'est aussi ce qui se **redessine** pendant le mouvement (repeints comptés par calque dans Chromium) : en 4 s de « See full details », la feuille est redessinée en entier ≈ 40 fois, la caméra noire ≈ 26 fois. Dans Safari, un calque qui se redessine garde une 2e (parfois 3e) image le temps de l'échange, et les corrections en or (deux ombres portées, filtre dessiné par le processeur) demandent des images intermédiaires de même taille.
+- Ces calques sont dans tous les arrêts relevés depuis le 21/11 (arrivée sur les cartes, remontée des cartes vers l'étude, descente « See full details »).
+- Démarrage : pas de pic de calques (la page est cachée par l'écran de chargement) ; ≈ 10 000 éléments de l'ancienne page (remplacée par le moteur) attendent d'être libérés pendant ≈ 7 s (Chromium) ; images décodées ≈ 70 Mo.
+- **Pourquoi « aléatoire »** : le pic d'un geste dépend de la vitesse, de ce que Safari n'a pas encore libéré (images de l'ancienne version d'un calque, page précédente juste après un rechargement) et de l'état de l'iPhone. Même geste, résultat différent. Rien de propre à l'iPhone 14 Pro : tous les iPhone / iPad, et tous les navigateurs de l'iPhone (même moteur) ; un iPhone avec moins de mémoire est plus exposé.
+
+**Corrections** (iPhone / iPad seulement ; `scripts/safari.mjs`) :
+- `finesse` : la feuille est posée, par le mécanisme du 27/10 (`B`, `--b`, ombres portées et grain du crayon à l'échelle), au plus petit niveau qui reste au moins aussi fin que l'écran : B ≥ zoom de la caméra (niveaux 0,36 ; 0,4 ; 0,45 ; 0,5 ; 0,56 ; 0,63 ; 0,71 ; 0,8 ; 0,9 ; 1), puis réduite par la caméra de s / B ≤ 1 : jamais agrandie après coup. Vers le haut dès que la caméra vise un plan plus proche (avant d'y arriver) ; vers le bas en mouvement si un niveau au moins 20 % plus petit suffit depuis 0,25 s, au niveau exact à l'arrêt ; au plus 0,8 pendant un défilement rapide (> 2,5 écrans/s : pas de grand redessin le temps d'un passage éclair, comme le « net / flou » du design sur Chrome). Loupe : feuille à 1 pendant la loupe. `nette()` reprend l'échelle réelle de la caméra (avancée lente du 02/11 comprise).
+- `nuitcompacte` : les trois lueurs du fond « nuit » (dégradés à 5–10 % d'opacité, animés) sont dessinées dans un cadre 3 fois plus petit agrandi 3 fois (principe de `compact` et `lueur`) : 21 → 2,4 Mo là où le fond est visible. Classe `vf-ios` posée sur `<html>` par un petit script (iPhone, iPad, iPad en « site pour ordinateur »).
+- Diagnostic de l'adresse de test : le niveau de la feuille est noté (`b0.50`) dans la colonne « zoom ».
+
+**Mesuré** (même modèle, avant → après) :
+
+| Endroit ou geste (`verif-memoire.mjs`) | Avant | Après |
+|---|---|---|
+| Toute la page au repos : maximum (entrée de l'étude) | 150 Mo | 103 Mo |
+| Étude, longue partie (19 écrans) | 113–115 Mo | 44–46 Mo |
+| Étude, fin et approche des cartes | 63–112 Mo | 33–43 Mo |
+| Projecteur, vitrine ouverte, cartes, pied de page | 7–85 Mo (vitrine 72) | inchangé |
+| « See pricing » puis « See full details » : maximum pendant la descente | 149 Mo | 101 Mo |
+| Descente éclair jusqu'aux cartes : maximum | 163 Mo (à l'arrivée sur les cartes) | 94 Mo |
+| Remontée rapide des cartes vers l'étude : maximum | 115 Mo | 53 Mo |
+| Surface redessinée de la feuille pendant la descente (Chromium, caméra + traits) | 1 417 + 1 384 Mo-équivalents | 638 + 429 |
+
+L'ancienne version dépasse le budget de 130 Mo dans 3 cas sur 5 ; la nouvelle nulle part (103 Mo au plus).
+
+**Contrôles** :
+- `node scripts/verif-finesse.mjs` (26 endroits de l'étude, 393 × 852, 375 × 667, 430 × 932, 852 × 393 ; captures ×3) : même forme partout (images floutées de 2 px : ≤ 0,03 % de pixels différents, au niveau du témoin) ; feuille jamais agrandie après coup ; défilement rapide : B ≤ 0,8 puis niveau exact à l'arrêt ; loupe : B = 1 pendant, niveau d'avant après ; ordinateur et Android : rien ne change (pas de `vf-ios`, B = 1).
+- Pixels bruts (×3, et rendu « façon Safari » avec `SAFARI=1` : feuille gardée en calque à sa taille CSS, comme Safari) : ≤ 0,2 % de pixels différents sur 393 × 852 et 375 × 667 ; jusqu'à 1,5 % sur 430 × 932 et 0,5 % en paysage : anticrénelage des traits fins sur toute la feuille (dessinée à la taille de l'écran au lieu de 3 fois plus grande puis réduite), même dessin, même place ; à l'œil identique, traits fins à peine plus nets. Avec des niveaux plus espacés (0,4 / 0,55 / 0,75 / 1, première version), textes visiblement adoucis par endroits (jusqu'à 3,1 %) : écarté.
+- Nouvel outil `node scripts/verif-memoire.mjs` : budget de 130 Mo sur toute la page et pendant les gestes à risque (tableau ci-dessus) ; à lancer avant chaque mise en ligne.
+
+**Non démontré** : l'absence d'arrêt sur l'iPhone (pas de Safari ici). Si un arrêt persiste : relevé du diagnostic (colonne zoom : `b…`, parties cachées), et rapport « JetsamEvent » de l'iPhone (preuve directe d'un arrêt pour mémoire, avec la mémoire de la page au moment de l'arrêt).
+
 ## Vérifications
 
 - **Au pixel** (`VERIF_REF`, 8 pages × 1440 / 1280 / 390 px × 6 hauteurs, APRÈS sans `aimantation` contre AVANT) : 44 captures sur 144 avec un écart, toutes sous 0,19 % des pixels. Mêmes zones, même ordre de grandeur que le témoin AVANT contre AVANT (35 captures sur 144, jusqu'à 0,21 %) : grains du sable d'or et poussière (tirage aléatoire), annotations de l'étude en mouvement, ton de l'en-tête après un saut hors du projecteur (aléatoire sur la version en ligne, voir ci-dessous). Écarts propres à APRÈS : le logo WUSHU réduit, identique à l'œil ; la ligne « THREE PACKAGES · FROM 49 € » saisie à un autre moment de son fondu (couleur et luminosité identiques, vérifiées en temps réel).

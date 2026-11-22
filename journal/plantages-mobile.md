@@ -22,8 +22,25 @@ Symptôme : « A problem repeatedly occurred », ou page blanche puis rechargeme
 | 18/11 | Filet réduit au vrai zoom de Safari | ✅ remontée réparée (« ça marche ») |
 | 21/11 | Rien de caché sous la planche des cartes (`sousplanche`) | ✅ descente ; arrêt en remontant vite réglé par `sousnoir` (22/11) |
 | 22/11 | Rien de dessiné sous le fond noir de l'étude, ni photo / négatif / or invisibles (`sousnoir`) | ✅ (Loan, 22/11) |
+| 22/11 (soir) | Mesure de toute la page et des gestes ; feuille de l'étude à la finesse de l'écran (`finesse`), lueurs « nuit » compactes (`nuitcompacte`), budget de mémoire vérifié avant chaque mise en ligne (`verif-memoire.mjs`) | ⏳ (adresse de test) |
+
+## Pourquoi « aléatoire » (22/11)
+- Au repos, aucun endroit de la page ne dépasse : les arrêts viennent des **mouvements** (défilement rapide, descente « See full details »), quand de grands calques apparaissent ou se redessinent vite (Safari garde une 2e image pendant un redessin et libère les anciennes avec un temps de retard).
+- La hauteur du pic dépend de la vitesse, de ce qui reste en mémoire (juste après un rechargement : plus de mémoire déjà prise) et de l'état de l'iPhone : même geste, résultat différent.
+- Tous les iPhone / iPad sont concernés, et tous les navigateurs de l'iPhone (même moteur que Safari) ; pas Android ni l'ordinateur.
 
 ## Historique
+
+### 22/11 (soir) — plantages « aléatoires » : feuille de l'étude à la finesse de l'écran (⏳)
+- Problème (Loan, loandrouard.com `40d79d21`) : arrêts imprévisibles sur iPhone, au défilement rapide, en remontant, et 3 fois de suite sur « See pricing » → « See full details » juste après le chargement ; parfois tout marche. Demande : une solution stable, pas un bug à la fois.
+- Méthode : mesure de toute la page (un endroit tous les demi-écrans) et des gestes, en ne comptant que les calques qui dessinent vraiment (conteneurs vides à 0, comme mesuré dans Safari le 08/10). Projecteur 47–85 Mo ; **étude jusqu'à 114 Mo sur 19 écrans, dont 4 × 33 Mo pour la feuille** et ses 3 calques (caméra noire, négatif, or), dessinés 3 fois plus grands que l'écran ne peut les montrer (caméra à ×0,33–0,5) et redessinés ≈ 40 fois pendant la descente « See full details ». Ils sont dans tous les arrêts relevés depuis le 21/11.
+- Fait : `finesse` (iPhone / iPad : feuille posée au plus petit niveau aussi fin que l'écran, mécanisme du 27/10 ; jamais agrandie après coup ; ≤ 0,8 pendant un défilement rapide ; loupe : 1) ; `nuitcompacte` (3 lueurs du fond « nuit » dessinées 3 fois plus petites).
+- Mesuré (`verif-memoire.mjs`, avant → après) : maximum au repos 150 → 103 Mo ; étude 47–115 → 24–50 Mo ; « See full details » 149 → 101 Mo ; descente éclair jusqu'aux cartes 163 → 94 Mo ; remontée des cartes vers l'étude 115 → 53 Mo (l'ancienne version dépassait le budget de 130 Mo dans 3 cas sur 5). Surface redessinée de la feuille pendant la descente ÷ 2 à 3. Image : même forme partout (4 formats d'iPhone) ; seuls les traits fins diffèrent d'anticrénelage (≤ 0,2 % des pixels sur 393 × 852 et 375 × 667, ≤ 1,5 % sur 430 × 932), à l'œil identiques ; ordinateur et Android inchangés.
+- ❌ Écarté le même jour : niveaux espacés (0,4 / 0,55 / 0,75 / 1) : petits textes visiblement adoucis par endroits.
+- Garde-fou : `scripts/verif-memoire.mjs` (budget de 130 Mo, toute la page et les gestes à risque), à lancer avant chaque mise en ligne.
+- Si ça plante encore : relevé du diagnostic (adresse de test, `resultats.html`) ; rapport « JetsamEvent » de l'iPhone (Réglages → Confidentialité et sécurité → Analyse et améliorations → Données d'analyse ; seulement si le partage des analyses est activé) : preuve directe d'un arrêt pour mémoire.
+- Fichiers : `scripts/safari.mjs` (`finesse`, `nuitcompacte`), `scripts/verif-finesse.mjs`, `scripts/verif-memoire.mjs`, `optimise/diag.js` (niveau `b…` noté).
+- Adresse de test : version `0356e231` (22/11). Pas encore sur loandrouard.com.
 
 ### 22/11 — mise en ligne (✅)
 - Loan, après essai sur l'iPhone et le Mac (adresse de test `c6e30b51`) : « tout à l'air de marcher ». Corrections du 21 et 22/11 en ligne sur loandrouard.com (`loandrouard-site` version `40d79d21`).
