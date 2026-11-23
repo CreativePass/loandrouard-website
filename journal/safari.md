@@ -14,7 +14,7 @@ Le site doit être identique dans tous les navigateurs (Loan, 21/11). Safari ne 
 | Transitions CSS relancées en continu : tremblement | `inclinaison` : animation calculée par la page | 21/11 ✅ |
 | Image remplacée pendant son téléchargement : « ? » au 1er chargement | ❌ préchargement de l'étude (déplaçait le problème) → ✅ images tenues pendant leur téléchargement + nouvel essai caché | 21/11 |
 | Zoom : tout est redessiné à l'échelle du zoom | `loupe` | 14/11 ✅ |
-| Calque dessiné à sa taille CSS × 3, jamais à l'échelle de sa réduction (Chrome, lui, redessine à la taille d'écran) : la feuille de l'étude, montrée réduite, pesait 3 à 9 fois trop | `finesse` (iPhone / iPad) | 22/11 ⏳ |
+| Calque dessiné à sa taille CSS × 3, jamais à l'échelle de sa réduction (Chrome, lui, redessine à la taille d'écran) : la feuille de l'étude, montrée réduite, pesait 3 à 9 fois trop | `finesse` (iPhone / iPad) | 22/11 ✅ |
 | Photo pas encore lisible au moment où le titre se règle : titre énorme | `titre` : silhouette relue jusqu'à être lisible | 21/11 ✅ |
 
 ## Historique

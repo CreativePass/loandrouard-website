@@ -61,6 +61,10 @@ Ce fichier n'est pas publié sur le site.
 - **Mobile dès le départ** : iPhone et Safari en priorité, de 320 px à 2 560 px de large. Pas d'aimantation du défilement
   (« scroll snap ») : retirée à la demande de Loan.
 - Images légères (WebP ou JPEG compressé). La texture `enduit-noir.jpg` (518 Ko) gagnerait à être réexportée plus légère (~250 Ko).
+- **Léger sur iPhone** (22/11 : plantages de l'iPhone quand la page dépasse sa mémoire de dessin ; méthode complète dans `LEGERETE.md`) :
+  images à la taille affichée × 3 au plus ; au plus 6 à 8 couches plein écran superposées (lueurs, grain, brumes : chacune ≈ 12 Mo
+  sur iPhone) ; lueurs et halos en petites images agrandies ; pas de flou ni d'ombre portée ni de 3D sur un grand élément qui
+  bouge ; une seule scène lourde à l'écran à la fois.
 
 ## 2. Ce qui a changé sur le site depuis le dernier export
 
