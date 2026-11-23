@@ -325,23 +325,27 @@ const SOUSNOIR_JS = `      { ${SAF}22/11 : calques invisibles de l'étude non de
       }
 `;
 
-// iPhone / iPad (tous les navigateurs d'iOS ont le moteur de Safari) : classe vf-ios sur <html>, gardée si la page réécrit ses classes.
-const IOS_JS = `<script>${SAF}iPhone / iPad repérés (classe vf-ios, 22/11), pour les corrections propres à leur moteur. */
+// Moteur de Safari (Apple WebKit) : Safari sur iPhone, iPad et Mac, et tous les navigateurs d'iOS (Chrome, Firefox, appli Google :
+// même moteur, imposé par Apple ; aucun autre moteur publié sur iOS fin 2026, même dans l'UE). Classe vf-webkit sur <html>, gardée si la
+// page réécrit ses classes. Chrome, Edge, Samsung Internet (Blink) et Firefox (Gecko) ne sont pas concernés : ils redessinent déjà
+// chaque calque à la taille où il est affiché (Chrome depuis la version 53, sauf pendant un will-change: transform).
+const MOTEUR = `(navigator.vendor === "Apple Computer, Inc." || /iP(hone|ad|od)/.test(navigator.userAgent + " " + navigator.platform) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))`;
+const IOS_JS = `<script>${SAF}moteur de Safari repéré (classe vf-webkit, 22/11 ; Mac compris le 23/11), pour les corrections propres à ce moteur. */
 (() => { const R = document.documentElement;
-  if (!(/iP(hone|ad|od)/.test(navigator.userAgent + " " + navigator.platform) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))) return;
-  const poser = () => { if (!R.classList.contains("vf-ios")) R.classList.add("vf-ios"); }; poser();
+  if (!${MOTEUR}) return;
+  const poser = () => { if (!R.classList.contains("vf-webkit")) R.classList.add("vf-webkit"); }; poser();
   if (window.MutationObserver) new MutationObserver(poser).observe(R, { attributes: true, attributeFilter: ["class"] }); })();
 </script>
 `;
-// Fond « nuit » : lueurs compactes sur iPhone / iPad (correction « nuitcompacte », 22/11 ; voir le commentaire de la correction).
+// Fond « nuit » : lueurs compactes, moteur de Safari (correction « nuitcompacte », 22/11 ; voir le commentaire de la correction).
 const NUIT_LIGNES = [
   ".vf-nuit i:nth-child(1) { top: -34vh; left: -18vw; width: 92vw; height: 92vh; background: radial-gradient(closest-side, rgba(246,245,241,.075), rgba(246,245,241,.022) 46%, transparent 72%); animation: vf-derive-a 46s ease-in-out infinite alternate; }",
   ".vf-nuit i:nth-child(2) { top: 26vh; right: -26vw; width: 76vw; height: 76vh; background: radial-gradient(closest-side, rgba(169,129,74,.10), rgba(169,129,74,.03) 44%, transparent 70%); animation: vf-derive-b 62s ease-in-out infinite alternate; }",
   ".vf-nuit i:nth-child(3) { bottom: -30vh; left: 12vw; width: 70vw; height: 60vh; background: radial-gradient(closest-side, rgba(246,245,241,.05), transparent 70%); animation: vf-derive-c 54s ease-in-out infinite alternate; }",
 ];
-const NUIT_CSS = `${SAF}nuit compacte (22/11) : sur iPhone / iPad, chaque lueur du fond « nuit » est dessinée 3 fois plus petite, agrandie 3 fois autour de son centre. */
-html.vf-ios .vf-nuit i { background: none; }
-html.vf-ios .vf-nuit i::before { content: ""; position: absolute; left: 33.3333%; top: 33.3333%; width: 33.3334%; height: 33.3334%; border-radius: 50%; background: var(--vfn); transform: scale(3); will-change: transform; }
+const NUIT_CSS = `${SAF}nuit compacte (22/11) : moteur de Safari (iPhone, iPad, Mac), chaque lueur du fond « nuit » est dessinée 3 fois plus petite, agrandie 3 fois autour de son centre. */
+html.vf-webkit .vf-nuit i { background: none; }
+html.vf-webkit .vf-nuit i::before { content: ""; position: absolute; left: 33.3333%; top: 33.3333%; width: 33.3334%; height: 33.3334%; border-radius: 50%; background: var(--vfn); transform: scale(3); will-change: transform; }
 `;
 
 const TOUTES = [
@@ -729,7 +733,7 @@ const TOUTES = [
   // Les arrêts relevés depuis le 21/11 ont tous lieu quand ces calques apparaissent ou se redessinent (arrivée sur les cartes,
   // remontée vers l'étude, descente « See full details »). Leur poids dépend de la vitesse et de ce que Safari n'a pas encore rendu :
   // d'où le côté « aléatoire ».
-  // Correction (iPhone / iPad seulement) : la feuille est posée, par le mécanisme du 27/10 (B, --b, ombres et grain à l'échelle), au
+  // Correction (moteur de Safari : iPhone, iPad, et Mac depuis le 23/11 ; Chrome et Firefox le font déjà d'eux-mêmes) : la feuille est posée, par le mécanisme du 27/10 (B, --b, ombres et grain à l'échelle), au
   // plus petit niveau qui reste au moins aussi fin que l'écran (B ≥ zoom de la caméra ; niveaux 0,36 à 1, espacés de 10 à 12 % : la
   // feuille n'est jamais dessinée plus de ≈ 14 % plus fine que l'écran, rééchantillonnage imperceptible), puis réduite par la
   // caméra de s / B ≤ 1 : jamais agrandie après coup, donc aussi nette qu'avant. Vers le haut aussitôt que la caméra vise un plan plus
@@ -738,20 +742,20 @@ const TOUTES = [
   // passage éclair (même principe que le design sur Chrome : « en mouvement, une texture déplacée ; à l'arrêt, redessinée nette »).
   // Loupe : feuille à 1, comme avant.
   // Au passage, nette() reprend l'échelle réelle de la caméra (avancée lente comprise, 02/11) au lieu de l'échelle sans l'avancée.
-  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran sur iPhone / iPad (déclarations)", fichiers: VF, n: 1,
+  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran, moteur de Safari (déclarations)", fichiers: VF, n: 1,
     avant: "    let B = 1, tB = 0, camS = 1, camX = 0, camY = 0;\n",
     apres: "    let B = 1, tB = 0, camS = 1, camX = 0, camY = 0;\n" +
-      "    " + SAF + "finesse (22/11) : sur iPhone / iPad, feuille posée au plus petit niveau aussi fin que l'écran (B ≥ zoom de la caméra). */\n" +
-      "    const fIOS = /iP(hone|ad|od)/.test(navigator.userAgent + \" \" + navigator.platform) || (navigator.platform === \"MacIntel\" && navigator.maxTouchPoints > 1);\n" +
+      "    " + SAF + "finesse (22/11) : moteur de Safari, feuille posée au plus petit niveau aussi fin que l'écran (B ≥ zoom de la caméra). */\n" +
+      "    const fIOS = " + MOTEUR + "; /* moteur de Safari : iPhone, iPad, Mac (Chrome et Firefox redessinent déjà à la taille affichée) */\n" +
       "    const fNiv = (x) => { for (const n of [0.36, 0.4, 0.45, 0.5, 0.56, 0.63, 0.71, 0.8, 0.9]) if (n >= x * 1.02) return n; return 1; }, fLoupe = () => document.documentElement.classList.contains(\"vf-loupe\");\n" +
       "    let camSr = 1, fT = 0, fY = 0, fV = 0, fBas = 0;\n" +
       "    const fTr = () => { cam.style.transform = cam2.style.transform = \"translate3d(\" + camX.toFixed(2) + \"px,\" + camY.toFixed(2) + \"px,0) scale(\" + (camSr / B).toFixed(4) + \")\"; };\n" +
       "    if (fIOS) window.__ldFinesse = (loupe) => { if (loupe) { if (B < 1) { poserB(1); fTr(); } } else { clearTimeout(tB); tB = setTimeout(nette, 200); } }; /* appelé par la loupe */\n" },
-  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran sur iPhone / iPad (à l'arrêt)", fichiers: VF, n: 1,
+  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran, moteur de Safari (à l'arrêt)", fichiers: VF, n: 1,
     avant: "    const nette = () => { const b = camS > 1.15 ? Math.min(camS, 5) : 1; if (Math.abs(b / B - 1) < 0.01) return; poserB(b);\n" +
       "      cam.style.transform = cam2.style.transform = \"translate3d(\" + camX.toFixed(2) + \"px,\" + camY.toFixed(2) + \"px,0) scale(\" + (camS / B).toFixed(4) + \")\"; };\n",
     apres: "    const nette = () => { const b = camS > 1.15 ? Math.min(camS, 5) : fIOS ? (fLoupe() ? 1 : fNiv(camSr)) : 1; if (Math.abs(b / B - 1) < 0.01) return; poserB(b); fTr(); }; " + SAF + "finesse (22/11). */\n" },
-  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran sur iPhone / iPad (en mouvement)", fichiers: VF, n: 1,
+  { id: "finesse", quoi: "Étude : feuille à la finesse de l'écran, moteur de Safari (en mouvement)", fichiers: VF, n: 1,
     avant: "      if (B > 1 && s < B * 0.75) poserB(1);\n",
     apres: "      if (B > 1 && s < B * 0.75) poserB(1);\n" +
       "      " + SAF + "finesse (22/11) : vers le haut dès que la caméra vise un plan plus proche ; vers le bas en mouvement si le niveau utile est\n" +
@@ -771,12 +775,12 @@ const TOUTES = [
 
   // « Nuit compacte » (22/11, même retour) : les trois lueurs du fond « nuit » (dégradés très doux, 5 à 10 % d'opacité, animés en
   // boucle) ont chacune leur calque, dessiné à leur taille × 3 sur iPhone : 21 Mo, là où le fond est visible (entrée de l'étude,
-  // point le plus lourd de la page après « finesse », et arrivée sur les cartes). Sur iPhone / iPad (classe vf-ios), chaque lueur
+  // point le plus lourd de la page après « finesse », et arrivée sur les cartes). Moteur de Safari (classe vf-webkit), chaque lueur
   // est dessinée dans un cadre 3 fois plus petit, agrandi 3 fois autour de son centre (principe de « compact » et « lueur ») : même
   // dégradé, 9 fois moins de mémoire (≈ 2,4 Mo). L'animation d'origine reste sur la lueur (le cadre ne fait que la suivre).
-  { id: "nuitcompacte", quoi: "iPhone / iPad repérés (classe vf-ios)", fichiers: VF, n: 1,
+  { id: "nuitcompacte", quoi: "Moteur de Safari repéré (classe vf-webkit)", fichiers: VF, n: 1,
     avant: '<script src="./support.js"></script>', apres: IOS_JS + '<script src="./support.js"></script>' },
-  { id: "nuitcompacte", quoi: "Fond « nuit » : lueurs compactes sur iPhone / iPad (styles)", fichiers: VF, n: 1,
+  { id: "nuitcompacte", quoi: "Fond « nuit » : lueurs compactes, moteur de Safari (styles)", fichiers: VF, n: 1,
     avant: "</style>\n</helmet>", apres: NUIT_CSS + "</style>\n</helmet>" },
   ...NUIT_LIGNES.map((l, i) => ({ id: "nuitcompacte", quoi: `Fond « nuit » : dégradé de la lueur ${i + 1} dans une variable`, fichiers: VF, n: 1,
     avant: l, apres: l.replace("; background: radial-gradient(", "; --vfn: radial-gradient(").replace("); animation: vf-derive-", "); background: var(--vfn); animation: vf-derive-") })),
@@ -849,7 +853,7 @@ const choix = process.env.SAFARI;
 // Réduit le 18/11 au seul zoom réel de Safari (arrêts en remontant la page : voir le commentaire de la correction).
 // « sousplanche », « glisse », « inclinaison », « images », « titre » (retours de Loan du 21/11) : voir les commentaires des corrections et journal/.
 // « finesse », « nuitcompacte » (22/11, plantages « aléatoires ») : feuille de l'étude à la finesse de l'écran et lueurs du fond
-// « nuit » compactes, sur iPhone / iPad (voir les corrections).
+// « nuit » compactes, pour le moteur de Safari (iPhone, iPad, et Mac depuis le 23/11 ; voir les corrections).
 export const SAFARI_IDS = choix === "aucune" ? [] : choix ? choix.split(",") : ["entete", "textures", "compact", "affiche", "lvh", "camera", "eteints", "lueur", "loupe", "filet", "sousplanche", "glisse", "inclinaison", "images", "titre", "sousnoir", "finesse", "nuitcompacte"];
 export const SAFARI_TOUTES = TOUTES;
 export const SAFARI = TOUTES.filter((c) => SAFARI_IDS.includes(c.id));

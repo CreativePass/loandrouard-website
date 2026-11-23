@@ -61,10 +61,19 @@ Ce fichier n'est pas publié sur le site.
 - **Mobile dès le départ** : iPhone et Safari en priorité, de 320 px à 2 560 px de large. Pas d'aimantation du défilement
   (« scroll snap ») : retirée à la demande de Loan.
 - Images légères (WebP ou JPEG compressé). La texture `enduit-noir.jpg` (518 Ko) gagnerait à être réexportée plus légère (~250 Ko).
-- **Léger sur iPhone** (22/11 : plantages de l'iPhone quand la page dépasse sa mémoire de dessin ; méthode complète dans `LEGERETE.md`) :
-  images à la taille affichée × 3 au plus ; au plus 6 à 8 couches plein écran superposées (lueurs, grain, brumes : chacune ≈ 12 Mo
-  sur iPhone) ; lueurs et halos en petites images agrandies ; pas de flou ni d'ombre portée ni de 3D sur un grand élément qui
-  bouge ; une seule scène lourde à l'écran à la fois.
+- **Léger sur tous les navigateurs** (23/11, même texte dans le document Claude ; méthode complète dans `LEGERETE.md`) : sur
+  iPhone, une page trop chargée en couches graphiques se ferme d'elle-même (plantages de novembre, réglés le 22/11).
+  - Images : WebP, au plus 3 fois la taille affichée (1 200 px de large pour 400 px affichés).
+  - Couches plein écran (lueurs, grain, brumes, voiles) : 6 à 8 superposées au plus ; chacune pèse environ 12 Mo sur iPhone.
+  - Lueurs, halos, dégradés : en petites images agrandies.
+  - Animations : uniquement `transform` et `opacity` ; pas de flou, d'ombre portée ni de 3D sur un grand élément qui bouge.
+  - `will-change` : sur quelques petits éléments, et seulement pendant l'animation.
+  - Une seule scène lourde à l'écran à la fois ; ce qui est caché ou hors de l'écran n'est pas dessiné.
+  - Selon le navigateur : Safari (iPhone, iPad, Mac) et tous les navigateurs de l'iPhone (moteur WebKit, seul publié sur iOS)
+    dessinent chaque couche à sa taille × 3 même affichée réduite, et ferment la page si la mémoire déborde : le plus exigeant,
+    concevoir pour lui. Chrome, Edge, Samsung Internet (Blink) redessinent à la taille affichée, sauf pendant un
+    `will-change: transform` ; mémoire pleine = zones vides un instant. Firefox (Gecko) ignore tous les `will-change` de la page
+    s'ils couvrent plus de 3 fois la surface du document.
 
 ## 2. Ce qui a changé sur le site depuis le dernier export
 

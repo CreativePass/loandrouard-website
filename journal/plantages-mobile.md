@@ -22,6 +22,7 @@ Symptôme : « A problem repeatedly occurred », ou page blanche puis rechargeme
 | 18/11 | Filet réduit au vrai zoom de Safari | ✅ remontée réparée (« ça marche ») |
 | 21/11 | Rien de caché sous la planche des cartes (`sousplanche`) | ✅ descente ; arrêt en remontant vite réglé par `sousnoir` (22/11) |
 | 22/11 | Rien de dessiné sous le fond noir de l'étude, ni photo / négatif / or invisibles (`sousnoir`) | ✅ (Loan, 22/11) |
+| 23/11 | Mêmes corrections pour Safari sur Mac (moteur de Safari : `vf-webkit`) ; Chrome et Firefox le font déjà d'eux-mêmes | ⏳ (adresse de test `e3860f00`) |
 | 22/11 (soir) | Mesure de toute la page et des gestes ; feuille de l'étude à la finesse de l'écran (`finesse`), lueurs « nuit » compactes (`nuitcompacte`), budget de mémoire vérifié avant chaque mise en ligne (`verif-memoire.mjs`) | ✅ (Loan, 23/11 : aucun plantage trouvé) ; en ligne le 23/11 |
 
 ## Pourquoi « aléatoire » (22/11)
@@ -30,6 +31,12 @@ Symptôme : « A problem repeatedly occurred », ou page blanche puis rechargeme
 - Tous les iPhone / iPad sont concernés, et tous les navigateurs de l'iPhone (même moteur que Safari) ; pas Android ni l'ordinateur.
 
 ## Historique
+
+### 23/11 — autres navigateurs : corrections étendues à Safari sur Mac (⏳)
+- Demande de Loan : que les corrections valent aussi pour les autres navigateurs. Recherche : sur iPhone / iPad, tous les navigateurs ont le moteur de Safari (aucun autre moteur publié sur iOS fin 2026) → déjà couverts ; Chrome / Edge / Samsung Internet (Blink) redessinent déjà chaque couche à la taille affichée (sauf pendant un `will-change: transform`) et bornent leur mémoire graphique → rien à faire ; Firefox : ignore tous les `will-change` au-delà de 3 fois la surface du document ; Safari sur Mac : même moteur, non couvert jusque-là.
+- Fait : `finesse` et `nuitcompacte` pour tout navigateur au moteur de Safari (`navigator.vendor` « Apple Computer, Inc. » ou appareil iOS ; classe `vf-webkit` au lieu de `vf-ios`). Sur Mac, la feuille est presque toujours affichée en grand : seule l'entrée de l'étude change (B 0,8), même forme. Chrome et Firefox : rien ne change.
+- Contrôles : `verif-finesse.mjs` (iPhone, Safari Mac simulé, Chrome ordinateur et Android), `verif-memoire.mjs` (103 Mo au plus). Adresse de test `e3860f00`. Règles par navigateur : `LEGERETE.md` ; document Claude « Fiche pour Claude Design » complété (section « Léger sur tous les navigateurs »).
+- Fichiers : `scripts/safari.mjs`, `scripts/verif-finesse.mjs`, `LEGERETE.md`, `CLAUDE-DESIGN.md`.
 
 ### 23/11 — mise en ligne (✅)
 - Loan, après essai sur l'adresse de test (`0356e231`) : « pas réussi à trouver de bug ». En ligne sur loandrouard.com (`loandrouard-site` version `750bdb46`, retour arrière `40d79d21`). Méthode gardée pour la suite : `LEGERETE.md`.

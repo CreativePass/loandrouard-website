@@ -46,6 +46,18 @@ les éléments plus légers et optimisés dès le départ. Ce fichier n'est pas 
   fond de la planche des cartes (17 Mo). Images : la feuille de l'étude est en 2400 × 1600 pour 1200 × 800 affichés (déjà la
   bonne finesse) ; `enduit-noir.jpg` et les photos du projecteur peuvent être réexportées plus légères (`PERFORMANCE.md`, « Images »).
 
+## Selon le navigateur (recherche du 23/11)
+| Navigateurs | Moteur | Ce qui compte | Corrections du site |
+|---|---|---|---|
+| Safari (iPhone, iPad, Mac) et tous les navigateurs de l'iPhone (Chrome, Firefox, appli Google, navigateurs intégrés) | WebKit : seul moteur publié sur iOS fin 2026, même dans l'UE ([MacRumors, juin 2026](https://www.macrumors.com/2026/06/17/webkit-rule-costs-ios-users-browser-performance)) | Couche dessinée à sa taille CSS × échelle de l'écran, même réduite ; jamais redessinée quand on l'agrandit ; page fermée si la mémoire déborde (iPhone) | `finesse` et `nuitcompacte` : tout navigateur au moteur de Safari (`navigator.vendor` « Apple Computer, Inc. », classe `vf-webkit`), Mac compris depuis le 23/11 |
+| Chrome, Edge, Opera, Samsung Internet (ordinateur, Android) | Blink | Redessine une couche à la taille affichée quand son échelle change (Chrome 53), sauf pendant un `will-change: transform` : elle garde sa finesse de départ, floue si on l'agrandit ([Chrome](https://developer.chrome.com/blog/re-rastering-composite)) ; mémoire graphique bornée : en cas de manque, zones vides un instant plutôt qu'un arrêt | Rien à faire : le navigateur fait déjà ce que fait `finesse` ; corrections non appliquées (image identique, vérifié) |
+| Firefox (ordinateur, Android) | Gecko | Ignore tous les `will-change` de la page s'ils couvrent plus de 3 fois la surface du document (avertissement dans la console) ([Bugzilla 1288216](https://bugzilla.mozilla.org/show_bug.cgi?id=1288216), [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/will-change)) | Rien de propre ; règle générale : peu de `will-change`, petits, seulement pendant l'animation |
+
+Règles valables partout : images à la bonne taille, peu de couches plein écran, rien de dessiné sous un aplat ou hors de l'écran,
+pas de grand redessin pendant un mouvement. Firefox et WebKit ne se téléchargent pas ici (réseau) : Chrome est simulé, Safari est
+jugé par le modèle et par l'iPhone ou le Mac de Loan. Pages sources non ouvrables d'ici le 23/11 (réseau) : faits tirés des
+résultats de recherche.
+
 ## Pour une nouvelle page (Home, Press) ou un nouvel effet
 - Compter les calques plein écran superposés (chacun ≈ 12 Mo sur iPhone) : en viser au plus 6 à 8 à la fois.
 - Images au format WebP, à la taille affichée × 3 au plus ; pas d'image de 2400 px pour 400 px affichés.

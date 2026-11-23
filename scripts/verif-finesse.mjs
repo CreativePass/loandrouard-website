@@ -1,4 +1,4 @@
-// Contrôle des corrections « finesse » et « nuitcompacte » (22/11, scripts/safari.mjs), iPhone / iPad seulement.
+// Contrôle des corrections « finesse » et « nuitcompacte » (22/11, scripts/safari.mjs), moteur de Safari (iPhone, iPad, Mac).
 // 1. Image : à chaque endroit de l'étude et à l'entrée de l'étude, la page est capturée telle quelle (feuille posée au niveau B,
 //    lueurs du fond « nuit » compactes), puis comme avant (feuille remise à 1200 × 800, réduite par la caméra ; lueurs à leur
 //    taille) : les deux images doivent être identiques (à l'écart près de deux captures sans rien changer).
@@ -7,7 +7,8 @@
 //    Avec SAFARI=1, la feuille garde will-change: transform pendant les deux captures (Chromium la dessine alors à sa taille CSS,
 //    comme Safari, au lieu de la redessiner à l'échelle de l'écran) : l'écart restant est celui que verra l'iPhone.
 // 2. Niveaux : B ≥ zoom de la caméra au repos (jamais agrandie après coup), B ≤ 0,8 pendant un défilement rapide, retour à
-//    l'arrêt ; loupe : B = 1 ; ordinateur et Android : rien ne change (B = 1, pas de classe vf-ios).
+//    l'arrêt ; loupe : B = 1 ; Safari sur Mac (moteur simulé) : niveaux et forme comme sur iPhone ; Chrome (ordinateur et Android) :
+//    rien ne change (B = 1, pas de classe vf-webkit).
 // 3. Aucune erreur JavaScript.
 // Usage : npm run construire && node scripts/verif-finesse.mjs [dossier construit, défaut public]
 import fs from "node:fs"; import http from "node:http"; import path from "node:path";
@@ -21,9 +22,10 @@ const ECRANS = (process.env.ECRANS || "393x852,375x667,430x932,852x393").split("
 const SAFARI = !!process.env.SAFARI, SORTIE = process.env.SORTIE || "";
 const nav = await chromium.launch();
 let echecs = 0;
-const ouvrir = async (w, h, ios) => {
+const ouvrir = async (w, h, ios, mac = false) => {
   const mobile = w < 1000;
-  const ctx = await nav.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: mobile ? 3 : 1, /* ×3 comme un iPhone : en ×1, Chromium réduit la photo d'un coup et crée un moiré absent de l'iPhone */ isMobile: mobile, hasTouch: mobile, ...(ios ? { userAgent: UA_IOS } : {}) });
+  const ctx = await nav.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: mobile ? 3 : mac ? 2 : 1, /* ×3 comme un iPhone, ×2 comme un écran Retina de Mac : en ×1, Chromium réduit la photo d'un coup et crée un moiré absent de l'iPhone */ isMobile: mobile, hasTouch: mobile, ...(ios ? { userAgent: UA_IOS } : {}) });
+  if (mac) await ctx.addInitScript(() => Object.defineProperty(Navigator.prototype, "vendor", { get: () => "Apple Computer, Inc." })); /* moteur de Safari sur Mac (simulé) */
   const page = await ctx.newPage(); const erreurs = [];
   page.on("pageerror", (e) => erreurs.push(e.message));
   await page.route(/fonts\.googleapis|fonts\.gstatic|stripe|cloudflareinsights|loan-api/, (r) => r.abort());
@@ -33,7 +35,7 @@ const ouvrir = async (w, h, ios) => {
 };
 /* État de la feuille : niveau B (--b), échelle affichée réelle (échelle du transform × B), taille CSS. */
 const etat = (page) => page.evaluate(() => { const c = document.querySelector(".vfa-scene > .vfa-cam"), m = (c.style.transform.match(/scale\(([\d.]+)\)/) || [])[1];
-  const b = +(c.style.getPropertyValue("--b") || 1); return { b, s: m ? +m * b : null, w: c.offsetWidth, ios: document.documentElement.classList.contains("vf-ios") }; });
+  const b = +(c.style.getPropertyValue("--b") || 1); return { b, s: m ? +m * b : null, w: c.offsetWidth, ios: document.documentElement.classList.contains("vf-webkit") }; });
 /* « Comme avant » : feuille à 1200 × 800 (B = 1) réduite d'autant par la caméra, lueurs de la nuit à leur taille. Rien ne remet la
    correction tant que la caméra ne bouge pas. */
 const commeAvant = (page) => page.evaluate(() => {
@@ -42,7 +44,7 @@ const commeAvant = (page) => page.evaluate(() => {
     c.style.width = "1200px"; c.style.height = "800px"; c.style.setProperty("--b", "1");
     c.style.transform = t.replace(/scale\(([\d.]+)\)/, (x, s) => "scale(" + (+s * b).toFixed(6) + ")"); }
   let st = document.getElementById("verif-finesse"); if (!st) { st = document.createElement("style"); st.id = "verif-finesse"; document.head.appendChild(st); }
-  st.textContent = "html.vf-ios .vf-nuit i { background: var(--vfn) !important; } html.vf-ios .vf-nuit i::before { display: none !important; }"; });
+  st.textContent = "html.vf-webkit .vf-nuit i { background: var(--vfn) !important; } html.vf-webkit .vf-nuit i::before { display: none !important; }"; });
 const remettre = (page) => page.evaluate(() => { const st = document.getElementById("verif-finesse"); if (st) st.remove();
   for (const c of document.querySelectorAll(".vfa-cam")) if (c.__verif) { const [w, h, b, t] = c.__verif; c.style.width = w; c.style.height = h; c.style.setProperty("--b", b); c.style.transform = t; c.__verif = null; }
   dispatchEvent(new Event("scroll")); });
@@ -56,17 +58,19 @@ const forme = (a, b) => { const W = a.width, H = a.height, R = 2, g = (img) => {
     return o; };
   const fa = flou(g(a)), fb = flou(g(b)); let n = 0; for (let i = 0; i < W * H; i++) if (Math.abs(fa[i] - fb[i]) > 24) n++; return n; };
 
-for (const [w, h] of ECRANS) {
-  const { ctx, page, erreurs } = await ouvrir(w, h, true);
+const LISTE = [...ECRANS.map(([w, h]) => [w, h, false]), ...(process.env.MAC === "0" ? [] : [[1440, 900, true]])];
+for (const [w, h, mac] of LISTE) {
+  const { ctx, page, erreurs } = await ouvrir(w, h, !mac, mac);
   if (SAFARI) await page.addStyleTag({ content: ".vfa-cam { will-change: transform !important; }" });
   const [a0, a1] = await page.evaluate(() => { const s = document.getElementById("analysis"); return [s.offsetTop - innerHeight, s.offsetTop + s.offsetHeight - innerHeight]; });
   const ys = []; for (let y = a0 + 200; y < a1; y += Math.round((a1 - a0) / 26)) ys.push(Math.round(y));
-  console.log(`\n${w} × ${h} (iPhone${SAFARI ? ", feuille dessinée à sa taille CSS comme dans Safari, ×3" : ""}) : ${ys.length} endroits de l'étude`);
+  console.log(`\n${w} × ${h} (${mac ? "Safari sur Mac, simulé" : "iPhone"}${SAFARI ? ", feuille dessinée à sa taille CSS comme dans Safari" : ""}) : ${ys.length} endroits de l'étude`);
   let pire = 0;
   for (const [i, y] of ys.entries()) {
     await page.evaluate((y) => scrollTo(0, y), y); await page.waitForTimeout(2600); /* caméra posée, niveau B choisi (0,2 s après l'arrêt) */
     const e = await etat(page);
     if (await page.evaluate(() => document.documentElement.classList.contains("vf-cache-etude"))) continue;
+    if (e.b >= 1) continue; /* B ≥ 1 : comme avant (B > 1 = netteté des grands écrans, mécanisme du 27/10, inchangé) */
     const okB = e.s === null || e.b >= Math.min(1, e.s) * 0.999 || e.s > 1.15; /* jamais agrandie après coup (au-delà de 1, comme avant) */
     const a = await shot(page); await page.waitForTimeout(250); const t0 = await shot(page);
     const temoin = pixelmatch(a.data, t0.data, null, a.width, a.height, { threshold: 0.03 });
@@ -114,15 +118,15 @@ for (const [w, h] of ECRANS) {
   if (erreurs.length) { echecs++; console.log("  ERREURS JS :", erreurs.join(" | ")); }
   await ctx.close();
 }
-/* Ordinateur et Android : rien ne change (pas de classe vf-ios, B = 1 au repos dans toute l'étude, sauf B > 1 au-delà de ×1,15). */
-for (const [w, h, nom] of [[1440, 900, "ordinateur"], [393, 852, "Android"]]) {
+/* Chrome, ordinateur et Android : rien ne change (pas de classe vf-webkit, B = 1 au repos dans toute l'étude, sauf B > 1 au-delà de ×1,15). */
+for (const [w, h, nom] of [[1440, 900, "Chrome ordinateur"], [393, 852, "Chrome Android"]]) {
   const { ctx, page, erreurs } = await ouvrir(w, h, false);
   const ys = await page.evaluate(() => { const s = document.getElementById("analysis"), r = []; for (let k = 1; k < 10; k++) r.push(Math.round(s.offsetTop + s.offsetHeight * k / 10 - innerHeight)); return r; });
   let ok = true, vus = [];
   for (const y of ys) { await page.evaluate((y) => scrollTo(0, y), y); await page.waitForTimeout(1500); const e = await etat(page); vus.push(e.b.toFixed(2)); if (e.ios || (e.b !== 1 && !(e.s > 1.15))) ok = false; }
   if (erreurs.length) { ok = false; console.log("  ERREURS JS :", erreurs.join(" | ")); }
   if (!ok) echecs++;
-  console.log(`\n${nom} ${w} × ${h} : classe vf-ios absente, B = ${[...new Set(vus)].join(", ")}${ok ? " (inchangé)" : "  ← CHANGÉ"}`);
+  console.log(`\n${nom} ${w} × ${h} : classe vf-webkit absente, B = ${[...new Set(vus)].join(", ")}${ok ? " (inchangé)" : "  ← CHANGÉ"}`);
   await ctx.close();
 }
 await nav.close();
