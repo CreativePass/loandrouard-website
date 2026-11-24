@@ -10,11 +10,11 @@ Tous dans `scripts/`, lancés après `npm run construire`. Chromium seulement (p
 | `verif-sousnoir.mjs` | Fin de l'étude et passage aux cartes : ce qui n'est plus dessiné est invisible (captures avec / sans, 7 écrans, `IOS=1` pour l'iPhone), mémoire estimée — 22/11 |
 | `verif-navigation.mjs` | Défilement doux (courbe de Chrome), inclinaison des cartes, image redemandée — 21/11 |
 | `verif-memoire.mjs` | **Budget de mémoire** (130 Mo) sur toute la page au repos et pendant les gestes à risque (vitrine → See full details, descente éclair, remontée rapide) ; seuls les calques qui dessinent comptent. À lancer avant chaque mise en ligne — 22/11 |
-| `verif-finesse.mjs` | Feuille de l'étude à la finesse de l'écran (iPhone) : même image qu'avant (×3, `SAFARI=1` : rendu façon Safari), niveaux, défilement rapide, loupe ; ordinateur et Android inchangés — 22/11 |
+| `verif-finesse.mjs` | Feuille de l'étude à la finesse de l'écran (moteur de Safari) : même forme qu'avant à chaque endroit de l'étude (×3 ; `SAFARI=1` : rendu façon Safari), feuille jamais dessinée plus petite qu'affichée, défilement rapide, loupe ; Safari sur Mac simulé (`MAC=0` pour l'ôter), Chrome ordinateur et Android inchangés ; `ECRANS=320x568,768x1024,…` pour d'autres tailles — 22/11, Mac 23/11 |
 | `verif-pincement.mjs` | Loupe, filet, vitrine, captures avant / après sur toute la page |
 | `verif-retraits.mjs`, `verif-serie.mjs`, `banc.mjs` | Diagnostic de l'adresse de test (séries, retraits `?sans=`) |
 | `verif-chargement.mjs` | Écran de chargement (extensions) |
-| Diagnostic de l'adresse de test (`optimise/diag.js`) | Après un arrêt, la page rouverte envoie le dernier état (position, partie à l'écran, zoom, parties cachées p/e/n/c) : `npx wrangler tail --config wrangler.essai.jsonc` pendant l'essai, ou `resultats.html` sur l'iPhone |
+| Diagnostic de l'adresse de test (`optimise/diag.js`) | Après un arrêt, la page rouverte envoie le dernier état (position, partie à l'écran, zoom, parties cachées p/e/n/c, niveau `b` de la feuille de l'étude) : `npx wrangler tail --config wrangler.essai.jsonc` pendant l'essai, ou `resultats.html` sur l'iPhone |
 | `mesurer.mjs` | Performance avant / après (long) |
 
 ## Limites connues

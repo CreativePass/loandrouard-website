@@ -9,7 +9,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - **Pages déjà publiées figées** (demande de Loan du 15/11) : Video Feedback, CGV, Privacy, Legal et Sponsors restent la version de l'export du 01/10 ; leur version dans Claude Design est en retard sur le site. Un nouvel export ne les remplace jamais (seules les nouvelles pages, Home puis Press, sont ajoutées). Contrôle : `PAGES_FIGEES` dans `scripts/construire.mjs` arrête la construction si l'une d'elles change.
 - Pas d'analytics, cookies, traceurs, bannière ni CSP sans demande de Loan. Exception : Cloudflare Web Analytics (sans cookie), gardé par Loan le 29/10/2026 et décrit dans la page Privacy.
 - **Terminer chaque réponse par un résumé** : réponses aux questions posées, puis liste de ce que Loan doit faire.
-- **Site léger sur iPhone (demande de Loan du 23/11)** : pour tout changement, sur cette page ou une autre, suivre la méthode de `LEGERETE.md` (mesurer toute la page et les gestes, dessiner chaque calque à la finesse que l'écran affiche, ne pas dessiner ce qui ne se voit pas, image inchangée) et respecter le budget de `scripts/verif-memoire.mjs` avant chaque mise en ligne.
+- **Site léger sur iPhone et sur tous les navigateurs (demande de Loan du 23/11)** : pour tout changement, sur cette page ou une autre, suivre la méthode et les règles par navigateur de `LEGERETE.md` (mesurer toute la page et les gestes, dessiner chaque calque à la finesse que l'écran affiche, ne pas dessiner ce qui ne se voit pas, image inchangée) et respecter le budget de `scripts/verif-memoire.mjs` avant chaque mise en ligne.
 - **Journal (demande de Loan du 21/11)** : avant de chercher la cause d'un problème, lire le fichier de sa catégorie dans `journal/` (voir `journal/LISEZ-MOI.md`) pour ne pas refaire une piste déjà essayée ; après chaque changement, y ajouter une entrée courte (problème, pistes essayées ✅ / ❌ / ⏳, fichiers). Concis : les détails vont dans `PERFORMANCE.md` ou `MISE-EN-LIGNE.md`.
 
 ## Prix et promotions (décision de Loan du 29/10/2026)
@@ -25,7 +25,7 @@ Loan n'est pas développeur : réponses en français, simples, une manipulation 
 - `scripts/traduction-fr.mjs` : version française de Video Feedback (`?lang=fr`), textes anglais → français validés par Loan.
 - `CLAUDE-DESIGN.md` : fiche à transmettre à Claude Design pour les nouvelles parties du site (Home puis Press, choix de Loan du 15/11), écarts entre le design system et le site, consigne des univers (Home, Video Feedback, The Journey, Press). Projet du site et design system transférés dans Claude le 15/11 (liens dans le fichier). Claude Design autonome (claude.ai/design) ferme le 14/12/2026. Le dépôt GitHub est public : rien de non publié dedans.
 - `PERFORMANCE.md` : optimisations de performance (mesures avant/après, ce qui reste possible) et comment re-mesurer (`scripts/mesurer.mjs`).
-- `LEGERETE.md` : méthode et règles pour un site léger sur iPhone (comment Safari compte la mémoire, ce qui a marché, repères, consignes pour les nouvelles pages).
+- `LEGERETE.md` : méthode et règles pour un site léger sur iPhone et tous les navigateurs (comment Safari compte la mémoire, ce que font Chrome et Firefox, ce qui a marché, repères, consignes pour les nouvelles pages).
 
 ## Republier
 1. Ajouter à la racine les nouvelles pages de l'export et leurs fichiers, sans remplacer les pages figées (règle ci-dessus).
